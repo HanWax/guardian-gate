@@ -14,8 +14,8 @@
         "package.json contains @tanstack/start and typescript dependencies"
       ],
       "priority": 1,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Project created with src/, tsconfig.json, package.json with @tanstack/react-start and typescript"
     },
     {
       "id": "T-002",
@@ -27,8 +27,8 @@
         "package-lock.json exists"
       ],
       "priority": 2,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Dependencies installed, node_modules and package-lock.json exist"
     },
     {
       "id": "T-003",
@@ -39,8 +39,8 @@
         "No TypeScript errors in console output"
       ],
       "priority": 3,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "TypeScript compilation passes with no errors"
     },
     {
       "id": "T-004",
@@ -51,8 +51,8 @@
         "No linting errors reported"
       ],
       "priority": 4,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Installed ESLint with TypeScript and React plugins, created eslint.config.js, added lint script to package.json, fixed linting errors in NotFound.tsx and __root.tsx"
     },
     {
       "id": "T-005",
@@ -65,8 +65,8 @@
         "Server process is active and responsive"
       ],
       "priority": 5,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Dev server starts successfully on http://localhost:3000/ with no errors"
     },
     {
       "id": "T-006",
