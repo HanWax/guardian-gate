@@ -294,3 +294,33 @@
   - Tailwind CSS classes work seamlessly with RTL Hebrew text
 ---
 
+## 2026-02-05 - T-001 through T-011
+- Created Layout component with RTL sidebar (border-e) and main content area
+- Created Navigation component with role-based conditional links (admin/manager/teacher)
+- Created three protected routes: /admin, /manager, /teacher with requireAuth beforeLoad
+- Created role-redirect helper (getRoleRedirectPath) with unit tests
+- Integrated Navigation into Layout sidebar
+- All quality checks pass: lint, typecheck, 43 tests
+- Files changed: src/components/Layout.tsx, src/components/Navigation.tsx, src/routes/admin.tsx, src/routes/manager.tsx, src/routes/teacher.tsx, src/lib/role-redirect.ts, src/lib/role-redirect.test.ts, src/routeTree.gen.ts
+- **Learnings for future iterations:**
+  - CSS border-e (logical property) renders on right side in RTL — correct for sidebar borders
+  - TanStack Router Link uses `to` prop (not `href`) for typed routes
+  - useAuth() provides user object; extractRole(user?.user_metadata) extracts role
+  - Dev server must run to generate routeTree.gen.ts for new routes before typecheck passes
+  - Auth-protected routes redirect to /login when no session — browser tests show login page
+---
+
+## 2026-02-05 - T-012 through T-016
+- Browser tested all three routes (/admin, /manager, /teacher) — all correctly redirect to /login
+- Auth guard (requireAuth) properly prevents unauthenticated access
+- No console errors on any page (only vite debug and React DevTools info)
+- RTL flow confirmed: Hebrew text right-aligned, login form properly laid out
+- Final quality checks: lint (0), typecheck (0), test (43/43 pass)
+- Files changed: scripts/compound/prd.json, tmp/*.png
+- **Learnings for future iterations:**
+  - Auth-protected routes can't be browser-tested without a real Supabase session
+  - The login redirect behavior IS the correct behavior for unauthenticated users
+  - Nitro CJS warnings in vitest are harmless (exit code still 0)
+  - vitest "close timed out" message is a known issue, doesn't affect test results
+---
+
