@@ -135,3 +135,21 @@
   - Button order in flex layouts reverses correctly in RTL (last button appears visually first)
 ---
 
+## 2026-02-05 - T-012
+- Verified project folder structure
+- All required directories already exist from initial TanStack Start setup:
+  - src/routes (for route components)
+  - src/components (for reusable components)
+  - src/utils (for utility functions)
+  - src/types (for TypeScript types)
+  - src/styles (for CSS files)
+- Additional directories also present: src/lib (library code)
+- TypeScript compilation passes with no errors
+- Files changed: scripts/compound/prd.json
+- **Learnings for future iterations:**
+  - TanStack Start template includes well-organized folder structure by default
+  - src/lib directory is also created for library/shared code
+  - No need to create standard directories manually - template provides them
+  - Project follows standard React project conventions
+---
+
