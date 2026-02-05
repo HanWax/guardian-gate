@@ -25,3 +25,27 @@ export function createClient() {
 
 // Export a singleton instance for convenience
 export const supabase = createClient();
+
+/**
+ * Hebrew translations for common authentication error messages
+ */
+export const authErrorMessages: Record<string, string> = {
+  invalid_credentials: 'פרטי ההתחברות שגויים',
+  otp_expired: 'הקוד פג תוקף. אנא בקש קוד חדש',
+  user_not_found: 'משתמש לא נמצא במערכת',
+  network_error: 'שגיאת רשת. אנא בדוק את החיבור לאינטרנט',
+  invalid_email: 'כתובת דוא"ל לא תקינה',
+  email_not_confirmed: 'כתובת הדוא"ל טרם אושרה',
+  too_many_requests: 'יותר מדי ניסיונות. אנא נסה שוב מאוחר יותר',
+  unauthorized: 'אין לך הרשאה לבצע פעולה זו',
+  session_expired: 'פג תוקף ההתחברות. אנא התחבר מחדש',
+  unknown_error: 'אירעה שגיאה לא צפויה. אנא נסה שוב',
+};
+
+/**
+ * Returns a Hebrew error message for a given error code
+ * Falls back to unknown_error message if code is not recognized
+ */
+export function getHebrewErrorMessage(errorCode: string): string {
+  return authErrorMessages[errorCode] || authErrorMessages.unknown_error;
+}
