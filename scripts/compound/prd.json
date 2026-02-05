@@ -121,8 +121,8 @@
         "Run `npm run typecheck` - exits with code 0"
       ],
       "priority": 9,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Added CSS logical properties to src/styles/app.css. Includes text-align: start for body, and example utility classes using margin-inline-start/end, padding-inline-start/end, and border-inline properties. TypeScript compilation passes."
     },
     {
       "id": "T-010",
