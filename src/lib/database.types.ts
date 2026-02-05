@@ -477,3 +477,7 @@ export const Constants = {
   },
 } as const
 
+export type Teacher = Database['public']['Tables']['teachers']['Row']
+export type TeacherInsert = Database['public']['Tables']['teachers']['Insert']
+export type TeacherUpdate = Database['public']['Tables']['teachers']['Update']
+
