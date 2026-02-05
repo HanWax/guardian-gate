@@ -116,3 +116,22 @@
   - Tailwind utility classes work seamlessly with RTL (flex, gap, padding)
 ---
 
+## 2026-02-05 - T-011
+- Verified RTL layout in browser using agent-browser
+- Tested page at http://localhost:3000/rtl-test
+- All RTL features confirmed working:
+  - Hebrew text aligns right and flows RTL
+  - Navigation buttons correctly positioned (הקודם right, הבא left)
+  - Logical properties work (border-inline-start on right, border-inline-end on left)
+  - Mixed content displays properly
+- No console errors (only vite debug messages and React DevTools info)
+- Screenshot saved to tmp/rtl-test.png
+- Files changed: tmp/rtl-test.png, scripts/compound/prd.json
+- **Learnings for future iterations:**
+  - agent-browser workflow: open → wait --load networkidle → screenshot → console
+  - Tailwind CSS flex layout automatically adapts to RTL direction
+  - border-inline-start/end CSS properties work perfectly for RTL
+  - Hebrew text naturally aligns right in RTL context without additional CSS
+  - Button order in flex layouts reverses correctly in RTL (last button appears visually first)
+---
+
