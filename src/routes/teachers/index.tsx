@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { requireRole } from '~/lib/auth-guard';
 import { useTeachers, useDeleteTeacher } from '~/lib/queries/teachers';
 import type { Teacher } from '~/lib/database.types';

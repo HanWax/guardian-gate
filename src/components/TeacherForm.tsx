@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link } from '@tanstack/react-router';
 import { teacherCreateSchema } from '~/lib/schemas/teacher';
 import type { Teacher } from '~/lib/database.types';
