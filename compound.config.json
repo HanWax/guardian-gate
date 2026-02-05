@@ -1,0 +1,15 @@
+{
+  "tool": "claude",
+  "reportsDir": "./reports",
+  "outputDir": "./scripts/compound",
+  "qualityChecks": [],
+  "maxIterations": 25,
+  "branchPrefix": "compound/",
+  "analyzeCommand": "",
+  "models": {
+    "analyze": "haiku",
+    "prd": "sonnet",
+    "tasks": "haiku",
+    "execute": "sonnet"
+  }
+}

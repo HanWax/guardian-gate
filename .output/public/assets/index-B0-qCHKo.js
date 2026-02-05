@@ -1,0 +1,1 @@
+import{j as e}from"./main-Bd2f4fXo.js";function t(){return e.jsxs("div",{className:"p-4",children:[e.jsx("h1",{className:"text-3xl font-bold",children:"GuardianGate"}),e.jsx("p",{className:"mt-2 text-lg",children:"שלום עולם"})]})}export{t as component};

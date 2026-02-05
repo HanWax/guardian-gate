@@ -70,7 +70,43 @@
 | With me | איתי |
 | Other | אחר |
 
+### Response Flows:
+
+**If parent selects "בכיתה" (In class) → High Friction Verification:**
+
+**Template ID:** `verify_in_class`
+
+```
+לאישור שהילד/ה בכיתה, הקלד/י את שם הילד/ה:
+```
+→ Parent must type child's name
+
+**If name matches:**
+```
+תודה, מעבירים לצוות לבדיקה.
+```
+→ System checks teacher status → If not confirmed, **🚨 INCONSISTENCY**
+
+**If name doesn't match:**
+
+**Template ID:** `verify_retry`
+
+```
+השם לא תואם. נסה/י שוב:
+```
+→ Allow 2 more attempts, then escalate to manager
+
+---
+
+**If parent selects "איתי" (With me):**
+→ Check teacher status → If confirmed arrived, **🚨 INCONSISTENCY**. Otherwise, resolved.
+
+---
+
 **If parent selects "אחר" (Other):**
+
+**Template ID:** `other_explanation_prompt`
+
 ```
 ספר/י לנו עוד:
 ```

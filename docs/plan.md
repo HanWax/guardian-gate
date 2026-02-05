@@ -99,9 +99,14 @@ For each child where:
 
 | Parent Response | System Action |
 |-----------------|---------------|
-| "בכיתה" (In class) | Check teacher status → If not confirmed, **🚨 INCONSISTENCY** |
+| "בכיתה" (In class) | **High friction:** Prompt parent to type child's name → If correct, check teacher status → If not confirmed, **🚨 INCONSISTENCY** |
 | "איתי" (With me) | Check teacher status → If confirmed arrived, **🚨 INCONSISTENCY**. Otherwise, resolved. |
 | "אחר" (Other) | Prompt for explanation → Forward to teacher with call button |
+
+**High Friction Verification (for "בכיתה"):**
+- Parent must type child's name to confirm
+- Prevents mindless button tapping
+- 3 attempts allowed, then escalates to manager
 
 ---
 
@@ -269,7 +274,8 @@ conversation_state (
   id UUID PRIMARY KEY,
   parent_id UUID REFERENCES parents(id),
   current_child_index INTEGER DEFAULT 0,
-  state TEXT,  -- 'awaiting_checkin', 'awaiting_explanation', 'awaiting_9am_response', etc.
+  state TEXT,  -- 'awaiting_checkin', 'awaiting_explanation', 'awaiting_9am_response', 'awaiting_name_verification', etc.
+  verification_attempts INTEGER DEFAULT 0,  -- For high friction name verification (max 3)
   updated_at TIMESTAMPTZ DEFAULT NOW()
 )
 ```
@@ -314,11 +320,13 @@ Templates requiring Meta approval:
 2. `second_ping` - Reminder for non-responders
 3. `explanation_prompt` - After "not today"
 4. `unconfirmed_alert` - 9am alert with buttons
-5. `teacher_summary` - Consolidated list
-6. `manager_escalation` - Inconsistency alert
-7. `parent_explanation_forward` - Forward explanation to teacher
-8. `confirm_dropping_off` - Acknowledgment
-9. `confirm_complete` - All children confirmed
+5. `verify_in_class` - High friction: type child's name to confirm
+6. `verify_retry` - Name didn't match, try again
+7. `teacher_summary` - Consolidated list
+8. `manager_escalation` - Inconsistency alert
+9. `parent_explanation_forward` - Forward explanation to teacher
+10. `confirm_dropping_off` - Acknowledgment
+11. `confirm_complete` - All children confirmed
 
 ---
 
