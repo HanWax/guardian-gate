@@ -41,3 +41,18 @@
   - Server runs on port 3000 (not the default Vite port 5173)
   - Use `run_in_background: true` for long-running server processes
 ---
+## 2026-02-05 - T-006
+- Tested development server page loads in browser
+- Verified HTTP 200 response from localhost:3000
+- Used agent-browser to open page, wait for networkidle, check console, and capture screenshot
+- Console shows only debug/info messages (no fatal errors): vite connection messages and React DevTools info
+- Screenshot confirms page renders properly with GuardianGate title and Hebrew text "שלום עולם"
+- Files changed: scripts/compound/prd.json, tmp/dev-server-loaded.png
+- **Learnings for future iterations:**
+  - Server runs on port 3000 (not 5173 as mentioned in acceptance criteria)
+  - agent-browser commands: open, wait --load networkidle, console, screenshot
+  - TanStack Router indicator appears at bottom right of page
+  - Page already displays Hebrew RTL content successfully
+  - Background bash tasks need time to start (use sleep before checking server status)
+---
+
