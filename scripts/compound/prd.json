@@ -92,8 +92,8 @@
         "Run `npm run typecheck` - exits with code 0"
       ],
       "priority": 6,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Completed: Implemented email validation with isValidEmail() regex function. Added emailError state with Hebrew error message 'כתובת דוא\"ל לא תקינה'. Submit button dynamically disabled based on email validation (isSubmitDisabled). Input field shows red border when invalid. TypeScript compilation passes."
     },
     {
       "id": "T-007",
@@ -108,8 +108,8 @@
         "Run `npm run typecheck` - exits with code 0"
       ],
       "priority": 7,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Completed: handleSubmit calls supabase.auth.signInWithOtp({email}). Loading state set during submission. Errors caught and displayed via getHebrewErrorMessage. Form cleared on success. Extracted isValidEmail to lib/validation.ts with unit tests."
     },
     {
       "id": "T-008",
@@ -123,8 +123,8 @@
         "Run `npm run typecheck` - exits with code 0"
       ],
       "priority": 8,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Completed: successMessage state shows Hebrew message after OTP sent. Message persists until user edits email (dismissed on interaction). data-testid='success-message' for testing."
     },
     {
       "id": "T-009",
@@ -138,8 +138,8 @@
         "Run `npm run typecheck` - exits with code 0"
       ],
       "priority": 9,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Completed: authError state displays Hebrew errors from getHebrewErrorMessage(). Dismissible via close button. data-testid='auth-error' for testing."
     },
     {
       "id": "T-010",
@@ -153,8 +153,8 @@
         "Run `npm run typecheck` - exits with code 0"
       ],
       "priority": 10,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Completed: Created src/routes/auth/callback.tsx. Extracts access_token, refresh_token, and type from URL hash params."
     },
     {
       "id": "T-011",
@@ -169,8 +169,8 @@
         "Run `npm run typecheck` - exits with code 0"
       ],
       "priority": 11,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Completed: Uses supabase.auth.setSession() to exchange tokens. On failure, displays Hebrew error via getHebrewErrorMessage."
     },
     {
       "id": "T-012",
@@ -184,8 +184,8 @@
         "Run `npm run typecheck` - exits with code 0"
       ],
       "priority": 12,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Completed: navigate({ to: '/' }) after successful session exchange. Uses TanStack Router navigate for client-side redirect."
     },
     {
       "id": "T-013",
@@ -199,8 +199,8 @@
         "Run `npm run typecheck` - exits with code 0"
       ],
       "priority": 13,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Completed: Error page shows Hebrew message, instruction to request new link, and a button to navigate back to /login."
     },
     {
       "id": "T-014",
@@ -215,8 +215,8 @@
         "Run `npm run typecheck` - exits with code 0"
       ],
       "priority": 14,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Completed: Created src/lib/auth-guard.ts with requireAuth() function. Uses supabase.auth.getSession() and throws redirect to /login if no session. Applied as beforeLoad on protected routes. Public routes (/login, /auth/callback) remain unprotected."
     },
     {
       "id": "T-015",
@@ -230,8 +230,8 @@
         "Run `npm run typecheck` - exits with code 0"
       ],
       "priority": 15,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Completed: requireAuth() in auth-guard.ts redirects to /login via TanStack Router redirect(). Applied as beforeLoad on index route."
     },
     {
       "id": "T-016",
@@ -245,8 +245,8 @@
         "Run `npm run typecheck` - exits with code 0"
       ],
       "priority": 16,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Completed: Supabase client in lib/supabase.ts configured with persistSession: true and autoRefreshToken: true. Session stored in localStorage by default. AuthContext re-reads session on mount."
     },
     {
       "id": "T-017",
@@ -259,8 +259,8 @@
         "Run `npm run typecheck` - exits with code 0"
       ],
       "priority": 17,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Completed: Created src/lib/roles.ts with Role type and extractRole() function. Unit tests in roles.test.ts."
     },
     {
       "id": "T-018",
@@ -274,8 +274,8 @@
         "Run `npm run typecheck` - exits with code 0"
       ],
       "priority": 18,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Completed: Created src/lib/auth-context.tsx with AuthProvider and useAuth() hook. Provides user, role, loading, signOut."
     },
     {
       "id": "T-019",
@@ -289,8 +289,8 @@
         "Run `npm run typecheck` - exits with code 0"
       ],
       "priority": 19,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Completed: extractRole() in roles.ts reads user_metadata.role, validates against Role type, defaults to 'teacher'. Used in AuthContext."
     },
     {
       "id": "T-020",
@@ -305,8 +305,8 @@
         "Run `npm run typecheck` - exits with code 0"
       ],
       "priority": 20,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Completed: signOut() calls supabase.auth.signOut(), sets user to null, redirects to /login via window.location.href."
     },
     {
       "id": "T-021",
@@ -319,8 +319,8 @@
         "Run `npm run typecheck` - exits with code 0"
       ],
       "priority": 21,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Completed: Added RootComponent to __root.tsx that wraps <Outlet /> with <AuthProvider>. All child routes can use useAuth()."
     },
     {
       "id": "T-022",
