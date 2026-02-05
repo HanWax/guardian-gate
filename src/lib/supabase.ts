@@ -1,4 +1,5 @@
 import { createClient as createSupabaseClient, type Session, type AuthChangeEvent, type User } from '@supabase/supabase-js';
+import type { Database } from './database.types';
 
 // Get Supabase URL and Anon Key from environment variables
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -14,7 +15,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
  * Creates and returns a configured Supabase client instance
  */
 export function createClient() {
-  return createSupabaseClient(supabaseUrl, supabaseAnonKey, {
+  return createSupabaseClient<Database>(supabaseUrl, supabaseAnonKey, {
     auth: {
       autoRefreshToken: true,
       persistSession: true,

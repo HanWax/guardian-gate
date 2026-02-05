@@ -10,7 +10,9 @@
     "start": "node .output/server/index.mjs",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run --passWithNoTests",
+    "gen:types": "supabase gen types typescript --local > src/lib/database.types.ts",
+    "db:reset": "supabase db reset"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.95.0",
@@ -37,6 +39,7 @@
     "globals": "^17.3.0",
     "jsdom": "^28.0.0",
     "nitro": "3.0.1-alpha.2",
+    "supabase": "^2.75.5",
     "tailwindcss": "^4.1.18",
     "typescript": "^5.7.2",
     "vite": "^7.3.1",
