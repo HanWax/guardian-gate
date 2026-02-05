@@ -172,3 +172,20 @@
   - Project structure should show hierarchy and purpose of each directory
 ---
 
+## 2026-02-05 - T-014
+- Created GitHub Actions CI workflow at .github/workflows/ci.yml
+- Workflow configuration:
+  - Triggers on pull_request and push to main/master
+  - Uses ubuntu-latest runner
+  - Node.js 20 with npm cache
+  - Three quality check steps: install, typecheck, lint
+- Valid YAML format
+- Files changed: .github/workflows/ci.yml, scripts/compound/prd.json
+- **Learnings for future iterations:**
+  - GitHub Actions workflows use actions/checkout@v4 for latest checkout
+  - actions/setup-node@v4 supports npm caching with cache: 'npm'
+  - Standard CI job should verify all local quality checks pass
+  - Workflow triggers should include both PR and push to main branches
+  - Name each step clearly for easy debugging in CI logs
+---
+
