@@ -24,6 +24,9 @@ export default function Navigation() {
           <Link to="/children" className="rounded px-3 py-2 hover:bg-gray-200">
             ילדים
           </Link>
+          <Link to="/parents" className="rounded px-3 py-2 hover:bg-gray-200">
+            הורים
+          </Link>
         </>
       )}
       {role === 'manager' && (
@@ -36,6 +39,9 @@ export default function Navigation() {
           </Link>
           <Link to="/children" className="rounded px-3 py-2 hover:bg-gray-200">
             ילדים
+          </Link>
+          <Link to="/parents" className="rounded px-3 py-2 hover:bg-gray-200">
+            הורים
           </Link>
         </>
       )}
