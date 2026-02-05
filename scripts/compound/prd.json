@@ -1,222 +1,224 @@
 {
-  "project": "RoleCall",
-  "branchName": "compound/setup-supabase-project",
-  "description": "Setup Supabase project with secure connection and verifiable health check",
+  "project": "GuardianGate MVP - TanStack Start Initialization",
+  "branchName": "compound/tanstack-start-initialization",
+  "description": "Initialize TanStack Start project with TypeScript and Hebrew RTL support",
   "tasks": [
     {
       "id": "T-001",
-      "title": "Verify Supabase dashboard access and document project requirements",
-      "description": "Confirm access to Supabase dashboard and document the project creation parameters needed",
+      "title": "Create TanStack Start project with TypeScript",
+      "description": "Initialize a new TanStack Start project using the official CLI with TypeScript configuration",
       "acceptanceCriteria": [
-        "Navigate to https://supabase.com/dashboard - page loads successfully",
-        "Log available organizations to notes",
-        "Document target project name 'rolecall-mvp' in notes",
-        "List available regions and log closest region to notes"
+        "Run `npm create @tanstack/start@latest --typescript` - exits with code 0",
+        "Directory structure created with src/, public/, and config files",
+        "tsconfig.json exists in project root",
+        "package.json contains @tanstack/start and typescript dependencies"
       ],
       "priority": 1,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Project created with src/, tsconfig.json, package.json with @tanstack/react-start and typescript"
     },
     {
       "id": "T-002",
-      "title": "Create new Supabase project in dashboard",
-      "description": "Create the rolecall-mvp Supabase project through the dashboard interface",
+      "title": "Install project dependencies",
+      "description": "Install all npm dependencies for the TanStack Start project",
       "acceptanceCriteria": [
-        "Project 'rolecall-mvp' exists in Supabase dashboard",
-        "Project status shows 'Active' or 'Running'",
-        "Project has a valid project URL (format: https://[ref].supabase.co)",
-        "Log project URL to notes for use in subsequent tasks"
+        "Run `npm install` - exits with code 0",
+        "node_modules directory created",
+        "package-lock.json exists"
       ],
       "priority": 2,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Dependencies installed, node_modules and package-lock.json exist"
     },
     {
       "id": "T-003",
-      "title": "Extract project API URL from settings",
-      "description": "Navigate to project settings and copy the API URL",
+      "title": "Verify TypeScript compilation",
+      "description": "Ensure TypeScript compiles without errors",
       "acceptanceCriteria": [
-        "Navigate to Project Settings > API in Supabase dashboard",
-        "Project URL is visible in format https://[ref].supabase.co",
-        "Log full project URL to notes",
-        "URL format validation: starts with https:// and ends with .supabase.co"
+        "Run `npm run typecheck` or `tsc --noEmit` - exits with code 0",
+        "No TypeScript errors in console output"
       ],
       "priority": 3,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "TypeScript compilation passes with no errors"
     },
     {
       "id": "T-004",
-      "title": "Extract anon public API key from settings",
-      "description": "Copy the anon/public API key from project settings for client-side use",
+      "title": "Verify linting passes",
+      "description": "Check that code quality linting is configured and passes",
       "acceptanceCriteria": [
-        "Navigate to Project Settings > API > Project API keys",
-        "Anon key (public) is visible and copyable",
-        "Log first 20 characters of anon key to notes for verification",
-        "Confirm key starts with 'eyJ' (JWT format)"
+        "Run linting command (npm run lint or similar) - exits with code 0",
+        "No linting errors reported"
       ],
       "priority": 4,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Installed ESLint with TypeScript and React plugins, created eslint.config.js, added lint script to package.json, fixed linting errors in NotFound.tsx and __root.tsx"
     },
     {
       "id": "T-005",
-      "title": "Verify .gitignore excludes .env.local",
-      "description": "Check that .gitignore already prevents committing environment files",
+      "title": "Start development server",
+      "description": "Verify the dev server starts without errors and binds to localhost",
       "acceptanceCriteria": [
-        "File .gitignore exists in project root",
-        "File .gitignore contains '.env.local' or '.env*.local' pattern",
-        "Run `git check-ignore .env.local` - exits with code 0 (file is ignored)",
-        "Log .gitignore env patterns to notes"
+        "Run `npm run dev` - server starts without errors",
+        "Server output shows listening on localhost (e.g., 'Local: http://localhost:5173')",
+        "No fatal errors in console output",
+        "Server process is active and responsive"
       ],
       "priority": 5,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Dev server starts successfully on http://localhost:3000/ with no errors"
     },
     {
       "id": "T-006",
-      "title": "Create .env.local.example template file",
-      "description": "Create example environment file with placeholder values for documentation",
+      "title": "Test development server page loads in browser",
+      "description": "Verify that the dev server serves content and displays a page in the browser",
       "acceptanceCriteria": [
-        "File .env.local.example exists in project root",
-        "File contains VITE_SUPABASE_URL with placeholder 'https://your-project.supabase.co'",
-        "File contains VITE_SUPABASE_ANON_KEY with placeholder 'your-anon-key-here'",
-        "File contains comments explaining where to get these values",
-        "Run `git status .env.local.example` - file is tracked by git"
+        "agent-browser: open http://localhost:5173 - page loads (HTTP 200)",
+        "agent-browser: wait --load networkidle - page settles",
+        "agent-browser: console - no fatal errors (warnings are OK)",
+        "agent-browser: screenshot tmp/dev-server-loaded.png - page renders content"
       ],
       "priority": 6,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Page loads successfully at http://localhost:3000 with HTTP 200, no fatal console errors (only vite debug messages), screenshot confirms GuardianGate title and Hebrew text 'שלום עולם' render properly"
     },
     {
       "id": "T-007",
-      "title": "Create .env.local with actual credentials",
-      "description": "Create the actual environment file with real Supabase credentials from previous tasks",
+      "title": "Test hot module replacement (HMR)",
+      "description": "Verify that code changes trigger automatic browser refresh",
       "acceptanceCriteria": [
-        "File .env.local exists in project root",
-        "File contains VITE_SUPABASE_URL=https://[actual-ref].supabase.co",
-        "File contains VITE_SUPABASE_ANON_KEY=[actual-key-from-T-004]",
-        "Run `git status .env.local` - shows as untracked (ignored)",
-        "Both values are valid (not placeholder text)"
+        "Modify a source file in src/ (e.g., change component text)",
+        "Save the file",
+        "Browser updates within 3 seconds without manual refresh",
+        "Log HMR behavior to notes (success or failure)"
       ],
       "priority": 7,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "HMR verified working. Modified src/routes/index.tsx, browser auto-updated within 3 seconds. Vite logs show 'hmr update' messages. Screenshots confirm text change appeared without manual refresh."
     },
     {
       "id": "T-008",
-      "title": "Install @supabase/supabase-js package",
-      "description": "Add the official Supabase client library to project dependencies",
+      "title": "Configure Hebrew RTL in root HTML",
+      "description": "Add dir='rtl' and lang='he' attributes to the root HTML element",
       "acceptanceCriteria": [
-        "Run `npm install @supabase/supabase-js` - exits with code 0",
-        "File package.json contains '@supabase/supabase-js' in dependencies",
-        "File package-lock.json or pnpm-lock.yaml exists and updated",
-        "Run `npm ls @supabase/supabase-js` - shows installed version"
+        "Find root HTML template (likely app.tsx, index.html, or root route component)",
+        "Add `dir='rtl'` attribute to <html> tag",
+        "Add `lang='he'` attribute to <html> tag",
+        "Save file and run `npm run typecheck` - exits with code 0"
       ],
       "priority": 8,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "RTL already configured in src/routes/__root.tsx RootDocument component. HTML element has dir='rtl' and lang='he' attributes set. TypeScript compilation passes."
     },
     {
       "id": "T-009",
-      "title": "Create src/lib directory if it doesn't exist",
-      "description": "Ensure the lib directory exists for shared utilities",
+      "title": "Implement CSS logical properties for RTL",
+      "description": "Add base CSS or configuration to use logical properties for RTL compatibility",
       "acceptanceCriteria": [
-        "Directory src/lib exists",
-        "Run `ls -la src/lib` - exits with code 0",
-        "Log existing files in src/lib to notes (or 'empty' if none)"
+        "Create or update global CSS file (src/styles/global.css or similar)",
+        "File contains CSS logical properties (margin-inline-start, padding-inline-end, etc.) OR RTL-safe styling approach",
+        "File applies to root element or body",
+        "Run `npm run typecheck` - exits with code 0"
       ],
       "priority": 9,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Added CSS logical properties to src/styles/app.css. Includes text-align: start for body, and example utility classes using margin-inline-start/end, padding-inline-start/end, and border-inline properties. TypeScript compilation passes."
     },
     {
       "id": "T-010",
-      "title": "Create Supabase client initialization file",
-      "description": "Create src/lib/supabase.ts with client singleton pattern",
+      "title": "Create RTL test page",
+      "description": "Create a basic test page to visually verify RTL layout direction",
       "acceptanceCriteria": [
-        "File src/lib/supabase.ts exists",
-        "File imports createClient from '@supabase/supabase-js'",
-        "File reads import.meta.env.VITE_SUPABASE_URL",
-        "File reads import.meta.env.VITE_SUPABASE_ANON_KEY",
-        "File exports supabase client instance",
+        "Create file src/routes/rtl-test.tsx (or appropriate routing path)",
+        "Page contains Hebrew text (e.g., 'שלום עולם' or Lorem ipsum in Hebrew)",
+        "Page has a heading that should right-align",
+        "Page has left/right navigation elements to verify direction",
         "Run `npm run typecheck` - exits with code 0"
       ],
       "priority": 10,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Created src/routes/rtl-test.tsx with comprehensive RTL tests including Hebrew text sections, navigation buttons, logical properties demonstration, mixed content, and lists. TypeScript compilation passes after route types generated."
     },
     {
       "id": "T-011",
-      "title": "Add TypeScript environment variable types",
-      "description": "Define types for Vite environment variables to ensure type safety",
+      "title": "Verify RTL layout in browser",
+      "description": "Test RTL page in browser and confirm right-to-left flow",
       "acceptanceCriteria": [
-        "File src/vite-env.d.ts or src/env.d.ts exists OR types added to existing file",
-        "File contains ImportMetaEnv interface with VITE_SUPABASE_URL: string",
-        "File contains ImportMetaEnv interface with VITE_SUPABASE_ANON_KEY: string",
-        "Run `npm run typecheck` - exits with code 0",
-        "No TypeScript errors when accessing import.meta.env.VITE_SUPABASE_URL"
+        "agent-browser: open http://localhost:5173/rtl-test (or appropriate URL) - page loads",
+        "agent-browser: wait --load networkidle - page settles",
+        "agent-browser: screenshot tmp/rtl-test.png - capture layout",
+        "agent-browser: console - no console errors",
+        "Log to notes: confirm text and layout flow from right to left (or failure details)"
       ],
       "priority": 11,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "RTL layout verified successfully at http://localhost:3000/rtl-test. Screenshot confirms: Hebrew text aligns right and flows RTL, navigation buttons correctly positioned (הקודם right, הבא left), logical properties work (border-inline-start on right, border-inline-end on left), mixed content displays properly. No console errors."
     },
     {
       "id": "T-012",
-      "title": "Create health check test page component",
-      "description": "Create a simple page component that tests Supabase connectivity",
+      "title": "Create project folder structure",
+      "description": "Organize project into logical folders for routes, components, utilities, types, and styles",
       "acceptanceCriteria": [
-        "Test page file created (e.g., src/routes/test-supabase.tsx or similar)",
-        "File imports supabase client from src/lib/supabase",
-        "File attempts connection test (e.g., supabase.from('_').select().limit(0) or similar query)",
-        "File displays connection status (success/failure) in UI",
+        "Create directory src/routes (if not exists)",
+        "Create directory src/components",
+        "Create directory src/utils",
+        "Create directory src/types",
+        "Create directory src/styles (if not exists)",
         "Run `npm run typecheck` - exits with code 0"
       ],
       "priority": 12,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "All required directories already exist: src/routes, src/components, src/utils, src/types, and src/styles. Project structure was created during initial TanStack Start setup. TypeScript compilation passes."
     },
     {
       "id": "T-013",
-      "title": "Start dev server and verify it runs",
-      "description": "Ensure the development server starts successfully with new dependencies",
+      "title": "Create comprehensive README.md",
+      "description": "Write documentation for setup, development, and RTL configuration",
       "acceptanceCriteria": [
-        "Run `npm run dev` - server starts without errors",
-        "Server binds to a port (check output for localhost URL)",
-        "Log dev server URL to notes (e.g., http://localhost:3000)",
-        "No build errors or module resolution failures in console"
+        "Create or update README.md in project root",
+        "README contains project description",
+        "README includes 'Getting Started' section with: 1) npm install, 2) npm run dev, 3) open http://localhost:5173",
+        "README documents folder structure (routes, components, utils, types, styles)",
+        "README includes RTL configuration section (dir='rtl', lang='he', CSS logical properties)",
+        "README includes development commands (dev, typecheck, lint, build)"
       ],
       "priority": 13,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Created comprehensive README.md with project description, Getting Started guide, folder structure documentation, RTL configuration details (HTML setup and CSS logical properties), available scripts, development workflow, and tech stack information."
     },
     {
       "id": "T-014",
-      "title": "Navigate to test page and verify page loads",
-      "description": "Open the health check test page in browser to verify routing works",
+      "title": "Create CI/CD workflow file",
+      "description": "Set up GitHub Actions workflow for automated type checking and linting",
       "acceptanceCriteria": [
-        "agent-browser: open http://localhost:3000/test-supabase - page loads",
-        "agent-browser: console - no React errors or module errors",
-        "agent-browser: snapshot -i - page contains connection status element",
-        "agent-browser: screenshot tmp/supabase-test-page.png - capture page state"
+        "Create file .github/workflows/ci.yml",
+        "Workflow triggers on pull requests",
+        "Workflow triggers on pushes to main/master branch",
+        "Workflow includes step: Run `npm install`",
+        "Workflow includes step: Run `npm run typecheck` - expects exit code 0",
+        "Workflow includes step: Run linting - expects exit code 0",
+        "File is valid YAML (parseable)"
       ],
       "priority": 14,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Created .github/workflows/ci.yml with GitHub Actions workflow. Triggers on pull requests and pushes to main/master. Includes steps: checkout, setup Node.js 20, install dependencies, run typecheck, run lint. Valid YAML format."
     },
     {
       "id": "T-015",
-      "title": "Verify Supabase connection success in browser",
-      "description": "Confirm the connection test shows successful connection to Supabase",
+      "title": "Verify CI workflow configuration",
+      "description": "Ensure CI workflow file is syntactically valid and will run correctly",
       "acceptanceCriteria": [
-        "agent-browser: page contains text 'success' OR 'connected' OR similar positive indicator",
-        "agent-browser: page does NOT contain text 'error' OR 'failed' OR 'invalid' (unless describing success)",
-        "agent-browser: console - no Supabase authentication errors",
-        "Log final connection status to notes"
+        "File .github/workflows/ci.yml exists",
+        "File content is valid YAML format",
+        "Workflow name is defined",
+        "Jobs section contains at least one job",
+        "Job runs-on specifies ubuntu-latest or similar",
+        "Job has at least 3 steps (install, typecheck, lint)",
+        "Run `npm run typecheck` - exits with code 0"
       ],
       "priority": 15,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Verified CI workflow configuration. File exists, valid YAML, workflow name 'CI' defined, contains 'quality-checks' job on ubuntu-latest, has 5 steps (checkout, setup node, install, typecheck, lint). TypeScript compilation passes."
     }
   ]
 }

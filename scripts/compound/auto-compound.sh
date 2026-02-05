@@ -5,10 +5,13 @@
 # Usage: ./auto-compound.sh [--dry-run]
 #
 # Requirements:
-# - amp or claude CLI installed and authenticated
+# - claude CLI installed and authenticated (uses your Pro subscription)
 # - gh CLI installed and authenticated
 # - jq installed
-# - ANTHROPIC_API_KEY environment variable set
+#
+# LLM Provider (set in .env.local):
+# - USE_CLAUDE_CODE=true (recommended - uses Pro subscription, no API credits)
+# - Or ANTHROPIC_API_KEY for direct API (requires API credits)
 
 set -e
 

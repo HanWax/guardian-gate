@@ -1,0 +1,17 @@
+## Codebase Patterns
+- TanStack Start dev server runs on port 3000 by default with `npm run dev`
+- agent-browser is used for frontend browser testing and verification
+
+---
+
+## 2026-02-05 13:50 - T-002
+- Verified dev server starts successfully
+- Installed agent-browser globally for browser testing
+- Confirmed localhost:3000 loads with GuardianGate title and Hebrew text "שלום עולם"
+- Files changed: tasks/prd.json, scripts/compound/progress.txt
+- **Learnings for future iterations:**
+  - agent-browser must be installed globally first (`npm install -g agent-browser && agent-browser install`)
+  - agent-browser snapshot -i shows interactive elements with refs
+  - TanStack Start already has Hebrew RTL content working in the current setup
+  - Screenshot verification confirms proper page rendering
+---

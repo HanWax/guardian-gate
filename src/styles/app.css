@@ -29,3 +29,30 @@
     outline: none !important;
   }
 }
+
+@layer base {
+  /* RTL-compatible logical properties for consistent layout direction */
+  body {
+    text-align: start; /* Aligns to right in RTL, left in LTR */
+  }
+
+  /* Example utility classes using logical properties */
+  .margin-inline-example {
+    margin-inline-start: 1rem; /* Right margin in RTL, left in LTR */
+    margin-inline-end: 1rem; /* Left margin in RTL, right in LTR */
+  }
+
+  .padding-inline-example {
+    padding-inline-start: 1rem; /* Right padding in RTL, left in LTR */
+    padding-inline-end: 1rem; /* Left padding in RTL, right in LTR */
+  }
+
+  /* Logical border properties */
+  .border-inline-start {
+    border-inline-start: 1px solid currentColor;
+  }
+
+  .border-inline-end {
+    border-inline-end: 1px solid currentColor;
+  }
+}
