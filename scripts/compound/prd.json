@@ -151,8 +151,8 @@
         "Log to notes: confirm text and layout flow from right to left (or failure details)"
       ],
       "priority": 11,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "RTL layout verified successfully at http://localhost:3000/rtl-test. Screenshot confirms: Hebrew text aligns right and flows RTL, navigation buttons correctly positioned (הקודם right, הבא left), logical properties work (border-inline-start on right, border-inline-end on left), mixed content displays properly. No console errors."
     },
     {
       "id": "T-012",
