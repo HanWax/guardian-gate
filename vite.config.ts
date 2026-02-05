@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { tanstackStart } from '@tanstack/react-start/plugin/vite'
 import { defineConfig } from 'vite'
 import tsConfigPaths from 'vite-tsconfig-paths'
@@ -20,4 +21,14 @@ export default defineConfig({
     viteReact(),
     nitro(),
   ],
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: ['./src/test/setup.ts'],
+    server: {
+      deps: {
+        external: ['nitro'],
+      },
+    },
+  },
 })

@@ -9,12 +9,34 @@ You are an autonomous coding agent working on a software project.
 3. Read the progress log at `[outputDir]/progress.txt` (check Codebase Patterns section first)
 4. Check you're on the correct branch from PRD `branchName`. If not, check it out or create from main.
 5. Pick the **highest priority** task where `passes: false`
-6. Implement that single task
+6. **Write tests first** (see Test-First Workflow below), then implement
 7. Run quality checks from config `qualityChecks` array
 8. Update CLAUDE.md files if you discover reusable patterns (see below)
 9. If checks pass, commit ALL changes with message: `feat: [Task ID] - [Task Title]`
 10. Update the PRD to set `passes: true` for the completed task
 11. Append your progress to `[outputDir]/progress.txt`
+
+## Test-First Workflow
+
+For each task, follow this order:
+
+1. **Identify testable logic** — pure functions, utilities, data transformations, validation logic, state derivations
+2. **Write failing tests first** — create `*.test.ts` files next to the source file (e.g., `lib/supabase.test.ts` for `lib/supabase.ts`). Tests should assert the expected behavior from the acceptance criteria.
+3. **Run tests to confirm they fail** — `npm run test` should show your new tests failing (red)
+4. **Implement the code** — write the minimum code to make the tests pass
+5. **Run tests again** — `npm run test` should now pass (green)
+
+**What to test (test-first):**
+- Pure functions (validation, formatting, translation lookups, role extraction)
+- State logic (auth state derivation, error message mapping)
+- Utility functions (helpers, transformers, parsers)
+
+**What NOT to unit test (rely on browser tests instead):**
+- React component rendering and DOM structure
+- Supabase SDK calls (these are integration concerns — mock-heavy tests add cost without confidence)
+- Routing and navigation behavior
+
+When a task is purely UI wiring with no extractable logic, skip test-first and note this in the progress log.
 
 ## Progress Report Format
 

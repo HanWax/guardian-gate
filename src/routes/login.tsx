@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useState } from 'react';
+import React, { useState } from 'react';
 
 export const Route = createFileRoute('/login')({
   component: LoginPage,
@@ -27,7 +27,7 @@ function LoginPage() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     // Final validation check
@@ -49,14 +49,14 @@ function LoginPage() {
         <div>
           <h1 className="text-3xl font-bold text-center">התחברות</h1>
           <p className="mt-2 text-center text-gray-600">
-            הזן את כתובת הדוא"ל שלך לקבלת קישור התחברות
+            {"הזן את כתובת הדוא\"ל שלך לקבלת קישור התחברות"}
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-6">
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-              דוא"ל
+              {"דוא\"ל"}
             </label>
             <input
               id="email"
