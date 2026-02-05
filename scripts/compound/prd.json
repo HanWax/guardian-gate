@@ -107,8 +107,8 @@
         "Save file and run `npm run typecheck` - exits with code 0"
       ],
       "priority": 8,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "RTL already configured in src/routes/__root.tsx RootDocument component. HTML element has dir='rtl' and lang='he' attributes set. TypeScript compilation passes."
     },
     {
       "id": "T-009",
