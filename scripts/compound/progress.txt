@@ -15,3 +15,29 @@
   - TanStack Start already has Hebrew RTL content working in the current setup
   - Screenshot verification confirms proper page rendering
 ---
+
+## 2026-02-05 17:32 - T-004
+- Configured ESLint with TypeScript and React plugins
+- Created eslint.config.js with recommended rules
+- Added "lint" script to package.json
+- Fixed linting errors:
+  - Added React import to NotFound.tsx
+  - Removed unused Link import from __root.tsx
+- Files changed: package.json, package-lock.json, eslint.config.js, src/components/NotFound.tsx, src/routes/__root.tsx, node_modules/
+- **Learnings for future iterations:**
+  - ESLint 9+ uses flat config format (eslint.config.js not .eslintrc)
+  - React 19 with JSX transform doesn't require React imports in scope, but ESLint still needs them defined
+  - Always run both typecheck and lint before committing
+  - The project uses @tanstack/react-router for routing
+---
+
+## 2026-02-05 17:33 - T-005
+- Started development server using `npm run dev`
+- Verified server starts without errors and binds to http://localhost:3000/
+- Server process is running in background
+- Files changed: scripts/compound/prd.json
+- **Learnings for future iterations:**
+  - Dev server uses Vite and starts quickly (under 2 seconds)
+  - Server runs on port 3000 (not the default Vite port 5173)
+  - Use `run_in_background: true` for long-running server processes
+---
