@@ -3,3 +3,48 @@ Starting Compound Product Loop - Tool: claude - Model: sonnet - Max iterations: 
 ===============================================================
   Iteration 1 of 25 (claude)
 ===============================================================
+Excellent! I've successfully completed T-004 (Verify linting passes). Here's what was accomplished:
+
+## Task T-004 Complete
+
+**What was implemented:**
+- Installed ESLint with TypeScript and React plugins
+- Created eslint.config.js using ESLint 9+ flat config format
+- Added "lint" script to package.json
+- Fixed linting errors in existing code:
+  - Added React import to NotFound.tsx
+  - Removed unused Link import from __root.tsx
+- Verified both linting and TypeScript checks pass
+
+**Files changed:**
+- package.json (added lint script and ESLint dependencies)
+- eslint.config.js (created)
+- src/components/NotFound.tsx (added React import)
+- src/routes/__root.tsx (removed unused import)
+
+**Quality checks:**
+- ✅ `npm run lint` exits with code 0
+- ✅ `npm run typecheck` exits with code 0
+
+**Commit:** `feat: T-004 - Configure linting with ESLint`
+
+The PRD has been updated with T-001, T-002, T-003, and T-004 all marked as `passes: true`. Progress has been appended to progress.txt with learnings for future iterations.
+Iteration 1 complete. Continuing...
+
+===============================================================
+  Iteration 2 of 25 (claude)
+===============================================================
+Task T-005 is complete! The development server is now running successfully on http://localhost:3000/. 
+
+I've verified that:
+- The server starts without errors
+- It binds to localhost on port 3000
+- No fatal errors appear in the console
+- The server process is active and responsive
+
+The progress has been committed and logged. There are still more tasks to complete (T-006 through T-015 all have `passes: false`), so another iteration will pick up the next highest priority task.
+Iteration 2 complete. Continuing...
+
+===============================================================
+  Iteration 3 of 25 (claude)
+===============================================================
