@@ -1,0 +1,222 @@
+{
+  "project": "RoleCall",
+  "branchName": "compound/setup-supabase-project",
+  "description": "Setup Supabase project with secure connection and verifiable health check",
+  "tasks": [
+    {
+      "id": "T-001",
+      "title": "Verify Supabase dashboard access and document project requirements",
+      "description": "Confirm access to Supabase dashboard and document the project creation parameters needed",
+      "acceptanceCriteria": [
+        "Navigate to https://supabase.com/dashboard - page loads successfully",
+        "Log available organizations to notes",
+        "Document target project name 'rolecall-mvp' in notes",
+        "List available regions and log closest region to notes"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "T-002",
+      "title": "Create new Supabase project in dashboard",
+      "description": "Create the rolecall-mvp Supabase project through the dashboard interface",
+      "acceptanceCriteria": [
+        "Project 'rolecall-mvp' exists in Supabase dashboard",
+        "Project status shows 'Active' or 'Running'",
+        "Project has a valid project URL (format: https://[ref].supabase.co)",
+        "Log project URL to notes for use in subsequent tasks"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "T-003",
+      "title": "Extract project API URL from settings",
+      "description": "Navigate to project settings and copy the API URL",
+      "acceptanceCriteria": [
+        "Navigate to Project Settings > API in Supabase dashboard",
+        "Project URL is visible in format https://[ref].supabase.co",
+        "Log full project URL to notes",
+        "URL format validation: starts with https:// and ends with .supabase.co"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "T-004",
+      "title": "Extract anon public API key from settings",
+      "description": "Copy the anon/public API key from project settings for client-side use",
+      "acceptanceCriteria": [
+        "Navigate to Project Settings > API > Project API keys",
+        "Anon key (public) is visible and copyable",
+        "Log first 20 characters of anon key to notes for verification",
+        "Confirm key starts with 'eyJ' (JWT format)"
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "T-005",
+      "title": "Verify .gitignore excludes .env.local",
+      "description": "Check that .gitignore already prevents committing environment files",
+      "acceptanceCriteria": [
+        "File .gitignore exists in project root",
+        "File .gitignore contains '.env.local' or '.env*.local' pattern",
+        "Run `git check-ignore .env.local` - exits with code 0 (file is ignored)",
+        "Log .gitignore env patterns to notes"
+      ],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "T-006",
+      "title": "Create .env.local.example template file",
+      "description": "Create example environment file with placeholder values for documentation",
+      "acceptanceCriteria": [
+        "File .env.local.example exists in project root",
+        "File contains VITE_SUPABASE_URL with placeholder 'https://your-project.supabase.co'",
+        "File contains VITE_SUPABASE_ANON_KEY with placeholder 'your-anon-key-here'",
+        "File contains comments explaining where to get these values",
+        "Run `git status .env.local.example` - file is tracked by git"
+      ],
+      "priority": 6,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "T-007",
+      "title": "Create .env.local with actual credentials",
+      "description": "Create the actual environment file with real Supabase credentials from previous tasks",
+      "acceptanceCriteria": [
+        "File .env.local exists in project root",
+        "File contains VITE_SUPABASE_URL=https://[actual-ref].supabase.co",
+        "File contains VITE_SUPABASE_ANON_KEY=[actual-key-from-T-004]",
+        "Run `git status .env.local` - shows as untracked (ignored)",
+        "Both values are valid (not placeholder text)"
+      ],
+      "priority": 7,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "T-008",
+      "title": "Install @supabase/supabase-js package",
+      "description": "Add the official Supabase client library to project dependencies",
+      "acceptanceCriteria": [
+        "Run `npm install @supabase/supabase-js` - exits with code 0",
+        "File package.json contains '@supabase/supabase-js' in dependencies",
+        "File package-lock.json or pnpm-lock.yaml exists and updated",
+        "Run `npm ls @supabase/supabase-js` - shows installed version"
+      ],
+      "priority": 8,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "T-009",
+      "title": "Create src/lib directory if it doesn't exist",
+      "description": "Ensure the lib directory exists for shared utilities",
+      "acceptanceCriteria": [
+        "Directory src/lib exists",
+        "Run `ls -la src/lib` - exits with code 0",
+        "Log existing files in src/lib to notes (or 'empty' if none)"
+      ],
+      "priority": 9,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "T-010",
+      "title": "Create Supabase client initialization file",
+      "description": "Create src/lib/supabase.ts with client singleton pattern",
+      "acceptanceCriteria": [
+        "File src/lib/supabase.ts exists",
+        "File imports createClient from '@supabase/supabase-js'",
+        "File reads import.meta.env.VITE_SUPABASE_URL",
+        "File reads import.meta.env.VITE_SUPABASE_ANON_KEY",
+        "File exports supabase client instance",
+        "Run `npm run typecheck` - exits with code 0"
+      ],
+      "priority": 10,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "T-011",
+      "title": "Add TypeScript environment variable types",
+      "description": "Define types for Vite environment variables to ensure type safety",
+      "acceptanceCriteria": [
+        "File src/vite-env.d.ts or src/env.d.ts exists OR types added to existing file",
+        "File contains ImportMetaEnv interface with VITE_SUPABASE_URL: string",
+        "File contains ImportMetaEnv interface with VITE_SUPABASE_ANON_KEY: string",
+        "Run `npm run typecheck` - exits with code 0",
+        "No TypeScript errors when accessing import.meta.env.VITE_SUPABASE_URL"
+      ],
+      "priority": 11,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "T-012",
+      "title": "Create health check test page component",
+      "description": "Create a simple page component that tests Supabase connectivity",
+      "acceptanceCriteria": [
+        "Test page file created (e.g., src/routes/test-supabase.tsx or similar)",
+        "File imports supabase client from src/lib/supabase",
+        "File attempts connection test (e.g., supabase.from('_').select().limit(0) or similar query)",
+        "File displays connection status (success/failure) in UI",
+        "Run `npm run typecheck` - exits with code 0"
+      ],
+      "priority": 12,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "T-013",
+      "title": "Start dev server and verify it runs",
+      "description": "Ensure the development server starts successfully with new dependencies",
+      "acceptanceCriteria": [
+        "Run `npm run dev` - server starts without errors",
+        "Server binds to a port (check output for localhost URL)",
+        "Log dev server URL to notes (e.g., http://localhost:3000)",
+        "No build errors or module resolution failures in console"
+      ],
+      "priority": 13,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "T-014",
+      "title": "Navigate to test page and verify page loads",
+      "description": "Open the health check test page in browser to verify routing works",
+      "acceptanceCriteria": [
+        "agent-browser: open http://localhost:3000/test-supabase - page loads",
+        "agent-browser: console - no React errors or module errors",
+        "agent-browser: snapshot -i - page contains connection status element",
+        "agent-browser: screenshot tmp/supabase-test-page.png - capture page state"
+      ],
+      "priority": 14,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "T-015",
+      "title": "Verify Supabase connection success in browser",
+      "description": "Confirm the connection test shows successful connection to Supabase",
+      "acceptanceCriteria": [
+        "agent-browser: page contains text 'success' OR 'connected' OR similar positive indicator",
+        "agent-browser: page does NOT contain text 'error' OR 'failed' OR 'invalid' (unless describing success)",
+        "agent-browser: console - no Supabase authentication errors",
+        "Log final connection status to notes"
+      ],
+      "priority": 15,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}
