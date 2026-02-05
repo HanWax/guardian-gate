@@ -1,5 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import React, { useState } from 'react';
+import { supabase, getHebrewErrorMessage } from '~/lib/supabase';
+import { isValidEmail } from '~/lib/validation';
 
 export const Route = createFileRoute('/login')({
   component: LoginPage,
@@ -8,14 +10,10 @@ export const Route = createFileRoute('/login')({
 function LoginPage() {
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [authError, setAuthError] = useState('');
 
-  // Email validation regex
-  const isValidEmail = (email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
-
-  // Validate email on change
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setEmail(value);
@@ -25,23 +23,39 @@ function LoginPage() {
     } else {
       setEmailError('');
     }
+
+    // Clear auth-level messages when user edits email
+    setAuthError('');
+    setSuccessMessage('');
   };
 
-  const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    // Final validation check
     if (!isValidEmail(email)) {
       setEmailError('כתובת דוא"ל לא תקינה');
       return;
     }
 
-    // TODO: Implement magic link submission in next task
-    console.log('Form submitted with email:', email);
+    setLoading(true);
+    setAuthError('');
+    setSuccessMessage('');
+
+    const { error } = await supabase.auth.signInWithOtp({ email });
+
+    setLoading(false);
+
+    if (error) {
+      const errorCode = error.message?.toLowerCase().replace(/\s+/g, '_') || 'unknown_error';
+      setAuthError(getHebrewErrorMessage(errorCode));
+      return;
+    }
+
+    setSuccessMessage('קישור התחברות נשלח! בדוק את תיבת הדוא"ל שלך');
+    setEmail('');
   };
 
-  // Disable submit button if email is empty or invalid
-  const isSubmitDisabled = !email || !isValidEmail(email);
+  const isSubmitDisabled = !email || !isValidEmail(email) || loading;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -52,6 +66,34 @@ function LoginPage() {
             {"הזן את כתובת הדוא\"ל שלך לקבלת קישור התחברות"}
           </p>
         </div>
+
+        {successMessage && (
+          <div
+            className="p-4 bg-green-50 border border-green-200 rounded-md"
+            role="status"
+            data-testid="success-message"
+          >
+            <p className="text-sm text-green-700">{successMessage}</p>
+          </div>
+        )}
+
+        {authError && (
+          <div
+            className="p-4 bg-red-50 border border-red-200 rounded-md flex items-start justify-between"
+            role="alert"
+            data-testid="auth-error"
+          >
+            <p className="text-sm text-red-700">{authError}</p>
+            <button
+              type="button"
+              onClick={() => setAuthError('')}
+              className="text-red-500 hover:text-red-700 ms-2"
+              aria-label="סגור"
+            >
+              ✕
+            </button>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-6">
           <div>
@@ -66,6 +108,7 @@ function LoginPage() {
               required
               value={email}
               onChange={handleEmailChange}
+              disabled={loading}
               className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
                 emailError ? 'border-red-500' : 'border-gray-300'
               }`}
@@ -88,7 +131,7 @@ function LoginPage() {
                 : 'bg-indigo-600 hover:bg-indigo-700'
             }`}
           >
-            שלח קישור התחברות
+            {loading ? 'שולח...' : 'שלח קישור התחברות'}
           </button>
         </form>
       </div>
