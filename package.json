@@ -12,6 +12,7 @@
     "lint": "eslint src --ext .ts,.tsx"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.95.0",
     "@tanstack/react-router": "^1.158.1",
     "@tanstack/react-router-devtools": "^1.158.1",
     "@tanstack/react-start": "^1.158.1",
