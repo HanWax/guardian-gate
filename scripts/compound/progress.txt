@@ -86,3 +86,18 @@
   - Always check existing code before attempting to add features
 ---
 
+## 2026-02-05 - T-009
+- Implemented CSS logical properties for RTL in src/styles/app.css
+- Added text-align: start to body element
+- Created example utility classes using margin-inline, padding-inline, and border-inline properties
+- All logical properties automatically adapt to RTL/LTR text direction
+- TypeScript compilation passes with no errors
+- Files changed: src/styles/app.css, scripts/compound/prd.json
+- **Learnings for future iterations:**
+  - Project uses Tailwind CSS v4 (via @import 'tailwindcss' source('../'))
+  - Tailwind CSS has built-in RTL support, but logical properties provide additional flexibility
+  - CSS logical properties use 'inline-start' (right in RTL) and 'inline-end' (left in RTL)
+  - text-align: start is RTL-aware (aligns right in RTL, left in LTR)
+  - @layer base in Tailwind allows adding custom base styles
+---
+
