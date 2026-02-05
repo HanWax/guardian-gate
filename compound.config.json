@@ -2,7 +2,7 @@
   "tool": "claude",
   "reportsDir": "./reports",
   "outputDir": "./scripts/compound",
-  "qualityChecks": [],
+  "qualityChecks": ["npm run lint", "npm run test", "npm run typecheck"],
   "maxIterations": 25,
   "branchPrefix": "compound/",
   "analyzeCommand": "",

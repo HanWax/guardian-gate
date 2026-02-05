@@ -2,7 +2,8 @@
 # Compound Product - Execution Loop
 # Runs AI agent repeatedly until all tasks in prd.json are complete.
 #
-# Usage: ./loop.sh [--tool amp|claude] [max_iterations]
+# Usage: ./loop.sh [--tool amp|claude] [--resume] [max_iterations]
+# See also: ./resume.sh for resuming a failed/interrupted run
 
 set -e
 
@@ -24,8 +25,13 @@ else
 fi
 
 # Parse arguments (can override config)
+RESUME=false
 while [[ $# -gt 0 ]]; do
   case $1 in
+    --resume)
+      RESUME=true
+      shift
+      ;;
     --tool)
       TOOL="$2"
       shift 2
@@ -61,9 +67,24 @@ fi
 OUTPUT_DIR="$PROJECT_ROOT/$OUTPUT_DIR"
 PRD_FILE="$OUTPUT_DIR/prd.json"
 PROGRESS_FILE="$OUTPUT_DIR/progress.txt"
+STATE_FILE="$OUTPUT_DIR/loop-state.json"
 
 # Note: Archiving is handled by auto-compound.sh before prd.json is overwritten
 # This prevents archiving the wrong content when switching between features
+
+# Handle resume
+START_FROM=1
+if [ "$RESUME" = true ]; then
+  if [ -f "$STATE_FILE" ]; then
+    START_FROM=$(jq -r '.nextIteration' "$STATE_FILE")
+    TOOL=$(jq -r '.tool' "$STATE_FILE")
+    MODEL=$(jq -r '.model' "$STATE_FILE")
+    MAX_ITERATIONS=$(jq -r '.maxIterations' "$STATE_FILE")
+    echo "Resuming from iteration $START_FROM (tool: $TOOL, model: $MODEL, max: $MAX_ITERATIONS)"
+  else
+    echo "No state file found at $STATE_FILE. Nothing to resume — starting fresh."
+  fi
+fi
 
 # Initialize progress file
 if [ ! -f "$PROGRESS_FILE" ]; then
@@ -72,11 +93,11 @@ if [ ! -f "$PROGRESS_FILE" ]; then
   echo "---" >> "$PROGRESS_FILE"
 fi
 
-echo "Starting Compound Product Loop - Tool: $TOOL - Model: $MODEL - Max iterations: $MAX_ITERATIONS"
+echo "Starting Compound Product Loop - Tool: $TOOL - Model: $MODEL - Iterations: $START_FROM to $MAX_ITERATIONS"
 
 cd "$PROJECT_ROOT"
 
-for i in $(seq 1 $MAX_ITERATIONS); do
+for i in $(seq $START_FROM $MAX_ITERATIONS); do
   echo ""
   echo "==============================================================="
   echo "  Iteration $i of $MAX_ITERATIONS ($TOOL)"
@@ -89,14 +110,25 @@ for i in $(seq 1 $MAX_ITERATIONS); do
     OUTPUT=$(claude --dangerously-skip-permissions --model "$MODEL" --print < "$SCRIPT_DIR/CLAUDE.md" 2>&1 | tee /dev/stderr) || true
   fi
   
+  # Save state after each iteration so resume can pick up from the next one
+  jq -n \
+    --argjson next "$((i + 1))" \
+    --arg tool "$TOOL" \
+    --arg model "$MODEL" \
+    --argjson max "$MAX_ITERATIONS" \
+    --arg ts "$(date -Iseconds)" \
+    '{nextIteration: $next, tool: $tool, model: $model, maxIterations: $max, lastCompleted: ($next - 1), savedAt: $ts}' \
+    > "$STATE_FILE"
+
   # Check for completion signal
   if echo "$OUTPUT" | grep -q "<promise>COMPLETE</promise>"; then
     echo ""
     echo "✅ Compound Product completed all tasks!"
     echo "Completed at iteration $i of $MAX_ITERATIONS"
+    rm -f "$STATE_FILE"
     exit 0
   fi
-  
+
   echo "Iteration $i complete. Continuing..."
   sleep 2
 done

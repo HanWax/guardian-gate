@@ -1,6 +1,7 @@
 /// <reference types="vite/client" />
 import {
   HeadContent,
+  Outlet,
   Scripts,
   createRootRoute,
 } from '@tanstack/react-router'
@@ -8,6 +9,7 @@ import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 import * as React from 'react'
 import { DefaultCatchBoundary } from '~/components/DefaultCatchBoundary'
 import { NotFound } from '~/components/NotFound'
+import { AuthProvider } from '~/lib/auth-context'
 import appCss from '~/styles/app.css?url'
 import { seo } from '~/utils/seo'
 
@@ -33,8 +35,17 @@ export const Route = createRootRoute({
   }),
   errorComponent: DefaultCatchBoundary,
   notFoundComponent: () => <NotFound />,
+  component: RootComponent,
   shellComponent: RootDocument,
 })
+
+function RootComponent() {
+  return (
+    <AuthProvider>
+      <Outlet />
+    </AuthProvider>
+  )
+}
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
