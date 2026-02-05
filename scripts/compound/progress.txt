@@ -213,3 +213,19 @@
   - GitHub Actions will automatically run this on PR creation and pushes
 ---
 
+## 2026-02-05 18:15 - T-001
+- Installed @supabase/supabase-js package (v2.95.0)
+- Created src/lib/supabase.ts with Supabase client initialization
+- Configured auth settings: autoRefreshToken, persistSession, detectSessionInUrl
+- Added environment variable validation for VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY
+- Exported createClient() function and singleton supabase instance
+- TypeScript compilation passes with no errors
+- Files changed: package.json, package-lock.json, src/lib/supabase.ts, scripts/compound/prd.json
+- **Learnings for future iterations:**
+  - Vite uses VITE_ prefix for environment variables (not NEXT_PUBLIC_ or REACT_APP_)
+  - Environment variables accessed via import.meta.env in Vite projects
+  - Supabase client needs auth config for magic link: autoRefreshToken, persistSession, detectSessionInUrl
+  - Good practice to validate environment variables at module load time
+  - Export both factory function (createClient) and singleton (supabase) for flexibility
+---
+
