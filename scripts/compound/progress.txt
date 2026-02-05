@@ -56,3 +56,20 @@
   - Background bash tasks need time to start (use sleep before checking server status)
 ---
 
+## 2026-02-05 - T-007
+- Tested hot module replacement (HMR)
+- Started dev server on http://localhost:3000
+- Modified src/routes/index.tsx to add " - HMR Test!" to Hebrew text
+- Browser updated automatically within 3 seconds without manual refresh
+- Server logs showed "hmr update" for the modified file
+- Screenshots (tmp/hmr-before.png, tmp/hmr-after.png) confirm visual changes
+- Reverted test change back to original content
+- Files changed: scripts/compound/prd.json, scripts/compound/progress.txt
+- **Learnings for future iterations:**
+  - Vite HMR works seamlessly with TanStack Start
+  - HMR logs appear in dev server output with "[vite] (client) hmr update" messages
+  - Changes to component files trigger both client-side HMR and SSR page reload
+  - agent-browser screenshot command is perfect for capturing HMR verification
+  - Always revert test changes after verification
+---
+

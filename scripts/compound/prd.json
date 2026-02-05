@@ -93,8 +93,8 @@
         "Log HMR behavior to notes (success or failure)"
       ],
       "priority": 7,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "HMR verified working. Modified src/routes/index.tsx, browser auto-updated within 3 seconds. Vite logs show 'hmr update' messages. Screenshots confirm text change appeared without manual refresh."
     },
     {
       "id": "T-008",
