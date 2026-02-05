@@ -21,6 +21,9 @@ export default function Navigation() {
           <Link to="/teacher" className="rounded px-3 py-2 hover:bg-gray-200">
             מורה
           </Link>
+          <Link to="/children" className="rounded px-3 py-2 hover:bg-gray-200">
+            ילדים
+          </Link>
         </>
       )}
       {role === 'manager' && (
@@ -30,6 +33,9 @@ export default function Navigation() {
           </Link>
           <Link to="/teacher" className="rounded px-3 py-2 hover:bg-gray-200">
             מורה
+          </Link>
+          <Link to="/children" className="rounded px-3 py-2 hover:bg-gray-200">
+            ילדים
           </Link>
         </>
       )}

@@ -15,7 +15,10 @@ import { Route as ManagerRouteImport } from './routes/manager'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ChildrenIndexRouteImport } from './routes/children/index'
+import { Route as ChildrenNewRouteImport } from './routes/children/new'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
+import { Route as ChildrenChildIdEditRouteImport } from './routes/children/$childId/edit'
 
 const TeacherRoute = TeacherRouteImport.update({
   id: '/teacher',
@@ -47,9 +50,24 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ChildrenIndexRoute = ChildrenIndexRouteImport.update({
+  id: '/children/',
+  path: '/children/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChildrenNewRoute = ChildrenNewRouteImport.update({
+  id: '/children/new',
+  path: '/children/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
   id: '/auth/callback',
   path: '/auth/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChildrenChildIdEditRoute = ChildrenChildIdEditRouteImport.update({
+  id: '/children/$childId/edit',
+  path: '/children/$childId/edit',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -61,6 +79,9 @@ export interface FileRoutesByFullPath {
   '/rtl-test': typeof RtlTestRoute
   '/teacher': typeof TeacherRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/children/new': typeof ChildrenNewRoute
+  '/children/': typeof ChildrenIndexRoute
+  '/children/$childId/edit': typeof ChildrenChildIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -70,6 +91,9 @@ export interface FileRoutesByTo {
   '/rtl-test': typeof RtlTestRoute
   '/teacher': typeof TeacherRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/children/new': typeof ChildrenNewRoute
+  '/children': typeof ChildrenIndexRoute
+  '/children/$childId/edit': typeof ChildrenChildIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -80,6 +104,9 @@ export interface FileRoutesById {
   '/rtl-test': typeof RtlTestRoute
   '/teacher': typeof TeacherRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/children/new': typeof ChildrenNewRoute
+  '/children/': typeof ChildrenIndexRoute
+  '/children/$childId/edit': typeof ChildrenChildIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -91,6 +118,9 @@ export interface FileRouteTypes {
     | '/rtl-test'
     | '/teacher'
     | '/auth/callback'
+    | '/children/new'
+    | '/children/'
+    | '/children/$childId/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -100,6 +130,9 @@ export interface FileRouteTypes {
     | '/rtl-test'
     | '/teacher'
     | '/auth/callback'
+    | '/children/new'
+    | '/children'
+    | '/children/$childId/edit'
   id:
     | '__root__'
     | '/'
@@ -109,6 +142,9 @@ export interface FileRouteTypes {
     | '/rtl-test'
     | '/teacher'
     | '/auth/callback'
+    | '/children/new'
+    | '/children/'
+    | '/children/$childId/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -119,6 +155,9 @@ export interface RootRouteChildren {
   RtlTestRoute: typeof RtlTestRoute
   TeacherRoute: typeof TeacherRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
+  ChildrenNewRoute: typeof ChildrenNewRoute
+  ChildrenIndexRoute: typeof ChildrenIndexRoute
+  ChildrenChildIdEditRoute: typeof ChildrenChildIdEditRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -165,11 +204,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/children/': {
+      id: '/children/'
+      path: '/children'
+      fullPath: '/children/'
+      preLoaderRoute: typeof ChildrenIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/children/new': {
+      id: '/children/new'
+      path: '/children/new'
+      fullPath: '/children/new'
+      preLoaderRoute: typeof ChildrenNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth/callback': {
       id: '/auth/callback'
       path: '/auth/callback'
       fullPath: '/auth/callback'
       preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/children/$childId/edit': {
+      id: '/children/$childId/edit'
+      path: '/children/$childId/edit'
+      fullPath: '/children/$childId/edit'
+      preLoaderRoute: typeof ChildrenChildIdEditRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -183,6 +243,9 @@ const rootRouteChildren: RootRouteChildren = {
   RtlTestRoute: RtlTestRoute,
   TeacherRoute: TeacherRoute,
   AuthCallbackRoute: AuthCallbackRoute,
+  ChildrenNewRoute: ChildrenNewRoute,
+  ChildrenIndexRoute: ChildrenIndexRoute,
+  ChildrenChildIdEditRoute: ChildrenChildIdEditRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
