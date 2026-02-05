@@ -1,4 +1,4 @@
-import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { createClient as createSupabaseClient, type Session, type AuthChangeEvent, type User } from '@supabase/supabase-js';
 
 // Get Supabase URL and Anon Key from environment variables
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -48,4 +48,38 @@ export const authErrorMessages: Record<string, string> = {
  */
 export function getHebrewErrorMessage(errorCode: string): string {
   return authErrorMessages[errorCode] || authErrorMessages.unknown_error;
+}
+
+/**
+ * Type for auth state change callback
+ */
+export type AuthStateChangeCallback = (event: AuthChangeEvent, session: Session | null) => void;
+
+/**
+ * Gets the current authentication session
+ * @returns Promise resolving to current session or null if not authenticated
+ */
+export async function getCurrentAuthState(): Promise<{ session: Session | null; user: User | null }> {
+  const { data, error } = await supabase.auth.getSession();
+  if (error) {
+    console.error('Error getting auth session:', error);
+    return { session: null, user: null };
+  }
+  return { session: data.session, user: data.session?.user || null };
+}
+
+/**
+ * Subscribes to authentication state changes
+ * @param callback - Function to call when auth state changes
+ * @returns Unsubscribe function to cleanup the listener
+ */
+export function subscribeToAuthChanges(callback: AuthStateChangeCallback): () => void {
+  const {
+    data: { subscription },
+  } = supabase.auth.onAuthStateChange(callback);
+
+  // Return unsubscribe function
+  return () => {
+    subscription.unsubscribe();
+  };
 }
