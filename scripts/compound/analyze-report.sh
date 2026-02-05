@@ -1,12 +1,13 @@
 #!/bin/bash
 # Analyze a report and pick #1 actionable priority
-# Supports multiple LLM providers: Anthropic, OpenRouter, AI Gateway
+# Supports multiple LLM providers: Claude Code CLI, Anthropic, OpenRouter, AI Gateway
 #
 # Usage: ./analyze-report.sh <report-path>
 # Output: JSON to stdout
 #
 # Environment variables (uses first one found):
-#   ANTHROPIC_API_KEY     - Anthropic API directly
+#   USE_CLAUDE_CODE=true  - Use Claude Code CLI (uses Pro subscription, no API credits)
+#   ANTHROPIC_API_KEY     - Anthropic API directly (requires API credits)
 #   OPENROUTER_API_KEY    - OpenRouter (uses claude-sonnet-4-20250514)
 #   AI_GATEWAY_URL        - Any OpenAI-compatible endpoint (requires AI_GATEWAY_API_KEY)
 
@@ -24,9 +25,12 @@ if [ ! -f "$REPORT_PATH" ]; then
   exit 1
 fi
 
-# Detect which provider is available (Vercel AI Gateway preferred)
+# Detect which provider is available (Claude Code CLI preferred - uses Pro subscription)
 PROVIDER=""
-if [ -n "$VERCEL_OIDC_TOKEN" ]; then
+if [ "$USE_CLAUDE_CODE" = "true" ] && command -v claude >/dev/null 2>&1; then
+  # Claude Code CLI - uses your Pro subscription, no API credits needed
+  PROVIDER="claude-code"
+elif [ -n "$VERCEL_OIDC_TOKEN" ]; then
   # Vercel AI Gateway with OIDC auth (from `vercel env pull`)
   PROVIDER="gateway"
   AI_GATEWAY_URL="${AI_GATEWAY_URL:-https://ai-gateway.vercel.sh/v1}"
@@ -42,6 +46,9 @@ elif [ -n "$OPENAI_API_KEY" ]; then
   PROVIDER="openai"
 elif [ -n "$OPENROUTER_API_KEY" ]; then
   PROVIDER="openrouter"
+elif command -v claude >/dev/null 2>&1; then
+  # Fallback: if no API keys but claude CLI is available, use it
+  PROVIDER="claude-code"
 fi
 
 if [ -z "$PROVIDER" ]; then
@@ -50,17 +57,21 @@ if [ -z "$PROVIDER" ]; then
   echo "║  No LLM provider configured. Set one of these environment vars: ║" >&2
   echo "╠══════════════════════════════════════════════════════════════════╣" >&2
   echo "║                                                                  ║" >&2
-  echo "║  Option 1: Vercel AI Gateway (recommended)                       ║" >&2
+  echo "║  Option 1: Claude Code CLI (recommended - uses Pro subscription) ║" >&2
+  echo "║    export USE_CLAUDE_CODE=true                                   ║" >&2
+  echo "║    (Requires 'claude' CLI installed and authenticated)           ║" >&2
+  echo "║                                                                  ║" >&2
+  echo "║  Option 2: Vercel AI Gateway                                     ║" >&2
   echo "║    Run: vercel env pull   (uses VERCEL_OIDC_TOKEN)               ║" >&2
   echo "║    Or:  export AI_GATEWAY_API_KEY=your-key                       ║" >&2
   echo "║                                                                  ║" >&2
-  echo "║  Option 2: Anthropic API (direct)                                ║" >&2
+  echo "║  Option 3: Anthropic API (requires API credits)                  ║" >&2
   echo "║    export ANTHROPIC_API_KEY=sk-ant-...                           ║" >&2
   echo "║                                                                  ║" >&2
-  echo "║  Option 3: OpenAI API (direct)                                   ║" >&2
+  echo "║  Option 4: OpenAI API (direct)                                   ║" >&2
   echo "║    export OPENAI_API_KEY=sk-...                                  ║" >&2
   echo "║                                                                  ║" >&2
-  echo "║  Option 4: OpenRouter                                            ║" >&2
+  echo "║  Option 5: OpenRouter                                            ║" >&2
   echo "║    export OPENROUTER_API_KEY=sk-or-...                           ║" >&2
   echo "║                                                                  ║" >&2
   echo "╚══════════════════════════════════════════════════════════════════╝" >&2
@@ -130,6 +141,11 @@ GATEWAY_MODEL="${AI_GATEWAY_MODEL:-anthropic/claude-3.5-haiku}"
 
 # Make the API call based on provider
 case "$PROVIDER" in
+  claude-code)
+    # Use Claude Code CLI - uses Pro subscription, no API credits
+    TEXT=$(echo "$PROMPT" | claude --print --dangerously-skip-permissions 2>/dev/null)
+    ;;
+
   anthropic)
     RESPONSE=$(curl -s https://api.anthropic.com/v1/messages \
       -H "Content-Type: application/json" \
