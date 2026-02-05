@@ -31,8 +31,8 @@
         "Run `npm run typecheck` - exits with code 0"
       ],
       "priority": 2,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Completed: Added authErrorMessages object with 10 Hebrew error translations (invalid_credentials, otp_expired, user_not_found, network_error, invalid_email, email_not_confirmed, too_many_requests, unauthorized, session_expired, unknown_error). Exported getHebrewErrorMessage() function that returns Hebrew message or falls back to unknown_error. TypeScript compilation passes."
     },
     {
       "id": "T-003",
@@ -46,8 +46,8 @@
         "Run `npm run typecheck` - exits with code 0"
       ],
       "priority": 3,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Completed: Added subscribeToAuthChanges() function that sets up onAuthStateChange listener and returns unsubscribe function. Exported getCurrentAuthState() function that returns current session and user. Added TypeScript types for auth state callbacks. TypeScript compilation passes."
     },
     {
       "id": "T-004",
@@ -60,8 +60,8 @@
         "Run `npm run typecheck` - exits with code 0 (no env variable errors)"
       ],
       "priority": 4,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Completed: Created .env file with VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY placeholders. Created .env.example for documentation. .env is properly ignored by .gitignore. TypeScript compilation passes with no environment variable errors."
     },
     {
       "id": "T-005",
@@ -76,8 +76,8 @@
         "Run `npm run typecheck` - exits with code 0"
       ],
       "priority": 5,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Completed: Created src/routes/login.tsx with email input form. Form has email input with id='email', data-testid='email-input', type='email', submit button, and onSubmit handler. Page includes Hebrew UI text. TypeScript compilation passes."
     },
     {
       "id": "T-006",

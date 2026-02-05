@@ -7,12 +7,41 @@ export const Route = createFileRoute('/login')({
 
 function LoginPage() {
   const [email, setEmail] = useState('');
+  const [emailError, setEmailError] = useState('');
+
+  // Email validation regex
+  const isValidEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  // Validate email on change
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setEmail(value);
+
+    if (value && !isValidEmail(value)) {
+      setEmailError('כתובת דוא"ל לא תקינה');
+    } else {
+      setEmailError('');
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Final validation check
+    if (!isValidEmail(email)) {
+      setEmailError('כתובת דוא"ל לא תקינה');
+      return;
+    }
+
     // TODO: Implement magic link submission in next task
     console.log('Form submitted with email:', email);
   };
+
+  // Disable submit button if email is empty or invalid
+  const isSubmitDisabled = !email || !isValidEmail(email);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -36,16 +65,28 @@ function LoginPage() {
               autoComplete="email"
               required
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              onChange={handleEmailChange}
+              className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
+                emailError ? 'border-red-500' : 'border-gray-300'
+              }`}
               placeholder="example@domain.com"
               data-testid="email-input"
             />
+            {emailError && (
+              <p className="mt-2 text-sm text-red-600" role="alert">
+                {emailError}
+              </p>
+            )}
           </div>
 
           <button
             type="submit"
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            disabled={isSubmitDisabled}
+            className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${
+              isSubmitDisabled
+                ? 'bg-gray-400 cursor-not-allowed'
+                : 'bg-indigo-600 hover:bg-indigo-700'
+            }`}
           >
             שלח קישור התחברות
           </button>
