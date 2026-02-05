@@ -15,8 +15,7 @@ node_modules/
 # Temp / working files
 tmp/
 tasks/
-re
-reports
+reports/
 logs/
 
 # Git worktrees
