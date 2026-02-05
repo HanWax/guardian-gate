@@ -1,30 +1,30 @@
-.env.local
+# Environment variables
 .env
-.env.development.local
-.env.test.local
-.env.production.local
-.env.development
-.env.test
-.env.production
-.env.local
-.env
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*
 
+# Build output
 .output
+
+# Editor
 .vscode
-re
-reports
-scripts/compound/auto-compound-tasks.log
-scripts/compound/auto-compound-execution.log
-scripts/compound/progress.txt
-scripts/compound/prd.json
-scripts/compound/auto-compound.sh
-scripts/compound/analyze-report.sh
-scripts/compound/loop.sh
-scripts/compound/prompt.md
+
+# Dependencies
+node_modules/
+.node_modules_cache
+
+# Temp / working files
 tmp/
 tasks/
-.node_modules_cache
-node_modules/
+re
+reports
+logs/
+
+# Git worktrees
+.worktrees
+
+# Compound engineering - runtime state (not workflow scripts)
+scripts/compound/prd.json
+scripts/compound/progress.txt
+scripts/compound/auto-compound-execution.log
+scripts/compound/auto-compound-prd.log
+scripts/compound/auto-compound-tasks.log
