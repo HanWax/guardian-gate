@@ -1,4 +1,5 @@
 import { Link } from '@tanstack/react-router'
+import * as React from 'react'
 
 export function NotFound({ children }: { children?: React.ReactNode }) {
   return (
