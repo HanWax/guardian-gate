@@ -12,7 +12,6 @@
 .env.test.local
 .env.production.local
 
-node_modules
 .output
 .vscode
 re
@@ -27,3 +26,6 @@ scripts/compound/loop.sh
 scripts/compound/prompt.md
 tmp/
 tasks/
+.node_modules_cache
+node_modules/
+
