@@ -1,6 +1,12 @@
 ## Codebase Patterns
 - TanStack Start dev server runs on port 3000 by default with `npm run dev`
 - agent-browser is used for frontend browser testing and verification
+- TanStack Router uses file-based routing: src/routes/*.tsx creates routes automatically
+- Route types are auto-generated when dev server runs (creates routeTree.gen.ts)
+- RTL configured in src/routes/__root.tsx via RootDocument component
+- CSS logical properties in src/styles/app.css for RTL compatibility
+- ESLint 9+ uses flat config format (eslint.config.js)
+- Tailwind CSS v4 configured via @import 'tailwindcss' in app.css
 
 ---
 
