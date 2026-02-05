@@ -28,7 +28,7 @@ function RtlTest() {
           <button className="px-4 py-2 bg-blue-500 text-white rounded">הבא</button>
         </div>
         <p className="text-sm text-gray-600">
-          כפתור "הקודם" צריך להיות בצד ימין, כפתור "הבא" צריך להיות בצד שמאל
+          כפתור &quot;הקודם&quot; צריך להיות בצד ימין, כפתור &quot;הבא&quot; צריך להיות בצד שמאל
         </p>
       </section>
 
