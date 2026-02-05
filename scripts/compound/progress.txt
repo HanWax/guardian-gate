@@ -73,3 +73,16 @@
   - Always revert test changes after verification
 ---
 
+## 2026-02-05 - T-008
+- Verified Hebrew RTL configuration in root HTML
+- Found RTL already configured in src/routes/__root.tsx
+- RootDocument component has <html dir="rtl" lang="he"> attributes
+- TypeScript compilation passes with no errors
+- Files changed: scripts/compound/prd.json
+- **Learnings for future iterations:**
+  - TanStack Start uses __root.tsx for root HTML configuration via shellComponent
+  - The RootDocument component is the place to configure HTML attributes
+  - RTL was set up during initial project creation (likely in templates)
+  - Always check existing code before attempting to add features
+---
+
