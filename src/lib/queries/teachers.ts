@@ -6,17 +6,9 @@ import {
   updateTeacher,
   deleteTeacher,
 } from '../server/teachers';
-import { supabase } from '../supabase';
+import { getAccessToken } from './utils';
 import type { Teacher } from '../database.types';
 import type { TeacherCreate, TeacherUpdate } from '../schemas/teacher';
-
-async function getAccessToken(): Promise<string> {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session?.access_token) {
-    throw new Error('לא מחובר/ת למערכת');
-  }
-  return session.access_token;
-}
 
 export const teacherKeys = {
   all: ['teachers'] as const,

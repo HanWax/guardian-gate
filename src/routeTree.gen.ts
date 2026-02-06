@@ -10,7 +10,6 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TeacherRouteImport } from './routes/teacher'
-import { Route as RtlTestRouteImport } from './routes/rtl-test'
 import { Route as ManagerRouteImport } from './routes/manager'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AdminRouteImport } from './routes/admin'
@@ -29,11 +28,6 @@ import { Route as ChildrenChildIdEditRouteImport } from './routes/children/$chil
 const TeacherRoute = TeacherRouteImport.update({
   id: '/teacher',
   path: '/teacher',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RtlTestRoute = RtlTestRouteImport.update({
-  id: '/rtl-test',
-  path: '/rtl-test',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ManagerRoute = ManagerRouteImport.update({
@@ -112,7 +106,6 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/login': typeof LoginRoute
   '/manager': typeof ManagerRoute
-  '/rtl-test': typeof RtlTestRoute
   '/teacher': typeof TeacherRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/children/new': typeof ChildrenNewRoute
@@ -130,7 +123,6 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/login': typeof LoginRoute
   '/manager': typeof ManagerRoute
-  '/rtl-test': typeof RtlTestRoute
   '/teacher': typeof TeacherRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/children/new': typeof ChildrenNewRoute
@@ -149,7 +141,6 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/login': typeof LoginRoute
   '/manager': typeof ManagerRoute
-  '/rtl-test': typeof RtlTestRoute
   '/teacher': typeof TeacherRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/children/new': typeof ChildrenNewRoute
@@ -169,7 +160,6 @@ export interface FileRouteTypes {
     | '/admin'
     | '/login'
     | '/manager'
-    | '/rtl-test'
     | '/teacher'
     | '/auth/callback'
     | '/children/new'
@@ -187,7 +177,6 @@ export interface FileRouteTypes {
     | '/admin'
     | '/login'
     | '/manager'
-    | '/rtl-test'
     | '/teacher'
     | '/auth/callback'
     | '/children/new'
@@ -205,7 +194,6 @@ export interface FileRouteTypes {
     | '/admin'
     | '/login'
     | '/manager'
-    | '/rtl-test'
     | '/teacher'
     | '/auth/callback'
     | '/children/new'
@@ -224,7 +212,6 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   LoginRoute: typeof LoginRoute
   ManagerRoute: typeof ManagerRoute
-  RtlTestRoute: typeof RtlTestRoute
   TeacherRoute: typeof TeacherRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   ChildrenNewRoute: typeof ChildrenNewRoute
@@ -245,13 +232,6 @@ declare module '@tanstack/react-router' {
       path: '/teacher'
       fullPath: '/teacher'
       preLoaderRoute: typeof TeacherRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/rtl-test': {
-      id: '/rtl-test'
-      path: '/rtl-test'
-      fullPath: '/rtl-test'
-      preLoaderRoute: typeof RtlTestRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/manager': {
@@ -360,7 +340,6 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   LoginRoute: LoginRoute,
   ManagerRoute: ManagerRoute,
-  RtlTestRoute: RtlTestRoute,
   TeacherRoute: TeacherRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   ChildrenNewRoute: ChildrenNewRoute,

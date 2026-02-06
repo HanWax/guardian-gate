@@ -4,12 +4,11 @@ import { DefaultCatchBoundary } from './components/DefaultCatchBoundary'
 import { NotFound } from './components/NotFound'
 
 export function getRouter() {
-  const router = createRouter({
+  return createRouter({
     routeTree,
     defaultPreload: 'intent',
     defaultErrorComponent: DefaultCatchBoundary,
     defaultNotFoundComponent: () => <NotFound />,
     scrollRestoration: true,
   })
-  return router
 }

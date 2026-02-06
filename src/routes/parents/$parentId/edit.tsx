@@ -1,91 +1,74 @@
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
-import { useState, useEffect } from 'react'
-import { requireAuth } from '~/lib/auth-guard'
-import { getParent, updateParent } from '~/lib/parents'
-import type { Parent } from '~/lib/parents'
-import { ParentForm } from '~/components/ParentForm'
-import Layout from '~/components/Layout'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
+import { requireAuth } from '~/lib/auth-guard';
+import { useParent, useUpdateParent } from '~/lib/queries/parents';
+import { ParentForm } from '~/components/ParentForm';
+import Layout from '~/components/Layout';
+import { AssignedChildren } from '~/components/AssignedChildren';
 
 export const Route = createFileRoute('/parents/$parentId/edit')({
   beforeLoad: () => requireAuth(),
   component: EditParent,
-})
+});
 
 function EditParent() {
-  const { parentId } = Route.useParams()
-  const navigate = useNavigate()
-  const [parent, setParent] = useState<Parent | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [error, setError] = useState('')
-  const [notFound, setNotFound] = useState(false)
+  const { parentId } = Route.useParams();
+  const navigate = useNavigate();
+  const { data: parent, isLoading, error } = useParent(parentId);
+  const updateMutation = useUpdateParent();
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const data = await getParent(parentId)
-        setParent(data)
-      } catch {
-        setNotFound(true)
-      } finally {
-        setLoading(false)
-      }
-    }
-    load()
-  }, [parentId])
-
-  async function handleSubmit(data: { name: string; phone: string }) {
-    setIsSubmitting(true)
-    setError('')
-    try {
-      await updateParent(parentId, { name: data.name, phone: data.phone })
-      navigate({ to: '/parents' })
-    } catch (err) {
-      const message = err instanceof Error ? err.message : ''
-      if (message.includes('duplicate') || message.includes('unique')) {
-        setError('מספר הטלפון כבר קיים במערכת')
-      } else {
-        setError('שגיאה בעדכון פרטי ההורה')
-      }
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
-  if (loading) {
+  if (isLoading) {
     return (
       <Layout>
         <p className="text-gray-500">טוען...</p>
       </Layout>
-    )
+    );
   }
 
-  if (notFound) {
+  if (error || !parent) {
     return (
       <Layout>
         <h1 className="text-2xl font-bold mb-4">הורה לא נמצא</h1>
         <Link to="/parents" className="text-indigo-600 hover:text-indigo-900">
-          ← חזרה לרשימת ההורים
+          {'\u2190'} חזרה לרשימת ההורים
         </Link>
       </Layout>
-    )
+    );
   }
+
+  const serverError = updateMutation.error
+    ? updateMutation.error instanceof Error
+      ? updateMutation.error.message.includes('duplicate') || updateMutation.error.message.includes('unique')
+        ? 'מספר הטלפון כבר קיים במערכת'
+        : updateMutation.error.message
+      : 'שגיאה בעדכון פרטי ההורה'
+    : undefined;
 
   return (
     <Layout>
     <div className="max-w-4xl">
       <div className="mb-6">
         <Link to="/parents" className="text-indigo-600 hover:text-indigo-900 text-sm">
-          ← חזרה לרשימת ההורים
+          {'\u2190'} חזרה לרשימת ההורים
         </Link>
       </div>
 
       <h1 className="text-2xl font-bold mb-6">עריכת הורה</h1>
 
-      {parent && (
-        <ParentForm initialData={parent} onSubmit={handleSubmit} isLoading={isSubmitting} serverError={error} />
-      )}
+      <ParentForm
+        initialData={parent}
+        onSubmit={(data) => {
+          updateMutation.mutate({ id: parentId, parent: data }, {
+            onSuccess: () => {
+              navigate({ to: '/parents' });
+            },
+          });
+        }}
+        isPending={updateMutation.isPending}
+        serverError={serverError}
+      />
+
+      <AssignedChildren parentId={parentId} />
     </div>
     </Layout>
-  )
+  );
 }
