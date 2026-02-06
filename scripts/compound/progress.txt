@@ -200,3 +200,27 @@ Started: Fri  6 Feb 2026 06:49:58 IST
   - T-005 phone validation already implemented via Zod schema (no separate function needed)
   
 ---
+## Thu 6 Feb 2026 14:00:00 IST - T-006, T-007
+
+- Created nurseries query hook (useNurseries) and server function (getNurseries)
+- Updated ManagerForm to fetch and display nursery dropdown
+- Dropdown fetches nurseries from Supabase on component mount
+- Shows loading skeleton while nurseries are being fetched
+- Dropdown is required field, validated through Zod schema
+- T-007 was already complete from T-002 implementation (mutation hook and form wiring)
+- All quality checks pass: lint ✓, typecheck ✓, test ✓ (167 tests)
+
+- Files changed:
+  - Created: src/lib/queries/nurseries.ts (useNurseries hook)
+  - Created: src/lib/server/nurseries.ts (getNurseries server function)
+  - Modified: src/components/ManagerForm.tsx (added nursery dropdown)
+
+- **Learnings for future iterations:**
+  - Nursery dropdown pattern: select element with loading state (skeleton div during fetch)
+  - Hebrew placeholder: "בחר גן" (select nursery)
+  - Loading skeleton: `<div className="h-10 bg-gray-100 rounded animate-pulse" />`
+  - Dropdown styling matches input fields (same border, focus states, error handling)
+  - Server function doesn't need role check for nurseries list (read-only data)
+  - T-007 mutation already complete: useCreateManager() hook used in new.tsx route
+  
+---

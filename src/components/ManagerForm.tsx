@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, type FormEvent, type Ref } from 'react'
 import { Link } from '@tanstack/react-router'
 import { managerCreateSchema } from '~/lib/schemas/manager'
 import type { Manager } from '~/lib/database.types'
+import { useNurseries } from '~/lib/queries/nurseries'
 
 interface ManagerFormProps {
   manager?: Manager
@@ -15,9 +16,10 @@ export function ManagerForm({ manager, nurseryId, onSubmit, isPending, serverErr
   const isEdit = !!manager
   const [name, setName] = useState(manager?.name ?? '')
   const [phone, setPhone] = useState(manager?.phone ?? '')
-  const [selectedNurseryId] = useState(manager?.nursery_id ?? nurseryId ?? '')
+  const [selectedNurseryId, setSelectedNurseryId] = useState(manager?.nursery_id ?? nurseryId ?? '')
   const [errors, setErrors] = useState<Record<string, string>>({})
   const firstInputRef = useRef<HTMLInputElement>(null)
+  const { data: nurseries, isLoading: nurseriesLoading } = useNurseries()
 
   useEffect(() => { firstInputRef.current?.focus() }, [])
 
@@ -72,8 +74,39 @@ export function ManagerForm({ manager, nurseryId, onSubmit, isPending, serverErr
           onChange={(v) => { setPhone(v); clearError('phone') }}
           error={errors.phone} required disabled={isPending} dir="ltr" placeholder="050-1234567" />
 
-        {/* Nursery dropdown will be added in T-006 */}
-        <input type="hidden" name="nursery_id" value={selectedNurseryId} />
+        <div>
+          <label htmlFor="nursery_id" className="block text-sm font-medium text-gray-700 mb-1">
+            גן<span className="text-red-500 ms-1">*</span>
+          </label>
+          {nurseriesLoading ? (
+            <div className="h-10 bg-gray-100 rounded animate-pulse" />
+          ) : (
+            <select
+              id="nursery_id"
+              name="nursery_id"
+              value={selectedNurseryId}
+              onChange={(e) => { setSelectedNurseryId(e.target.value); clearError('nursery_id') }}
+              disabled={isPending}
+              aria-invalid={!!errors.nursery_id}
+              aria-describedby={errors.nursery_id ? 'nursery_id-error' : undefined}
+              className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm ${
+                errors.nursery_id ? 'border-red-500' : 'border-gray-300'
+              } ${isPending ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+            >
+              <option value="">בחר גן</option>
+              {nurseries?.map((nursery) => (
+                <option key={nursery.id} value={nursery.id}>
+                  {nursery.name}
+                </option>
+              ))}
+            </select>
+          )}
+          {errors.nursery_id && (
+            <p id="nursery_id-error" className="mt-1 text-sm text-red-600" role="alert">
+              {errors.nursery_id}
+            </p>
+          )}
+        </div>
 
         <div className="flex gap-3 pt-2">
           <button type="submit" disabled={isPending}
