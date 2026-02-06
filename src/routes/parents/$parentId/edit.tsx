@@ -3,6 +3,7 @@ import { requireAuth } from '~/lib/auth-guard';
 import { useParent, useUpdateParent } from '~/lib/queries/parents';
 import { ParentForm } from '~/components/ParentForm';
 import Layout from '~/components/Layout';
+import { AssignedChildren } from '~/components/AssignedChildren';
 
 export const Route = createFileRoute('/parents/$parentId/edit')({
   beforeLoad: () => requireAuth(),
@@ -65,6 +66,8 @@ function EditParent() {
         isPending={updateMutation.isPending}
         serverError={serverError}
       />
+
+      <AssignedChildren parentId={parentId} />
     </div>
     </Layout>
   );
