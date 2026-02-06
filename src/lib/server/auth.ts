@@ -21,6 +21,12 @@ export async function requireManagerRole(accessToken: string) {
   return user
 }
 
+export async function requireAdminRole(accessToken: string) {
+  const { user, role } = await requireAuth(accessToken)
+  if (role !== 'admin') throw new Error('אין לך הרשאה לבצע פעולה זו')
+  return user
+}
+
 export async function resolveNurseryId(user: { id: string }, role: string | undefined): Promise<string | null> {
   if (role === 'admin') return null
 
