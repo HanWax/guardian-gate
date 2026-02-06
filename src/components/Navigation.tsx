@@ -20,6 +20,9 @@ export default function Navigation() {
           <Link to="/parents" className="rounded px-3 py-2 hover:bg-gray-200">הורים</Link>
         </>
       )}
+      {role === 'admin' && (
+        <Link to="/managers" className="rounded px-3 py-2 hover:bg-gray-200">מנהלים</Link>
+      )}
     </nav>
   )
 }

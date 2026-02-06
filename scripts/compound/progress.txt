@@ -269,3 +269,23 @@ Started: Fri  6 Feb 2026 06:49:58 IST
   - Loading state: disabled button with "מוחק..." text during isPending
   
 ---
+## Thu 6 Feb 2026 14:15:00 IST - T-013
+
+- Added managers link to Navigation component
+- Link text: "מנהלים" (managers in Hebrew)
+- Only shows for users with admin role (role === 'admin')
+- Positioned after parents link in navigation
+- Styling matches other nav items (rounded px-3 py-2 hover:bg-gray-200)
+- All quality checks pass: lint ✓, typecheck ✓
+
+- Files changed:
+  - Modified: src/components/Navigation.tsx (added managers link)
+
+- **Learnings for future iterations:**
+  - Navigation component uses useAuth() hook to access role
+  - Role-based navigation pattern: {role === 'admin' && <Link...>}
+  - canManage constant: role === 'admin' || role === 'manager'
+  - Navigation links placed in flex column with gap-2
+  - Standard nav link styling: rounded px-3 py-2 hover:bg-gray-200
+  
+---
