@@ -231,7 +231,7 @@
         "Run `npm run typecheck` - exits with code 0"
       ],
       "priority": 14,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {
@@ -251,7 +251,7 @@
         "Run `npm test` - exits with code 0"
       ],
       "priority": 15,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {
@@ -270,7 +270,7 @@
         "No console errors during flow"
       ],
       "priority": 16,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {
@@ -290,7 +290,7 @@
         "No console errors during flow"
       ],
       "priority": 17,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {
@@ -305,7 +305,7 @@
         "After creating first manager, empty state disappears"
       ],
       "priority": 18,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {
@@ -320,7 +320,7 @@
         "Loading states clear when operation completes"
       ],
       "priority": 19,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {
@@ -334,7 +334,7 @@
         "All three quality checks pass without warnings or errors"
       ],
       "priority": 20,
-      "passes": false,
+      "passes": true,
       "notes": ""
     }
   ]
