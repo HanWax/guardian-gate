@@ -16,6 +16,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TeachersIndexRouteImport } from './routes/teachers/index'
 import { Route as ParentsIndexRouteImport } from './routes/parents/index'
+import { Route as ManagersIndexRouteImport } from './routes/managers/index'
 import { Route as ChildrenIndexRouteImport } from './routes/children/index'
 import { Route as TeachersNewRouteImport } from './routes/teachers/new'
 import { Route as ParentsNewRouteImport } from './routes/parents/new'
@@ -58,6 +59,11 @@ const TeachersIndexRoute = TeachersIndexRouteImport.update({
 const ParentsIndexRoute = ParentsIndexRouteImport.update({
   id: '/parents/',
   path: '/parents/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ManagersIndexRoute = ManagersIndexRouteImport.update({
+  id: '/managers/',
+  path: '/managers/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ChildrenIndexRoute = ChildrenIndexRouteImport.update({
@@ -112,6 +118,7 @@ export interface FileRoutesByFullPath {
   '/parents/new': typeof ParentsNewRoute
   '/teachers/new': typeof TeachersNewRoute
   '/children/': typeof ChildrenIndexRoute
+  '/managers/': typeof ManagersIndexRoute
   '/parents/': typeof ParentsIndexRoute
   '/teachers/': typeof TeachersIndexRoute
   '/children/$childId/edit': typeof ChildrenChildIdEditRoute
@@ -129,6 +136,7 @@ export interface FileRoutesByTo {
   '/parents/new': typeof ParentsNewRoute
   '/teachers/new': typeof TeachersNewRoute
   '/children': typeof ChildrenIndexRoute
+  '/managers': typeof ManagersIndexRoute
   '/parents': typeof ParentsIndexRoute
   '/teachers': typeof TeachersIndexRoute
   '/children/$childId/edit': typeof ChildrenChildIdEditRoute
@@ -147,6 +155,7 @@ export interface FileRoutesById {
   '/parents/new': typeof ParentsNewRoute
   '/teachers/new': typeof TeachersNewRoute
   '/children/': typeof ChildrenIndexRoute
+  '/managers/': typeof ManagersIndexRoute
   '/parents/': typeof ParentsIndexRoute
   '/teachers/': typeof TeachersIndexRoute
   '/children/$childId/edit': typeof ChildrenChildIdEditRoute
@@ -166,6 +175,7 @@ export interface FileRouteTypes {
     | '/parents/new'
     | '/teachers/new'
     | '/children/'
+    | '/managers/'
     | '/parents/'
     | '/teachers/'
     | '/children/$childId/edit'
@@ -183,6 +193,7 @@ export interface FileRouteTypes {
     | '/parents/new'
     | '/teachers/new'
     | '/children'
+    | '/managers'
     | '/parents'
     | '/teachers'
     | '/children/$childId/edit'
@@ -200,6 +211,7 @@ export interface FileRouteTypes {
     | '/parents/new'
     | '/teachers/new'
     | '/children/'
+    | '/managers/'
     | '/parents/'
     | '/teachers/'
     | '/children/$childId/edit'
@@ -218,6 +230,7 @@ export interface RootRouteChildren {
   ParentsNewRoute: typeof ParentsNewRoute
   TeachersNewRoute: typeof TeachersNewRoute
   ChildrenIndexRoute: typeof ChildrenIndexRoute
+  ManagersIndexRoute: typeof ManagersIndexRoute
   ParentsIndexRoute: typeof ParentsIndexRoute
   TeachersIndexRoute: typeof TeachersIndexRoute
   ChildrenChildIdEditRoute: typeof ChildrenChildIdEditRoute
@@ -274,6 +287,13 @@ declare module '@tanstack/react-router' {
       path: '/parents'
       fullPath: '/parents/'
       preLoaderRoute: typeof ParentsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/managers/': {
+      id: '/managers/'
+      path: '/managers'
+      fullPath: '/managers/'
+      preLoaderRoute: typeof ManagersIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/children/': {
@@ -346,6 +366,7 @@ const rootRouteChildren: RootRouteChildren = {
   ParentsNewRoute: ParentsNewRoute,
   TeachersNewRoute: TeachersNewRoute,
   ChildrenIndexRoute: ChildrenIndexRoute,
+  ManagersIndexRoute: ManagersIndexRoute,
   ParentsIndexRoute: ParentsIndexRoute,
   TeachersIndexRoute: TeachersIndexRoute,
   ChildrenChildIdEditRoute: ChildrenChildIdEditRoute,

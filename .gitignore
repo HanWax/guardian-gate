@@ -17,7 +17,7 @@ node_modules/
 
 # Temp / working files
 tmp/
-tasks/
+# tasks/
 reports/
 logs/
 
@@ -25,7 +25,7 @@ logs/
 .worktrees
 
 # Compound engineering - runtime state (not workflow scripts)
-scripts/compound/progress.txt
-scripts/compound/auto-compound-execution.log
-scripts/compound/auto-compound-prd.log
-scripts/compound/auto-compound-tasks.log
+# scripts/compound/progress.txt
+# scripts/compound/auto-compound-execution.log
+# scripts/compound/auto-compound-prd.log
+# scripts/compound/auto-compound-tasks.log
