@@ -9,7 +9,7 @@ Child safety check-in system for nurseries. Prevents "forgotten child" fatalitie
 | Phase | Total | Complete | Remaining |
 |-------|-------|----------|-----------|
 | Phase 1: Foundation | 5 | 5 | 0 |
-| Phase 2: Admin Dashboard | 6 | 5 | 1 |
+| Phase 2: Admin Dashboard | 6 | 6 | 0 |
 | Phase 3: WhatsApp Integration | 5 | 0 | 5 |
 | Phase 4-8: Remaining | — | 0 | — |
 
@@ -73,13 +73,20 @@ Child safety check-in system for nurseries. Prevents "forgotten child" fatalitie
 - Auth callback handler at `/auth/callback`
 - Success message directing user to check email
 
-### 7. [MEDIUM] Nursery settings page
+### 7. [MEDIUM] Add missing Teachers nav link and populate dashboard stubs
+
+- Added Teachers CRUD navigation link to admin/manager sidebar
+- Populated teacher dashboard with welcome message and view-only quick-access cards
+- Populated admin and manager dashboards with DashboardCard components
+- **Status: COMPLETE**
+
+### 8. [MEDIUM] Nursery settings page
 
 - Configure times (dropoff_start, dropoff_end, first_message_time, second_ping_time)
 - Timezone settings
 - **Status: NOT STARTED**
 
-### 8. [MEDIUM] Children CRUD
+### 9. [MEDIUM] Children CRUD
 
 - Add/edit/delete children
 - Assign to nursery
@@ -89,7 +96,7 @@ Child safety check-in system for nurseries. Prevents "forgotten child" fatalitie
 - ChildForm component with name input
 - Full list view with create/edit/delete actions
 
-### 9. [MEDIUM] Parents CRUD
+### 10. [MEDIUM] Parents CRUD
 
 - Add/edit/delete parents
 - Phone number (WhatsApp)
@@ -102,7 +109,7 @@ Child safety check-in system for nurseries. Prevents "forgotten child" fatalitie
 - ParentForm component with name + phone inputs
 - Note: children-parents assignment UI not yet built (junction table exists in DB)
 
-### 10. [MEDIUM] Teachers CRUD
+### 11. [MEDIUM] Teachers CRUD
 
 - Add/edit/delete teachers
 - Assign to nursery
@@ -113,7 +120,7 @@ Child safety check-in system for nurseries. Prevents "forgotten child" fatalitie
 - React Query hooks for data fetching and mutations
 - TeacherForm component with name + phone inputs
 
-### 11. [MEDIUM] Managers CRUD
+### 12. [MEDIUM] Managers CRUD
 
 - Add/edit/delete managers
 - Assign to nursery
@@ -176,7 +183,7 @@ See docs/plan.md for full details on:
 
 ## Next Up (Recommended Order)
 
-1. **Nursery settings page** (#7) — needed before WhatsApp scheduling can work
+1. **Nursery settings page** (#8) — needed before WhatsApp scheduling can work
 2. **Children-parents assignment UI** — junction table exists, need UI to link parents to children
 3. **Phase 3: WhatsApp Integration** — core safety flow depends on this
 
@@ -190,3 +197,10 @@ See docs/plan.md for full details on:
 - Dashboard pages (`/admin`, `/manager`, `/teacher`) exist as placeholder stubs — no content yet
 
 *Last updated: 2026-02-06*
+
+---
+
+**Completion Summary (17/17 tasks completed)**
+- All Phase 1 Foundation tasks: ✅ Complete
+- All Phase 2 Admin Dashboard tasks: ✅ Complete
+- Phase 3 WhatsApp Integration: Upcoming (5 tasks remaining)
