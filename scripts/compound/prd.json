@@ -15,7 +15,7 @@
         "Run `npm run typecheck` - exits with code 0"
       ],
       "priority": 1,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {
@@ -33,7 +33,7 @@
         "Run `npm test` - exits with code 0"
       ],
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {
@@ -47,7 +47,7 @@
         "Run `npm run typecheck` - exits with code 0"
       ],
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {

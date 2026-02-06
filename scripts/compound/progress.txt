@@ -97,3 +97,81 @@ Started: Fri  6 Feb 2026 06:49:58 IST
   - Quality checks (T-017) pass with all 153 tests passing
 
 ---
+## Thu 6 Feb 2026 11:42:00 IST - T-001
+
+- Created managers list page route at src/routes/managers/index.tsx
+- Implemented requireRole('admin') for admin-only access via beforeLoad hook
+- Added basic page shell with Hebrew heading and description
+- Route tree auto-generated successfully by TanStack Start dev server
+
+- Files changed:
+  - Created: src/routes/managers/index.tsx
+
+- **Learnings for future iterations:**
+  - TanStack Start auto-generates route types when dev server is running
+  - Use requireRole('admin') for admin-only routes (not requireAuth())
+  - Route protection pattern: beforeLoad: () => requireRole('admin')
+  - Page shell structure: max-w-5xl mx-auto p-4 sm:p-6 wrapper
+  - Hebrew headings: "ניהול מנהלים" for managers management
+
+---
+
+## Thu 6 Feb 2026 11:45:45 IST - T-002
+
+- Created manager schema with full validation (name, phone, nursery_id)
+- Wrote 14 unit tests for managerCreateSchema and managerUpdateSchema (all pass)
+- Implemented server functions in src/lib/server/managers.ts:
+  - getManagers: Fetches managers with nursery join (.select('*, nurseries(id, name)'))
+  - getManager, createManager, updateManager, deleteManager
+  - All use requireAdminRole() for access control
+- Added requireAdminRole() function to src/lib/server/auth.ts
+- Created React Query hooks in src/lib/queries/managers.ts:
+  - useManagers, useManager, useCreateManager, useUpdateManager, useDeleteManager
+  - Standard cache key factory pattern: managerKeys.all/list/detail
+- Updated managers list page with full CRUD UI:
+  - Table with 4 columns: name, phone, nursery (from join), actions
+  - Loading skeleton, error state, empty state handling
+  - Delete confirmation inline (matches teachers pattern)
+  - "הוספת מנהל" button in PageShell header
+- Created route stubs for /managers/new and /managers/$managerId/edit
+- All quality checks pass: lint ✓, typecheck ✓, test ✓ (167 tests)
+
+- Files changed:
+  - Created: src/lib/schemas/manager.ts, src/lib/schemas/manager.test.ts
+  - Created: src/lib/server/managers.ts
+  - Created: src/lib/queries/managers.ts
+  - Modified: src/lib/server/auth.ts (added requireAdminRole)
+  - Modified: src/routes/managers/index.tsx (full CRUD UI)
+  - Created: src/routes/managers/new.tsx, src/routes/managers/$managerId.edit.tsx (stubs)
+  - Auto-generated: src/routeTree.gen.ts
+
+- **Learnings for future iterations:**
+  - Supabase nested join syntax: `.select('*, nurseries(id, name)')` returns nested object
+  - Manager data type needs explicit typing: `ManagerWithNursery` to handle nested nursery
+  - Phone field gets `dir="ltr"` for proper LTR display in RTL layout
+  - Empty state message: "אין מנהלים במערכת עדיין" (no managers in system yet)
+  - requireAdminRole pattern: same as requireManagerRole but checks only for 'admin'
+  - Test-first workflow successful: schema tests → implementation → green
+  - Route stubs must exist before typecheck passes (dev server auto-generates types)
+  - Nitro CJS warnings in vitest output are harmless (exit code 0)
+  
+---
+## Thu 6 Feb 2026 13:35:00 IST - T-003
+
+- T-003 was already complete from T-002 implementation
+- The "הוספת מנהל" button exists in PageShell component (lines 102-107 of managers/index.tsx)
+- Button positioned correctly at top right of page header
+- Links to /managers/new route
+- Styling matches teachers list pattern
+- All acceptance criteria met, typecheck passes
+
+- Files verified:
+  - src/routes/managers/index.tsx (button already implemented)
+
+- **Learnings for future iterations:**
+  - T-002 implementation already included the "Add Manager" button in PageShell header
+  - Pattern: action buttons placed in PageShell header next to page title/description
+  - Hebrew button text: "+ הוספת מנהל" (with plus sign prefix)
+  - Button styling: bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700
+  
+---
