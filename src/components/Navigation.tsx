@@ -1,54 +1,24 @@
 import { Link } from '@tanstack/react-router'
 import { useAuth } from '~/lib/auth-context'
-import { extractRole } from '~/lib/roles'
 
 export default function Navigation() {
-  const { user } = useAuth()
-  const role = extractRole(user?.user_metadata)
-
-  console.log('Navigation: extracted role =', role)
+  const { role } = useAuth()
+  const canManage = role === 'admin' || role === 'manager'
 
   return (
     <nav className="flex flex-col gap-2">
       {role === 'admin' && (
-        <>
-          <Link to="/admin" className="rounded px-3 py-2 hover:bg-gray-200">
-            ניהול
-          </Link>
-          <Link to="/manager" className="rounded px-3 py-2 hover:bg-gray-200">
-            מנהל
-          </Link>
-          <Link to="/teacher" className="rounded px-3 py-2 hover:bg-gray-200">
-            מורה
-          </Link>
-          <Link to="/children" className="rounded px-3 py-2 hover:bg-gray-200">
-            ילדים
-          </Link>
-          <Link to="/parents" className="rounded px-3 py-2 hover:bg-gray-200">
-            הורים
-          </Link>
-        </>
+        <Link to="/admin" className="rounded px-3 py-2 hover:bg-gray-200">ניהול</Link>
       )}
-      {role === 'manager' && (
-        <>
-          <Link to="/manager" className="rounded px-3 py-2 hover:bg-gray-200">
-            מנהל
-          </Link>
-          <Link to="/teacher" className="rounded px-3 py-2 hover:bg-gray-200">
-            מורה
-          </Link>
-          <Link to="/children" className="rounded px-3 py-2 hover:bg-gray-200">
-            ילדים
-          </Link>
-          <Link to="/parents" className="rounded px-3 py-2 hover:bg-gray-200">
-            הורים
-          </Link>
-        </>
+      {canManage && (
+        <Link to="/manager" className="rounded px-3 py-2 hover:bg-gray-200">מנהל</Link>
       )}
-      {role === 'teacher' && (
-        <Link to="/teacher" className="rounded px-3 py-2 hover:bg-gray-200">
-          מורה
-        </Link>
+      <Link to="/teacher" className="rounded px-3 py-2 hover:bg-gray-200">מורה</Link>
+      {canManage && (
+        <>
+          <Link to="/children" className="rounded px-3 py-2 hover:bg-gray-200">ילדים</Link>
+          <Link to="/parents" className="rounded px-3 py-2 hover:bg-gray-200">הורים</Link>
+        </>
       )}
     </nav>
   )

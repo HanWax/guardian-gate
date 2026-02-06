@@ -1,146 +1,70 @@
-import { createServerFn } from '@tanstack/react-start';
-import { z } from 'zod';
-import { teacherCreateSchema, teacherUpdateSchema } from '../schemas/teacher';
-import { createServiceClient, requireManagerRole } from './auth';
+import { createServerFn } from '@tanstack/react-start'
+import { z } from 'zod'
+import { teacherCreateSchema, teacherUpdateSchema } from '../schemas/teacher'
+import { createServiceClient, requireManagerRole } from './auth'
 
-const errorMessages = {
-  unauthorized: 'אין לך הרשאה לבצע פעולה זו',
+const err = {
   not_found: 'מורה לא נמצא/ה',
   create_failed: 'שגיאה ביצירת מורה. אנא נסה שוב',
   update_failed: 'שגיאה בעדכון מורה. אנא נסה שוב',
   delete_failed: 'שגיאה במחיקת מורה. אנא נסה שוב',
   fetch_failed: 'שגיאה בטעינת נתונים. אנא נסה שוב',
-} as const;
+} as const
 
-const accessTokenSchema = z.object({
-  accessToken: z.string().min(1),
-});
+const tokenSchema = z.object({ accessToken: z.string().min(1) })
 
 export const getTeachers = createServerFn({ method: 'GET' })
-  .inputValidator(
-    accessTokenSchema.extend({
-      nursery_id: z.string().uuid().optional(),
-    }),
-  )
+  .inputValidator(tokenSchema.extend({ nursery_id: z.string().uuid().optional() }))
   .handler(async ({ data }) => {
-    await requireManagerRole(data.accessToken);
-
-    const supabase = createServiceClient();
-    let query = supabase
-      .from('teachers')
-      .select('*')
-      .order('name', { ascending: true });
-
-    if (data.nursery_id) {
-      query = query.eq('nursery_id', data.nursery_id);
-    }
-
-    const { data: teachers, error } = await query;
-
-    if (error) {
-      throw new Error(errorMessages.fetch_failed);
-    }
-
-    return teachers;
-  });
+    await requireManagerRole(data.accessToken)
+    const supabase = createServiceClient()
+    let query = supabase.from('teachers').select('*').order('name', { ascending: true })
+    if (data.nursery_id) query = query.eq('nursery_id', data.nursery_id)
+    const { data: teachers, error } = await query
+    if (error) throw new Error(err.fetch_failed)
+    return teachers
+  })
 
 export const getTeacher = createServerFn({ method: 'GET' })
-  .inputValidator(
-    accessTokenSchema.extend({
-      id: z.string().uuid(),
-    }),
-  )
+  .inputValidator(tokenSchema.extend({ id: z.string().uuid() }))
   .handler(async ({ data }) => {
-    await requireManagerRole(data.accessToken);
-
-    const supabase = createServiceClient();
+    await requireManagerRole(data.accessToken)
+    const supabase = createServiceClient()
     const { data: teacher, error } = await supabase
-      .from('teachers')
-      .select('*')
-      .eq('id', data.id)
-      .single();
-
-    if (error || !teacher) {
-      throw new Error(errorMessages.not_found);
-    }
-
-    return teacher;
-  });
+      .from('teachers').select('*').eq('id', data.id).single()
+    if (error || !teacher) throw new Error(err.not_found)
+    return teacher
+  })
 
 export const createTeacher = createServerFn({ method: 'POST' })
-  .inputValidator(
-    accessTokenSchema.extend({
-      teacher: teacherCreateSchema,
-    }),
-  )
+  .inputValidator(tokenSchema.extend({ teacher: teacherCreateSchema }))
   .handler(async ({ data }) => {
-    await requireManagerRole(data.accessToken);
-
-    const supabase = createServiceClient();
+    await requireManagerRole(data.accessToken)
+    const supabase = createServiceClient()
     const { data: teacher, error } = await supabase
-      .from('teachers')
-      .insert({
-        name: data.teacher.name,
-        phone: data.teacher.phone,
-        nursery_id: data.teacher.nursery_id,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      throw new Error(errorMessages.create_failed);
-    }
-
-    return teacher;
-  });
+      .from('teachers').insert(data.teacher).select().single()
+    if (error) throw new Error(err.create_failed)
+    return teacher
+  })
 
 export const updateTeacher = createServerFn({ method: 'POST' })
-  .inputValidator(
-    accessTokenSchema.extend({
-      id: z.string().uuid(),
-      teacher: teacherUpdateSchema,
-    }),
-  )
+  .inputValidator(tokenSchema.extend({ id: z.string().uuid(), teacher: teacherUpdateSchema }))
   .handler(async ({ data }) => {
-    await requireManagerRole(data.accessToken);
-
-    const supabase = createServiceClient();
+    await requireManagerRole(data.accessToken)
+    const supabase = createServiceClient()
     const { data: teacher, error } = await supabase
-      .from('teachers')
-      .update(data.teacher)
-      .eq('id', data.id)
-      .select()
-      .single();
-
-    if (error) {
-      throw new Error(errorMessages.update_failed);
-    }
-
-    if (!teacher) {
-      throw new Error(errorMessages.not_found);
-    }
-
-    return teacher;
-  });
+      .from('teachers').update(data.teacher).eq('id', data.id).select().single()
+    if (error) throw new Error(err.update_failed)
+    if (!teacher) throw new Error(err.not_found)
+    return teacher
+  })
 
 export const deleteTeacher = createServerFn({ method: 'POST' })
-  .inputValidator(
-    accessTokenSchema.extend({
-      id: z.string().uuid(),
-    }),
-  )
+  .inputValidator(tokenSchema.extend({ id: z.string().uuid() }))
   .handler(async ({ data }) => {
-    await requireManagerRole(data.accessToken);
-
-    const supabase = createServiceClient();
-    const { error } = await supabase
-      .from('teachers')
-      .delete()
-      .eq('id', data.id);
-
-    if (error) {
-      throw new Error(errorMessages.delete_failed);
-    }
-
-    return { success: true };
-  });
+    await requireManagerRole(data.accessToken)
+    const supabase = createServiceClient()
+    const { error } = await supabase.from('teachers').delete().eq('id', data.id)
+    if (error) throw new Error(err.delete_failed)
+    return { success: true }
+  })
