@@ -1,0 +1,22 @@
+Perfect! I've created a comprehensive PRD for the Managers CRUD feature and saved it to `tasks/prd-managers-crud.md`.
+
+## Summary
+
+The PRD breaks down the Managers CRUD implementation into **5 focused tasks**:
+
+1. **T-001:** Managers list page at /managers
+2. **T-002:** Create form at /managers/new
+3. **T-003:** Edit form at /managers/$managerId/edit
+4. **T-004:** Delete functionality with Hebrew confirmation
+5. **T-005:** Navigation and polish
+
+Each task has clear, verifiable acceptance criteria including browser verification. The PRD emphasizes:
+
+- **No database changes** (managers table already exists)
+- **Pattern reuse** from teachers CRUD for consistency
+- **Hebrew RTL UI** throughout
+- **Israeli phone validation** matching existing patterns
+- **Admin-only access** with requireAuth protection
+- **2-4 hour completion** target with small, focused tasks
+
+All functional requirements are numbered and unambiguous, and the non-goals section clearly defines scope boundaries to prevent feature creep.

@@ -16,13 +16,16 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TeachersIndexRouteImport } from './routes/teachers/index'
 import { Route as ParentsIndexRouteImport } from './routes/parents/index'
+import { Route as ManagersIndexRouteImport } from './routes/managers/index'
 import { Route as ChildrenIndexRouteImport } from './routes/children/index'
 import { Route as TeachersNewRouteImport } from './routes/teachers/new'
 import { Route as ParentsNewRouteImport } from './routes/parents/new'
+import { Route as ManagersNewRouteImport } from './routes/managers/new'
 import { Route as ChildrenNewRouteImport } from './routes/children/new'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as TeachersTeacherIdEditRouteImport } from './routes/teachers/$teacherId/edit'
 import { Route as ParentsParentIdEditRouteImport } from './routes/parents/$parentId/edit'
+import { Route as ManagersManagerIdEditRouteImport } from './routes/managers/$managerId.edit'
 import { Route as ChildrenChildIdEditRouteImport } from './routes/children/$childId/edit'
 
 const TeacherRoute = TeacherRouteImport.update({
@@ -60,6 +63,11 @@ const ParentsIndexRoute = ParentsIndexRouteImport.update({
   path: '/parents/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ManagersIndexRoute = ManagersIndexRouteImport.update({
+  id: '/managers/',
+  path: '/managers/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ChildrenIndexRoute = ChildrenIndexRouteImport.update({
   id: '/children/',
   path: '/children/',
@@ -73,6 +81,11 @@ const TeachersNewRoute = TeachersNewRouteImport.update({
 const ParentsNewRoute = ParentsNewRouteImport.update({
   id: '/parents/new',
   path: '/parents/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ManagersNewRoute = ManagersNewRouteImport.update({
+  id: '/managers/new',
+  path: '/managers/new',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ChildrenNewRoute = ChildrenNewRouteImport.update({
@@ -95,6 +108,11 @@ const ParentsParentIdEditRoute = ParentsParentIdEditRouteImport.update({
   path: '/parents/$parentId/edit',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ManagersManagerIdEditRoute = ManagersManagerIdEditRouteImport.update({
+  id: '/managers/$managerId/edit',
+  path: '/managers/$managerId/edit',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ChildrenChildIdEditRoute = ChildrenChildIdEditRouteImport.update({
   id: '/children/$childId/edit',
   path: '/children/$childId/edit',
@@ -109,12 +127,15 @@ export interface FileRoutesByFullPath {
   '/teacher': typeof TeacherRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/children/new': typeof ChildrenNewRoute
+  '/managers/new': typeof ManagersNewRoute
   '/parents/new': typeof ParentsNewRoute
   '/teachers/new': typeof TeachersNewRoute
   '/children/': typeof ChildrenIndexRoute
+  '/managers/': typeof ManagersIndexRoute
   '/parents/': typeof ParentsIndexRoute
   '/teachers/': typeof TeachersIndexRoute
   '/children/$childId/edit': typeof ChildrenChildIdEditRoute
+  '/managers/$managerId/edit': typeof ManagersManagerIdEditRoute
   '/parents/$parentId/edit': typeof ParentsParentIdEditRoute
   '/teachers/$teacherId/edit': typeof TeachersTeacherIdEditRoute
 }
@@ -126,12 +147,15 @@ export interface FileRoutesByTo {
   '/teacher': typeof TeacherRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/children/new': typeof ChildrenNewRoute
+  '/managers/new': typeof ManagersNewRoute
   '/parents/new': typeof ParentsNewRoute
   '/teachers/new': typeof TeachersNewRoute
   '/children': typeof ChildrenIndexRoute
+  '/managers': typeof ManagersIndexRoute
   '/parents': typeof ParentsIndexRoute
   '/teachers': typeof TeachersIndexRoute
   '/children/$childId/edit': typeof ChildrenChildIdEditRoute
+  '/managers/$managerId/edit': typeof ManagersManagerIdEditRoute
   '/parents/$parentId/edit': typeof ParentsParentIdEditRoute
   '/teachers/$teacherId/edit': typeof TeachersTeacherIdEditRoute
 }
@@ -144,12 +168,15 @@ export interface FileRoutesById {
   '/teacher': typeof TeacherRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/children/new': typeof ChildrenNewRoute
+  '/managers/new': typeof ManagersNewRoute
   '/parents/new': typeof ParentsNewRoute
   '/teachers/new': typeof TeachersNewRoute
   '/children/': typeof ChildrenIndexRoute
+  '/managers/': typeof ManagersIndexRoute
   '/parents/': typeof ParentsIndexRoute
   '/teachers/': typeof TeachersIndexRoute
   '/children/$childId/edit': typeof ChildrenChildIdEditRoute
+  '/managers/$managerId/edit': typeof ManagersManagerIdEditRoute
   '/parents/$parentId/edit': typeof ParentsParentIdEditRoute
   '/teachers/$teacherId/edit': typeof TeachersTeacherIdEditRoute
 }
@@ -163,12 +190,15 @@ export interface FileRouteTypes {
     | '/teacher'
     | '/auth/callback'
     | '/children/new'
+    | '/managers/new'
     | '/parents/new'
     | '/teachers/new'
     | '/children/'
+    | '/managers/'
     | '/parents/'
     | '/teachers/'
     | '/children/$childId/edit'
+    | '/managers/$managerId/edit'
     | '/parents/$parentId/edit'
     | '/teachers/$teacherId/edit'
   fileRoutesByTo: FileRoutesByTo
@@ -180,12 +210,15 @@ export interface FileRouteTypes {
     | '/teacher'
     | '/auth/callback'
     | '/children/new'
+    | '/managers/new'
     | '/parents/new'
     | '/teachers/new'
     | '/children'
+    | '/managers'
     | '/parents'
     | '/teachers'
     | '/children/$childId/edit'
+    | '/managers/$managerId/edit'
     | '/parents/$parentId/edit'
     | '/teachers/$teacherId/edit'
   id:
@@ -197,12 +230,15 @@ export interface FileRouteTypes {
     | '/teacher'
     | '/auth/callback'
     | '/children/new'
+    | '/managers/new'
     | '/parents/new'
     | '/teachers/new'
     | '/children/'
+    | '/managers/'
     | '/parents/'
     | '/teachers/'
     | '/children/$childId/edit'
+    | '/managers/$managerId/edit'
     | '/parents/$parentId/edit'
     | '/teachers/$teacherId/edit'
   fileRoutesById: FileRoutesById
@@ -215,12 +251,15 @@ export interface RootRouteChildren {
   TeacherRoute: typeof TeacherRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   ChildrenNewRoute: typeof ChildrenNewRoute
+  ManagersNewRoute: typeof ManagersNewRoute
   ParentsNewRoute: typeof ParentsNewRoute
   TeachersNewRoute: typeof TeachersNewRoute
   ChildrenIndexRoute: typeof ChildrenIndexRoute
+  ManagersIndexRoute: typeof ManagersIndexRoute
   ParentsIndexRoute: typeof ParentsIndexRoute
   TeachersIndexRoute: typeof TeachersIndexRoute
   ChildrenChildIdEditRoute: typeof ChildrenChildIdEditRoute
+  ManagersManagerIdEditRoute: typeof ManagersManagerIdEditRoute
   ParentsParentIdEditRoute: typeof ParentsParentIdEditRoute
   TeachersTeacherIdEditRoute: typeof TeachersTeacherIdEditRoute
 }
@@ -276,6 +315,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ParentsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/managers/': {
+      id: '/managers/'
+      path: '/managers'
+      fullPath: '/managers/'
+      preLoaderRoute: typeof ManagersIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/children/': {
       id: '/children/'
       path: '/children'
@@ -295,6 +341,13 @@ declare module '@tanstack/react-router' {
       path: '/parents/new'
       fullPath: '/parents/new'
       preLoaderRoute: typeof ParentsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/managers/new': {
+      id: '/managers/new'
+      path: '/managers/new'
+      fullPath: '/managers/new'
+      preLoaderRoute: typeof ManagersNewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/children/new': {
@@ -325,6 +378,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ParentsParentIdEditRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/managers/$managerId/edit': {
+      id: '/managers/$managerId/edit'
+      path: '/managers/$managerId/edit'
+      fullPath: '/managers/$managerId/edit'
+      preLoaderRoute: typeof ManagersManagerIdEditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/children/$childId/edit': {
       id: '/children/$childId/edit'
       path: '/children/$childId/edit'
@@ -343,12 +403,15 @@ const rootRouteChildren: RootRouteChildren = {
   TeacherRoute: TeacherRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   ChildrenNewRoute: ChildrenNewRoute,
+  ManagersNewRoute: ManagersNewRoute,
   ParentsNewRoute: ParentsNewRoute,
   TeachersNewRoute: TeachersNewRoute,
   ChildrenIndexRoute: ChildrenIndexRoute,
+  ManagersIndexRoute: ManagersIndexRoute,
   ParentsIndexRoute: ParentsIndexRoute,
   TeachersIndexRoute: TeachersIndexRoute,
   ChildrenChildIdEditRoute: ChildrenChildIdEditRoute,
+  ManagersManagerIdEditRoute: ManagersManagerIdEditRoute,
   ParentsParentIdEditRoute: ParentsParentIdEditRoute,
   TeachersTeacherIdEditRoute: TeachersTeacherIdEditRoute,
 }
