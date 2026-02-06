@@ -18,6 +18,7 @@ export default function Navigation() {
         <>
           <Link to="/children" className="rounded px-3 py-2 hover:bg-gray-200">ילדים</Link>
           <Link to="/parents" className="rounded px-3 py-2 hover:bg-gray-200">הורים</Link>
+          <Link to="/teachers" className="rounded px-3 py-2 hover:bg-gray-200">מורות</Link>
         </>
       )}
       {role === 'admin' && (
