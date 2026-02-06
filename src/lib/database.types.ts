@@ -481,3 +481,7 @@ export type Teacher = Database['public']['Tables']['teachers']['Row']
 export type TeacherInsert = Database['public']['Tables']['teachers']['Insert']
 export type TeacherUpdate = Database['public']['Tables']['teachers']['Update']
 
+export type Manager = Database['public']['Tables']['managers']['Row']
+export type ManagerInsert = Database['public']['Tables']['managers']['Insert']
+export type ManagerUpdate = Database['public']['Tables']['managers']['Update']
+

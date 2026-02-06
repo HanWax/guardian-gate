@@ -1,5 +1,9 @@
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { requireRole } from '~/lib/auth-guard';
+import { useCreateManager } from '~/lib/queries/managers';
+import { ManagerForm } from '~/components/ManagerForm';
+
+const DEFAULT_NURSERY_ID = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
 
 export const Route = createFileRoute('/managers/new')({
   beforeLoad: () => requireRole('admin'),
@@ -7,10 +11,27 @@ export const Route = createFileRoute('/managers/new')({
 });
 
 function NewManagerPage() {
+  const navigate = useNavigate();
+  const createMutation = useCreateManager();
+
   return (
-    <div className="max-w-2xl mx-auto p-4 sm:p-6">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">הוספת מנהל</h1>
-      <p className="text-gray-600">טופס הוספת מנהל יוצג כאן</p>
-    </div>
+    <ManagerForm
+      nurseryId={DEFAULT_NURSERY_ID}
+      onSubmit={(data) => {
+        createMutation.mutate(data, {
+          onSuccess: () => {
+            navigate({ to: '/managers' });
+          },
+        });
+      }}
+      isPending={createMutation.isPending}
+      serverError={
+        createMutation.error instanceof Error
+          ? createMutation.error.message
+          : createMutation.error
+            ? 'שגיאה ביצירת מנהל'
+            : null
+      }
+    />
   );
 }

@@ -175,3 +175,28 @@ Started: Fri  6 Feb 2026 06:49:58 IST
   - Button styling: bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700
   
 ---
+## Thu 6 Feb 2026 13:50:00 IST - T-004, T-005
+
+- Created ManagerForm component following TeacherForm pattern
+- Form includes name, phone, and nursery_id fields with Zod validation
+- Phone validation uses regex pattern from manager schema (same as teachers)
+- Form displays errors, handles loading state, and has cancel/submit buttons
+- Updated managers/new.tsx route to use ManagerForm with mutation hook
+- Added Manager type exports to database.types.ts (Manager, ManagerInsert, ManagerUpdate)
+- All quality checks pass: lint ✓, typecheck ✓, test ✓ (167 tests)
+
+- Files changed:
+  - Created: src/components/ManagerForm.tsx
+  - Modified: src/routes/managers/new.tsx (now uses ManagerForm)
+  - Modified: src/lib/database.types.ts (added Manager type exports)
+
+- **Learnings for future iterations:**
+  - Phone validation pattern: /^\+?\d[\d\-\s]{6,15}$/ used in Zod schema
+  - Form validation happens in handleSubmit via schema.safeParse()
+  - Error display: errors map with field names as keys, cleared on field change
+  - Hidden input for nursery_id placeholder (dropdown will be added in T-006)
+  - Database type exports pattern: `export type Manager = Database['public']['Tables']['managers']['Row']`
+  - Hebrew error message for creation: 'שגיאה ביצירת מנהל'
+  - T-005 phone validation already implemented via Zod schema (no separate function needed)
+  
+---
