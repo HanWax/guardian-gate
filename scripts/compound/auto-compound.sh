@@ -2,7 +2,7 @@
 # Compound Product - Full Pipeline
 # Reads a report, picks #1 priority, creates PRD + tasks, runs loop, creates PR
 #
-# Usage: ./auto-compound.sh [--dry-run]
+# Usage: ./auto-compound.sh [--dry-run] [--resume]
 #
 # Requirements:
 # - claude CLI installed and authenticated (uses your Pro subscription)
@@ -19,12 +19,17 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 CONFIG_FILE="$PROJECT_ROOT/compound.config.json"
 DRY_RUN=false
+RESUME=false
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
   case $1 in
     --dry-run)
       DRY_RUN=true
+      shift
+      ;;
+    --resume)
+      RESUME=true
       shift
       ;;
     *)
@@ -80,64 +85,107 @@ if [ -f ".env.local" ]; then
   set +a
 fi
 
-# Step 1: Find most recent report
-log "Step 1: Finding most recent report..."
-git pull origin main 2>/dev/null || true
+# Check for --resume with existing prd.json
+PRD_FILE="$OUTPUT_DIR/prd.json"
+PROGRESS_FILE="$OUTPUT_DIR/progress.txt"
 
-LATEST_REPORT=$(ls -t "$REPORTS_DIR"/*.md 2>/dev/null | head -1)
-[ -f "$LATEST_REPORT" ] || error "No reports found in $REPORTS_DIR"
-REPORT_NAME=$(basename "$LATEST_REPORT")
-log "Using report: $REPORT_NAME"
+if [ "$RESUME" = true ]; then
+  if [ ! -f "$PRD_FILE" ]; then
+    error "Cannot resume: no prd.json found at $PRD_FILE"
+  fi
 
-# Step 2: Analyze report
-log "Step 2: Analyzing report to pick #1 actionable priority..."
+  REMAINING=$(jq '[.tasks[] | select(.passes == false)] | length' "$PRD_FILE")
+  TOTAL=$(jq '.tasks | length' "$PRD_FILE")
+  BRANCH_NAME=$(jq -r '.branchName // empty' "$PRD_FILE")
+  PRIORITY_ITEM=$(jq -r '.description // empty' "$PRD_FILE")
+  RATIONALE="(resumed from existing prd.json)"
+  REPORT_NAME="(resumed)"
 
-if [ -n "$ANALYZE_COMMAND" ]; then
-  # Use custom analyze command
-  # Note: This executes the command from config - ensure your config is trusted
-  ANALYSIS_JSON=$(bash -c "$ANALYZE_COMMAND \"$LATEST_REPORT\"" 2>/dev/null)
+  if [ "$REMAINING" -eq 0 ]; then
+    log "All $TOTAL tasks already pass. Nothing to resume."
+    exit 0
+  fi
+
+  [ -n "$BRANCH_NAME" ] || error "Cannot resume: prd.json has no branchName"
+
+  log "Resuming existing run: $PRIORITY_ITEM"
+  log "Branch: $BRANCH_NAME"
+  log "Tasks remaining: $REMAINING of $TOTAL"
+
+  if [ "$DRY_RUN" = true ]; then
+    log "DRY RUN - Would resume with:"
+    jq '{branch: .branchName, description: .description, remaining: [.tasks[] | select(.passes == false) | {id, title}]}' "$PRD_FILE"
+    exit 0
+  fi
+
+  # Ensure we're on the correct branch
+  CURRENT_BRANCH=$(git branch --show-current)
+  if [ "$CURRENT_BRANCH" != "$BRANCH_NAME" ]; then
+    log "Switching to branch $BRANCH_NAME..."
+    git checkout "$BRANCH_NAME" || error "Failed to checkout branch $BRANCH_NAME"
+  fi
+
 else
-  # Use default analyze script
-  ANALYSIS_JSON=$("$SCRIPT_DIR/analyze-report.sh" "$LATEST_REPORT" 2>/dev/null)
-fi
+  # === Full pipeline: Steps 1-5 ===
 
-[ -n "$ANALYSIS_JSON" ] || error "Failed to analyze report"
+  # Step 1: Find most recent report
+  log "Step 1: Finding most recent report..."
+  git pull origin main 2>/dev/null || true
 
-# Parse the analysis
-PRIORITY_ITEM=$(echo "$ANALYSIS_JSON" | jq -r '.priority_item // empty')
-DESCRIPTION=$(echo "$ANALYSIS_JSON" | jq -r '.description // empty')
-RATIONALE=$(echo "$ANALYSIS_JSON" | jq -r '.rationale // empty')
-BRANCH_NAME=$(echo "$ANALYSIS_JSON" | jq -r '.branch_name // empty')
+  LATEST_REPORT=$(ls -t "$REPORTS_DIR"/*.md 2>/dev/null | head -1)
+  [ -f "$LATEST_REPORT" ] || error "No reports found in $REPORTS_DIR"
+  REPORT_NAME=$(basename "$LATEST_REPORT")
+  log "Using report: $REPORT_NAME"
 
-[ -n "$PRIORITY_ITEM" ] || error "Failed to parse priority item from analysis"
+  # Step 2: Analyze report
+  log "Step 2: Analyzing report to pick #1 actionable priority..."
 
-# Ensure branch has correct prefix
-if [[ "$BRANCH_NAME" != "$BRANCH_PREFIX"* ]]; then
-  BRANCH_NAME="${BRANCH_PREFIX}$(echo "$BRANCH_NAME" | sed "s|^[^/]*/||")"
-fi
+  if [ -n "$ANALYZE_COMMAND" ]; then
+    # Use custom analyze command
+    # Note: This executes the command from config - ensure your config is trusted
+    ANALYSIS_JSON=$(bash -c "$ANALYZE_COMMAND \"$LATEST_REPORT\"" 2>/dev/null)
+  else
+    # Use default analyze script
+    ANALYSIS_JSON=$("$SCRIPT_DIR/analyze-report.sh" "$LATEST_REPORT" 2>/dev/null)
+  fi
 
-log "Priority item: $PRIORITY_ITEM"
-log "Branch: $BRANCH_NAME"
-log "Rationale: $RATIONALE"
+  [ -n "$ANALYSIS_JSON" ] || error "Failed to analyze report"
 
-if [ "$DRY_RUN" = true ]; then
-  log "DRY RUN - Would proceed with:"
-  echo "$ANALYSIS_JSON" | jq .
-  exit 0
-fi
+  # Parse the analysis
+  PRIORITY_ITEM=$(echo "$ANALYSIS_JSON" | jq -r '.priority_item // empty')
+  DESCRIPTION=$(echo "$ANALYSIS_JSON" | jq -r '.description // empty')
+  RATIONALE=$(echo "$ANALYSIS_JSON" | jq -r '.rationale // empty')
+  BRANCH_NAME=$(echo "$ANALYSIS_JSON" | jq -r '.branch_name // empty')
 
-# Step 3: Create feature branch
-log "Step 3: Creating feature branch..."
-git checkout main
-git checkout -b "$BRANCH_NAME" || git checkout "$BRANCH_NAME"
+  [ -n "$PRIORITY_ITEM" ] || error "Failed to parse priority item from analysis"
 
-# Step 4: Use agent to create PRD
-log "Step 4: Creating PRD with $TOOL..."
+  # Ensure branch has correct prefix
+  if [[ "$BRANCH_NAME" != "$BRANCH_PREFIX"* ]]; then
+    BRANCH_NAME="${BRANCH_PREFIX}$(echo "$BRANCH_NAME" | sed "s|^[^/]*/||")"
+  fi
 
-PRD_FILENAME="prd-$(echo "$BRANCH_NAME" | sed "s|^${BRANCH_PREFIX}||").md"
-mkdir -p "$TASKS_DIR"
+  log "Priority item: $PRIORITY_ITEM"
+  log "Branch: $BRANCH_NAME"
+  log "Rationale: $RATIONALE"
 
-PRD_PROMPT="Load the prd skill. Create a PRD for: $PRIORITY_ITEM
+  if [ "$DRY_RUN" = true ]; then
+    log "DRY RUN - Would proceed with:"
+    echo "$ANALYSIS_JSON" | jq .
+    exit 0
+  fi
+
+  # Step 3: Create feature branch
+  log "Step 3: Creating feature branch..."
+  git checkout main
+  git checkout -b "$BRANCH_NAME" || git checkout "$BRANCH_NAME"
+
+  # Step 4: Use agent to create PRD
+  log "Step 4: Creating PRD with $TOOL..."
+
+  PRD_FILENAME="prd-$(echo "$BRANCH_NAME" | sed "s|^${BRANCH_PREFIX}||").md"
+  mkdir -p "$TASKS_DIR"
+
+  PRD_PROMPT="Load the prd skill. Create a PRD for: $PRIORITY_ITEM
 
 Description: $DESCRIPTION
 
@@ -156,62 +204,62 @@ IMPORTANT CONSTRAINTS:
 
 Save the PRD to: tasks/$PRD_FILENAME"
 
-log "Using model '$MODEL_PRD' for PRD generation"
-if [[ "$TOOL" == "amp" ]]; then
-  echo "$PRD_PROMPT" | amp --execute --dangerously-allow-all --model "$MODEL_PRD" 2>&1 | tee "$OUTPUT_DIR/auto-compound-prd.log"
-else
-  echo "$PRD_PROMPT" | claude --dangerously-skip-permissions --model "$MODEL_PRD" 2>&1 | tee "$OUTPUT_DIR/auto-compound-prd.log"
-fi
-
-# Verify PRD was created
-PRD_PATH="$TASKS_DIR/$PRD_FILENAME"
-[ -f "$PRD_PATH" ] || error "PRD was not created at $PRD_PATH"
-log "PRD created: $PRD_PATH"
-
-# Archive previous run before overwriting prd.json
-PRD_FILE="$OUTPUT_DIR/prd.json"
-PROGRESS_FILE="$OUTPUT_DIR/progress.txt"
-ARCHIVE_DIR="$OUTPUT_DIR/archive"
-
-if [ -f "$PRD_FILE" ]; then
-  OLD_BRANCH=$(jq -r '.branchName // empty' "$PRD_FILE" 2>/dev/null || echo "")
-  
-  if [ -n "$OLD_BRANCH" ] && [ "$OLD_BRANCH" != "$BRANCH_NAME" ]; then
-    DATE=$(date +%Y-%m-%d)
-    FOLDER_NAME=$(echo "$OLD_BRANCH" | sed 's|^[^/]*/||')
-    ARCHIVE_FOLDER="$ARCHIVE_DIR/$DATE-$FOLDER_NAME"
-    
-    log "Archiving previous run: $OLD_BRANCH"
-    mkdir -p "$ARCHIVE_FOLDER"
-    cp "$PRD_FILE" "$ARCHIVE_FOLDER/"
-    [ -f "$PROGRESS_FILE" ] && cp "$PROGRESS_FILE" "$ARCHIVE_FOLDER/"
-    log "Archived to: $ARCHIVE_FOLDER"
+  log "Using model '$MODEL_PRD' for PRD generation"
+  if [[ "$TOOL" == "amp" ]]; then
+    echo "$PRD_PROMPT" | amp --execute --dangerously-allow-all --model "$MODEL_PRD" 2>&1 | tee "$OUTPUT_DIR/auto-compound-prd.log"
+  else
+    echo "$PRD_PROMPT" | claude --dangerously-skip-permissions --model "$MODEL_PRD" 2>&1 | tee "$OUTPUT_DIR/auto-compound-prd.log"
   fi
-fi
 
-# Step 5: Use agent to convert PRD to tasks
-log "Step 5: Converting PRD to prd.json with $TOOL..."
+  # Verify PRD was created
+  PRD_PATH="$TASKS_DIR/$PRD_FILENAME"
+  [ -f "$PRD_PATH" ] || error "PRD was not created at $PRD_PATH"
+  log "PRD created: $PRD_PATH"
 
-TASKS_PROMPT="Load the tasks skill. Convert $PRD_PATH to $OUTPUT_DIR/prd.json
+  # Archive previous run before overwriting prd.json
+  ARCHIVE_DIR="$OUTPUT_DIR/archive"
+
+  if [ -f "$PRD_FILE" ]; then
+    OLD_BRANCH=$(jq -r '.branchName // empty' "$PRD_FILE" 2>/dev/null || echo "")
+
+    if [ -n "$OLD_BRANCH" ] && [ "$OLD_BRANCH" != "$BRANCH_NAME" ]; then
+      DATE=$(date +%Y-%m-%d)
+      FOLDER_NAME=$(echo "$OLD_BRANCH" | sed 's|^[^/]*/||')
+      ARCHIVE_FOLDER="$ARCHIVE_DIR/$DATE-$FOLDER_NAME"
+
+      log "Archiving previous run: $OLD_BRANCH"
+      mkdir -p "$ARCHIVE_FOLDER"
+      cp "$PRD_FILE" "$ARCHIVE_FOLDER/"
+      [ -f "$PROGRESS_FILE" ] && cp "$PROGRESS_FILE" "$ARCHIVE_FOLDER/"
+      log "Archived to: $ARCHIVE_FOLDER"
+    fi
+  fi
+
+  # Step 5: Use agent to convert PRD to tasks
+  log "Step 5: Converting PRD to prd.json with $TOOL..."
+
+  TASKS_PROMPT="Load the tasks skill. Convert $PRD_PATH to $OUTPUT_DIR/prd.json
 
 Use branch name: $BRANCH_NAME
 
 Remember: Each task must be small enough to complete in one iteration."
 
-log "Using model '$MODEL_TASKS' for task conversion"
-if [[ "$TOOL" == "amp" ]]; then
-  echo "$TASKS_PROMPT" | amp --execute --dangerously-allow-all --model "$MODEL_TASKS" 2>&1 | tee "$OUTPUT_DIR/auto-compound-tasks.log"
-else
-  echo "$TASKS_PROMPT" | claude --dangerously-skip-permissions --model "$MODEL_TASKS" 2>&1 | tee "$OUTPUT_DIR/auto-compound-tasks.log"
+  log "Using model '$MODEL_TASKS' for task conversion"
+  if [[ "$TOOL" == "amp" ]]; then
+    echo "$TASKS_PROMPT" | amp --execute --dangerously-allow-all --model "$MODEL_TASKS" 2>&1 | tee "$OUTPUT_DIR/auto-compound-tasks.log"
+  else
+    echo "$TASKS_PROMPT" | claude --dangerously-skip-permissions --model "$MODEL_TASKS" 2>&1 | tee "$OUTPUT_DIR/auto-compound-tasks.log"
+  fi
+
+  # Verify prd.json was created
+  [ -f "$OUTPUT_DIR/prd.json" ] || error "prd.json was not created"
+  log "Tasks created: $(cat "$OUTPUT_DIR/prd.json" | jq '.tasks | length') tasks"
+
+  # Commit the PRD and prd.json
+  git add "$PRD_PATH" "$OUTPUT_DIR/prd.json"
+  git commit -m "chore: add PRD and tasks for $PRIORITY_ITEM" || true
+
 fi
-
-# Verify prd.json was created
-[ -f "$OUTPUT_DIR/prd.json" ] || error "prd.json was not created"
-log "Tasks created: $(cat "$OUTPUT_DIR/prd.json" | jq '.tasks | length') tasks"
-
-# Commit the PRD and prd.json
-git add "$PRD_PATH" "$OUTPUT_DIR/prd.json"
-git commit -m "chore: add PRD and tasks for $PRIORITY_ITEM" || true
 
 # Step 6: Run the loop
 log "Step 6: Running execution loop (max $MAX_ITERATIONS iterations, model: $MODEL_EXECUTE)..."
