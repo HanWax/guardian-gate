@@ -249,3 +249,23 @@ Started: Fri  6 Feb 2026 06:49:58 IST
   - T-009 update mutation already complete: useUpdateManager() hook used in edit route
   
 ---
+## Thu 6 Feb 2026 14:10:00 IST - T-010, T-011, T-012
+
+- T-010, T-011, T-012 were already complete from T-002 implementation
+- Delete button exists in each manager row (red "מחיקה" button)
+- Clicking delete shows inline confirmation (not modal) with Hebrew buttons
+- Confirmation buttons: "אישור" (confirm, red) and "ביטול" (cancel, gray)
+- Delete mutation uses useDeleteManager() hook (created in T-002)
+- Mutation automatically refreshes list via React Query cache invalidation
+- Loading state shows during deletion: "מוחק..." text on confirm button
+- Delete button positioned at end of row for RTL layout
+- All quality checks already passing
+
+- **Learnings for future iterations:**
+  - Delete confirmation pattern: inline toggle (not modal), state tracks confirmId
+  - Hebrew confirmation text: "אישור" and "ביטול" buttons (not full sentence)
+  - isConfirming state shows confirm/cancel buttons, normal state shows edit/delete
+  - Delete mutation invalidates cache via `queryClient.invalidateQueries({ queryKey: managerKeys.all })`
+  - Loading state: disabled button with "מוחק..." text during isPending
+  
+---
