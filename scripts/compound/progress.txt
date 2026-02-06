@@ -224,3 +224,28 @@ Started: Fri  6 Feb 2026 06:49:58 IST
   - T-007 mutation already complete: useCreateManager() hook used in new.tsx route
   
 ---
+## Thu 6 Feb 2026 14:05:00 IST - T-008, T-009
+
+- Implemented manager edit route following teacher edit pattern
+- Route fetches manager data by managerId using useManager() hook
+- Displays loading skeleton while fetching (3 field placeholders)
+- Shows error state if manager not found or fetch fails
+- Form pre-fills with existing manager data (name, phone, nursery_id)
+- Uses useUpdateManager() mutation hook (already created in T-002)
+- On success: redirects to /managers list
+- On error: shows Hebrew error message
+- T-009 mutation already complete from T-002 implementation
+- All quality checks pass: lint ✓, typecheck ✓, test ✓ (167 tests)
+
+- Files changed:
+  - Modified: src/routes/managers/$managerId.edit.tsx (full implementation)
+
+- **Learnings for future iterations:**
+  - Edit route pattern: fetch single item, show loading/error states, pass to form
+  - Loading skeleton for edit forms: 3 fields (name, phone, nursery)
+  - Hebrew error message for not found: 'מנהל לא נמצא/ה'
+  - Hebrew error message for update: 'שגיאה בעדכון מנהל'
+  - Edit form reuses same ManagerForm component with manager prop
+  - T-009 update mutation already complete: useUpdateManager() hook used in edit route
+  
+---
