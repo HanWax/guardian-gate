@@ -265,8 +265,48 @@ fi
 log "Step 6: Running execution loop (max $MAX_ITERATIONS iterations, model: $MODEL_EXECUTE)..."
 "$SCRIPT_DIR/loop.sh" --model "$MODEL_EXECUTE" "$MAX_ITERATIONS" 2>&1 | tee "$OUTPUT_DIR/auto-compound-execution.log"
 
-# Step 7: Create PR
-log "Step 7: Creating Pull Request..."
+# Step 7: Update report with completion status
+log "Step 7: Updating report with task completion status..."
+
+# On resume, LATEST_REPORT may not be set — try to find it
+if [ -z "${LATEST_REPORT:-}" ]; then
+  LATEST_REPORT=$(ls -t "$REPORTS_DIR"/*.md 2>/dev/null | head -1)
+fi
+
+if [ -f "${LATEST_REPORT:-}" ]; then
+  COMPLETED_COUNT=$(jq '[.tasks[] | select(.passes == true)] | length' "$PRD_FILE")
+  TOTAL_COUNT=$(jq '.tasks | length' "$PRD_FILE")
+
+  UPDATE_PROMPT="Update the report at $LATEST_REPORT to reflect that '$PRIORITY_ITEM' is now COMPLETE.
+
+Specifically:
+1. Change the status of the item from 'NOT STARTED' (or whatever it currently says) to 'COMPLETE'
+2. Add a brief summary of what was implemented (2-3 bullet points based on the branch name and description)
+3. Update the Progress Summary table counts (increment Complete, decrement Remaining for the relevant phase)
+4. Remove the completed item from the 'Next Up' recommended order list and renumber remaining items
+5. Update the 'Last updated' date at the bottom to today's date
+
+Tasks completed: $COMPLETED_COUNT/$TOTAL_COUNT
+Branch: $BRANCH_NAME
+
+Do NOT change anything else in the report. Keep all other content exactly as-is."
+
+  if [[ "$TOOL" == "amp" ]]; then
+    echo "$UPDATE_PROMPT" | amp --execute --dangerously-allow-all --model "$MODEL_TASKS" 2>&1 | tee -a "$OUTPUT_DIR/auto-compound-execution.log"
+  else
+    echo "$UPDATE_PROMPT" | claude --dangerously-skip-permissions --model "$MODEL_TASKS" 2>&1 | tee -a "$OUTPUT_DIR/auto-compound-execution.log"
+  fi
+
+  # Commit the updated report
+  git add "$LATEST_REPORT"
+  git commit -m "docs: update report - $PRIORITY_ITEM complete" || true
+  log "Report updated"
+else
+  log "Skipping report update (no report file found or resumed run)"
+fi
+
+# Step 8: Create PR
+log "Step 8: Creating Pull Request..."
 
 git push -u origin "$BRANCH_NAME"
 
