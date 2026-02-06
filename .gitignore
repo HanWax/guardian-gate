@@ -8,6 +8,9 @@
 # Editor
 .vscode
 
+# Agent skills
+.agents
+
 # Dependencies
 node_modules/
 .node_modules_cache
@@ -22,7 +25,6 @@ logs/
 .worktrees
 
 # Compound engineering - runtime state (not workflow scripts)
-scripts/compound/prd.json
 scripts/compound/progress.txt
 scripts/compound/auto-compound-execution.log
 scripts/compound/auto-compound-prd.log
