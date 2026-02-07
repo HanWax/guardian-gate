@@ -14,9 +14,27 @@
 set -e
 
 REPORT_PATH="$1"
+shift || true
+
+# Parse optional arguments
+EXCLUDED_TITLES=()
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --exclude-titles)
+      shift
+      while [[ $# -gt 0 && "$1" != --* ]]; do
+        EXCLUDED_TITLES+=("$1")
+        shift
+      done
+      ;;
+    *)
+      shift
+      ;;
+  esac
+done
 
 if [ -z "$REPORT_PATH" ]; then
-  echo "Usage: ./analyze-report.sh <report-path>" >&2
+  echo "Usage: ./analyze-report.sh <report-path> [--exclude-titles <title1> <title2> ...]" >&2
   exit 1
 fi
 
@@ -104,6 +122,18 @@ if [ -d "$TASKS_DIR" ]; then
   fi
 fi
 
+# Build excluded titles section for the prompt
+EXCLUDED_SECTION=""
+if [ ${#EXCLUDED_TITLES[@]} -gt 0 ]; then
+  EXCLUDED_SECTION="
+## Currently Being Worked On (DO NOT PICK THESE)
+"
+  for title in "${EXCLUDED_TITLES[@]}"; do
+    EXCLUDED_SECTION="$EXCLUDED_SECTION- $title
+"
+  done
+fi
+
 PROMPT="You are analyzing a daily report for a software product.
 
 Read this report and identify the #1 most actionable item that should be worked on TODAY.
@@ -116,13 +146,16 @@ CONSTRAINTS:
 - Prefer high-impact, low-effort items
 - Focus on UI/UX improvements, copy changes, bug fixes, or configuration changes
 - IMPORTANT: Do NOT pick items that appear in the 'Recently Fixed' section below
-$RECENT_FIXES
+- IMPORTANT: Do NOT pick items marked **Status: IN PROGRESS** in the report
+- IMPORTANT: Do NOT pick items listed in the 'Currently Being Worked On' section below
+$RECENT_FIXES$EXCLUDED_SECTION
 REPORT:
 $REPORT_CONTENT
 
 Respond with ONLY a JSON object (no markdown, no code fences, no explanation):
 {
   \"priority_item\": \"Brief title of the item\",
+  \"item_id\": \"The item number from the report heading (e.g. 1, 2, 3)\",
   \"description\": \"2-3 sentence description of what needs to be done\",
   \"rationale\": \"Why this is the #1 priority based on the report\",
   \"acceptance_criteria\": [\"List of 3-5 specific, verifiable criteria\"],

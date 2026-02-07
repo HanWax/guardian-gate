@@ -26,6 +26,10 @@ fi
 
 # Parse arguments (can override config)
 RESUME=false
+CUSTOM_OUTPUT_DIR=""
+CUSTOM_PROJECT_ROOT=""
+CLAIMS_FILE=""
+CLAIM_TITLE=""
 while [[ $# -gt 0 ]]; do
   case $1 in
     --resume)
@@ -48,6 +52,38 @@ while [[ $# -gt 0 ]]; do
       MODEL="${1#*=}"
       shift
       ;;
+    --output-dir)
+      CUSTOM_OUTPUT_DIR="$2"
+      shift 2
+      ;;
+    --output-dir=*)
+      CUSTOM_OUTPUT_DIR="${1#*=}"
+      shift
+      ;;
+    --project-root)
+      CUSTOM_PROJECT_ROOT="$2"
+      shift 2
+      ;;
+    --project-root=*)
+      CUSTOM_PROJECT_ROOT="${1#*=}"
+      shift
+      ;;
+    --claims-file)
+      CLAIMS_FILE="$2"
+      shift 2
+      ;;
+    --claims-file=*)
+      CLAIMS_FILE="${1#*=}"
+      shift
+      ;;
+    --claim-title)
+      CLAIM_TITLE="$2"
+      shift 2
+      ;;
+    --claim-title=*)
+      CLAIM_TITLE="${1#*=}"
+      shift
+      ;;
     *)
       if [[ "$1" =~ ^[0-9]+$ ]]; then
         MAX_ITERATIONS="$1"
@@ -63,11 +99,39 @@ if [[ "$TOOL" != "amp" && "$TOOL" != "claude" ]]; then
   exit 1
 fi
 
+# Override project root if specified (for worktree mode)
+if [ -n "$CUSTOM_PROJECT_ROOT" ]; then
+  PROJECT_ROOT="$CUSTOM_PROJECT_ROOT"
+fi
+
 # Resolve paths
 OUTPUT_DIR="$PROJECT_ROOT/$OUTPUT_DIR"
+
+# Override output dir if specified (for worktree mode)
+if [ -n "$CUSTOM_OUTPUT_DIR" ]; then
+  OUTPUT_DIR="$CUSTOM_OUTPUT_DIR"
+fi
+
 PRD_FILE="$OUTPUT_DIR/prd.json"
 PROGRESS_FILE="$OUTPUT_DIR/progress.txt"
 STATE_FILE="$OUTPUT_DIR/loop-state.json"
+
+# Heartbeat function for parallel mode
+update_heartbeat() {
+  if [ -n "$CLAIMS_FILE" ] && [ -f "$CLAIMS_FILE" ] && [ -n "$CLAIM_TITLE" ]; then
+    local LOCK_FILE="${CLAIMS_FILE%.json}.lock"
+    if /usr/bin/shlock -f "$LOCK_FILE" -p $$; then
+      local NOW
+      NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+      local UPDATED
+      UPDATED=$(jq --arg title "$CLAIM_TITLE" --arg ts "$NOW" \
+        '.claims = [.claims[] | if .itemTitle == $title then .lastHeartbeat = $ts else . end]' \
+        "$CLAIMS_FILE")
+      echo "$UPDATED" > "$CLAIMS_FILE"
+      rm -f "$LOCK_FILE"
+    fi
+  fi
+}
 
 # Note: Archiving is handled by auto-compound.sh before prd.json is overwritten
 # This prevents archiving the wrong content when switching between features
@@ -102,6 +166,9 @@ for i in $(seq $START_FROM $MAX_ITERATIONS); do
   echo "==============================================================="
   echo "  Iteration $i of $MAX_ITERATIONS ($TOOL)"
   echo "==============================================================="
+
+  # Update heartbeat in parallel mode
+  update_heartbeat
 
   # Run the selected tool with the prompt
   if [[ "$TOOL" == "amp" ]]; then
