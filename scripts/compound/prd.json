@@ -144,8 +144,8 @@
         "Run `npm run lint` - exits with code 0"
       ],
       "priority": 8,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Already RTL-compatible: all classes use symmetric/vertical utilities (px-*, py-*, mb-*). No directional pl-*/pr-*/ml-*/mr-*/text-left present. Tailwind v4 px-* maps to padding-inline (logical)."
     },
     {
       "id": "T-009",
@@ -158,7 +158,7 @@
         "No new console errors or warnings"
       ],
       "priority": 9,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {
@@ -176,7 +176,7 @@
         "Run `npm run lint` - exits with code 0"
       ],
       "priority": 10,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {
