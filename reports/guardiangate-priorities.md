@@ -84,7 +84,15 @@ Child safety check-in system for nurseries. Prevents "forgotten child" fatalitie
 
 - Configure times (dropoff_start, dropoff_end, first_message_time, second_ping_time)
 - Timezone settings
-- **Status: NOT STARTED**
+- **Status: COMPLETE**
+- Route: `/settings` with `requireAuth()` guard
+- Zod schema validation for HH:mm time format and timezone
+- Form with time inputs and timezone dropdown (Asia/Jerusalem default)
+- Server function using service-role client with `requireManagerRole()` access
+- React Query hooks for fetching and updating nursery settings
+- Hebrew labels, error messages, and success feedback
+- RTL-compatible styling with logical CSS properties
+- Navigation link visible to admin/manager roles only
 
 ### 9. [MEDIUM] Children CRUD
 
@@ -183,9 +191,8 @@ See docs/plan.md for full details on:
 
 ## Next Up (Recommended Order)
 
-1. **Nursery settings page** (#8) — needed before WhatsApp scheduling can work
-2. **Children-parents assignment UI** — junction table exists, need UI to link parents to children
-3. **Phase 3: WhatsApp Integration** — core safety flow depends on this
+1. **Children-parents assignment UI** — junction table exists, need UI to link parents to children
+2. **Phase 3: WhatsApp Integration** — core safety flow depends on this
 
 ---
 
@@ -194,9 +201,9 @@ See docs/plan.md for full details on:
 - Tech Stack: TanStack Start, Supabase, Vercel, Meta WhatsApp Cloud API
 - Estimated cost: ~₪200/month (WhatsApp messages only)
 - All UI must support Hebrew RTL
-- Dashboard pages (`/admin`, `/manager`, `/teacher`) exist as placeholder stubs — no content yet
+- Dashboard pages (`/admin`, `/manager`, `/teacher`) populated with quick-access cards
 
-*Last updated: 2026-02-06*
+*Last updated: 2026-02-08*
 
 ---
 
