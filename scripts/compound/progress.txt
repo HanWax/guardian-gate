@@ -507,3 +507,49 @@ All implementation and verification tasks complete. Ready for PR creation.
   - All quality checks pass: lint ✓, test ✓ (69 tests), typecheck ✓
 
 ---
+## Sat  8 Feb 2026 08:50:00 IST - T-002
+
+- Created updateNurserySettings server function in src/lib/server/nurseries.ts
+- Function follows established pattern from managers.ts:
+  - Uses createServerFn with POST method
+  - Validates input with tokenSchema extended with nurseryId (UUID) and settings (Zod schema)
+  - Calls requireManagerRole() for auth verification (admin/manager access)
+  - Creates service client with SUPABASE_SERVICE_ROLE_KEY
+  - Updates nurseries table using .update().eq().select().single() pattern
+  - Returns updated nursery record or throws Hebrew error message
+- Added error messages: update_failed, not_found (Hebrew)
+- All quality checks pass: lint ✓, typecheck ✓, test ✓ (69 tests)
+
+- Files changed:
+  - Modified: src/lib/server/nurseries.ts (added updateNurserySettings function)
+
+- **Learnings for future iterations:**
+  - Settings update pattern: use requireManagerRole() not requireAdminRole() (managers can update their nursery settings)
+  - Input validator pattern: tokenSchema.extend({ nurseryId: z.string().uuid(), settings: schema })
+  - Hebrew error messages: "שגיאה בעדכון הגדרות הגן" (error updating nursery settings), "גן לא נמצא" (nursery not found)
+  - Update pattern: .update(data.settings).eq('id', data.nurseryId).select().single()
+  - Check both error and null record for not_found case
+
+---
+## Sat  8 Feb 2026 08:53:00 IST - T-003
+
+- Created nursery query hooks in src/lib/queries/nurseries.ts
+- Added getNurserySettings server function to fetch single nursery with settings
+- Implemented useNurserySettings(nurseryId) hook with React Query useQuery
+- Implemented useUpdateNurserySettings() mutation hook
+- Added nurseryKeys.detail(id) to cache key factory
+- Mutation invalidates specific nursery query on success (not entire list)
+- All quality checks pass: lint ✓, test ✓ (69 tests), typecheck ✓
+
+- Files changed:
+  - Modified: src/lib/server/nurseries.ts (added getNurserySettings)
+  - Modified: src/lib/queries/nurseries.ts (added hooks and detail key)
+
+- **Learnings for future iterations:**
+  - Query hooks pattern: useQuery with enabled: !!id to prevent fetching without ID
+  - Server function for single record: select specific fields, .eq().single(), check both error and null
+  - Mutation invalidation: use specific key (nurseryKeys.detail(variables.nurseryId)) not all nursery keys
+  - Type import pattern: `import type { updateNurserySettingsSchema } from '../schemas/nursery'` then `z.infer<typeof ...>`
+  - Settings fetch requires requireManagerRole() since only admin/manager can view settings
+  
+---
