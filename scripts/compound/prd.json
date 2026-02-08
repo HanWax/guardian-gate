@@ -1,260 +1,217 @@
 {
-  "project": "RoleCall",
-  "branchName": "compound/fix-nav-and-dashboard-stubs",
-  "description": "Add missing /teachers navigation link and populate all role dashboards with quick-access cards",
+  "project": "RoleCall - Nursery Settings Page",
+  "branchName": "compound/nursery-settings-page",
+  "description": "Build a settings page for admins/managers to configure nursery timing parameters and timezone",
   "tasks": [
     {
       "id": "T-001",
-      "title": "Add /teachers link to Navigation component",
-      "description": "Update Navigation component to include a link to /teachers with Hebrew label, visible only to admin and manager roles.",
+      "title": "Create nursery settings Zod schema",
+      "description": "Define Zod validation schema for nursery settings fields (dropoff_start, dropoff_end, first_message_time, second_ping_time, timezone)",
       "acceptanceCriteria": [
-        "File src/components/Navigation.tsx exists",
-        "File contains link element or route navigation for /teachers",
-        "Link uses Hebrew label (מורות or similar)",
-        "Link visibility checks user role via useAuth() hook",
-        "Link only renders when role is 'admin' or 'manager'",
-        "Run `npm run typecheck` - exits with code 0",
-        "Run `npm run lint` - exits with code 0"
+        "File src/lib/schemas/nursery.ts created",
+        "File contains updateNurserySettingsSchema export",
+        "Schema validates dropoff_start as time format (HH:mm)",
+        "Schema validates dropoff_end as time format (HH:mm)",
+        "Schema validates first_message_time as time format (HH:mm)",
+        "Schema validates second_ping_time as time format (HH:mm)",
+        "Schema validates timezone as non-empty string",
+        "Run `npm run typecheck` - exits with code 0"
       ],
       "priority": 1,
-      "passes": true,
+      "passes": false,
       "notes": ""
     },
     {
       "id": "T-002",
-      "title": "Verify Navigation component uses RTL-compatible Tailwind classes",
-      "description": "Ensure the /teachers link styling uses logical properties (ps-*, pe-*, ms-*, me-*) not directional (pl-*, pr-*, ml-*, mr-*).",
+      "title": "Create updateNurserySettings server function",
+      "description": "Implement server function to update nursery settings using service-role client and access token verification",
       "acceptanceCriteria": [
-        "File src/components/Navigation.tsx does NOT contain pl-, pr-, ml-, mr-, text-left, or text-right classes",
-        "File uses ps-, pe-, ms-, me-, or text-start classes where appropriate",
+        "File src/lib/server/nurseries.ts created",
+        "Export updateNurserySettings function",
+        "Function accepts accessToken parameter",
+        "Function accepts validated nursery settings data",
+        "Function creates service client with SUPABASE_SERVICE_ROLE_KEY",
+        "Function verifies auth via access token",
+        "Function updates nurseries table with provided data",
+        "Function returns updated nursery record or throws error",
         "Run `npm run typecheck` - exits with code 0"
       ],
       "priority": 2,
-      "passes": true,
+      "passes": false,
       "notes": ""
     },
     {
       "id": "T-003",
-      "title": "Test Navigation with admin role - /teachers link visible",
-      "description": "Verify navigation displays /teachers link when user has admin role.",
+      "title": "Create nurseries query hooks",
+      "description": "Implement React Query hooks for fetching and updating nursery settings following established patterns",
       "acceptanceCriteria": [
-        "Log in as admin user (or mock admin role)",
-        "Navigate to dashboard or page with Navigation component visible",
-        "Screenshot shows /teachers link is visible",
-        "No console errors logged"
+        "File src/lib/queries/nurseries.ts created",
+        "Export nurseriesKeys factory with detail function",
+        "Export useNurserySettings(nurseryId) hook",
+        "useNurserySettings hook uses React Query useQuery",
+        "useNurserySettings hook fetches from /api/nurseries/:id OR server function",
+        "Export useUpdateNurserySettings() mutation hook",
+        "useUpdateNurserySettings uses getAccessToken() from queries/utils.ts",
+        "useUpdateNurserySettings calls updateNurserySettings server function",
+        "useUpdateNurserySettings invalidates nursery query on success",
+        "Run `npm run typecheck` - exits with code 0"
       ],
       "priority": 3,
-      "passes": true,
-      "notes": "Implementation verified: Navigation uses canManage check (admin || manager), link renders correctly with Hebrew label"
+      "passes": false,
+      "notes": ""
     },
     {
       "id": "T-004",
-      "title": "Test Navigation with manager role - /teachers link visible",
-      "description": "Verify navigation displays /teachers link when user has manager role.",
+      "title": "Create settings route file",
+      "description": "Create /settings route file with route protection and beforeLoad guard",
       "acceptanceCriteria": [
-        "Log in as manager user (or mock manager role)",
-        "Navigate to dashboard or page with Navigation component visible",
-        "Screenshot shows /teachers link is visible",
-        "No console errors logged"
+        "File src/routes/settings.tsx created",
+        "Route exports createFileRoute with path '/settings'",
+        "Route has beforeLoad property with requireAuth() call",
+        "requireAuth() guards against unauthenticated access",
+        "Run `npm run typecheck` - exits with code 0",
+        "Dev server running - routeTree.gen.ts includes settings route"
       ],
       "priority": 4,
-      "passes": true,
-      "notes": "Implementation verified: Navigation uses canManage check (admin || manager), link renders correctly with Hebrew label"
+      "passes": false,
+      "notes": ""
     },
     {
       "id": "T-005",
-      "title": "Test Navigation with teacher role - /teachers link hidden",
-      "description": "Verify navigation hides /teachers link when user has teacher role.",
+      "title": "Build nursery settings form component",
+      "description": "Create form component displaying all nursery timing fields with proper input types",
       "acceptanceCriteria": [
-        "Log in as teacher user (or mock teacher role)",
-        "Navigate to dashboard or page with Navigation component visible",
-        "Screenshot shows /teachers link is NOT visible",
-        "No console errors logged"
+        "Form component renders in src/routes/settings.tsx",
+        "Form displays dropoff_start field with time input type",
+        "Form displays dropoff_end field with time input type",
+        "Form displays first_message_time field with time input type",
+        "Form displays second_ping_time field with time input type",
+        "Form displays timezone field with select dropdown",
+        "Timezone select includes at minimum: Asia/Jerusalem, UTC options",
+        "Form loads and displays current nursery values from useNurserySettings hook",
+        "Run `npm run typecheck` - exits with code 0"
       ],
       "priority": 5,
-      "passes": true,
-      "notes": "Implementation verified: Teachers link wrapped in canManage check, only shows for admin/manager"
+      "passes": false,
+      "notes": ""
     },
     {
       "id": "T-006",
-      "title": "Create DashboardCard component file",
-      "description": "Create src/components/DashboardCard.tsx with title, description, and href props.",
+      "title": "Implement form validation with Zod schema",
+      "description": "Add validation logic to form using Zod schema and display Hebrew error messages",
       "acceptanceCriteria": [
-        "File src/components/DashboardCard.tsx is created",
-        "Component exports a function named DashboardCard",
-        "Component accepts props: title (string), description (string), href (string)",
-        "Component returns a clickable card/link element",
+        "Form validates fields against updateNurserySettingsSchema",
+        "Invalid time format triggers validation error",
+        "Invalid timezone triggers validation error",
+        "Error messages displayed in Hebrew",
+        "Form uses getHebrewErrorMessage() for error translation",
+        "Validation errors display on field level or form level",
+        "Run `npm run lint` - exits with code 0",
         "Run `npm run typecheck` - exits with code 0"
       ],
       "priority": 6,
-      "passes": true,
+      "passes": false,
       "notes": ""
     },
     {
       "id": "T-007",
-      "title": "DashboardCard uses TanStack Router Link component",
-      "description": "Ensure DashboardCard wraps content in TanStack Router's Link component for navigation.",
+      "title": "Implement form submission with mutation",
+      "description": "Connect form submit to useUpdateNurserySettings mutation hook",
       "acceptanceCriteria": [
-        "File src/components/DashboardCard.tsx imports Link from @tanstack/react-router",
-        "Component renders Link with to prop set to href prop value",
+        "Form has submit button",
+        "Form submit calls useUpdateNurserySettings mutation",
+        "Mutation passes validated data to server function",
+        "Mutation includes loading state during submission",
+        "On success: display Hebrew success message/toast",
+        "On error: display Hebrew error message/toast",
+        "Form disables submit button during loading",
         "Run `npm run typecheck` - exits with code 0"
       ],
       "priority": 7,
-      "passes": true,
+      "passes": false,
       "notes": ""
     },
     {
       "id": "T-008",
-      "title": "DashboardCard uses RTL-compatible Tailwind classes",
-      "description": "Verify DashboardCard styling uses logical properties, not directional classes.",
+      "title": "Apply RTL-compatible CSS styling",
+      "description": "Style form with logical CSS properties for Hebrew RTL layout",
       "acceptanceCriteria": [
-        "File src/components/DashboardCard.tsx does NOT contain pl-, pr-, ml-, mr-, text-left, or text-right classes",
-        "File uses ps-, pe-, ms-, me-, or text-start classes for spacing/alignment",
-        "Run `npm run typecheck` - exits with code 0"
+        "Form uses logical padding: ps-* or pe-* (not pl-*, pr-*)",
+        "Form uses logical margins: ms-* or me-* (not ml-*, mr-*)",
+        "Form uses text-start (not text-left)",
+        "Form uses logical space between fields",
+        "All layout is visually correct in RTL mode",
+        "Run `npm run lint` - exits with code 0"
       ],
       "priority": 8,
-      "passes": true,
+      "passes": false,
       "notes": ""
     },
     {
       "id": "T-009",
-      "title": "Populate admin dashboard with 4 DashboardCard components",
-      "description": "Replace admin dashboard stub (src/routes/admin/index.tsx) with cards linking to children, parents, teachers, and managers.",
+      "title": "Run quality checks on implementation",
+      "description": "Verify all linting, testing, and type checking passes",
       "acceptanceCriteria": [
-        "File src/routes/admin/index.tsx renders 4 DashboardCard components",
-        "Cards link to: /admin/children, /admin/parents, /admin/teachers, /admin/managers",
-        "All card titles and descriptions are in Hebrew",
-        "Cards container uses responsive grid (grid-cols-2 on desktop, grid-cols-1 on mobile via sm: breakpoint)",
+        "Run `npm run lint` - exits with code 0",
+        "Run `npm run test` - exits with code 0",
         "Run `npm run typecheck` - exits with code 0",
-        "Run `npm run lint` - exits with code 0"
+        "No new console errors or warnings"
       ],
       "priority": 9,
-      "passes": true,
+      "passes": false,
       "notes": ""
     },
     {
       "id": "T-010",
-      "title": "Test admin dashboard - all 4 cards render and links work",
-      "description": "Verify admin dashboard displays all cards and navigation works correctly.",
+      "title": "Add settings link to sidebar navigation",
+      "description": "Add navigation link to settings page in sidebar, visible only to admin/manager roles",
       "acceptanceCriteria": [
-        "Log in as admin user and navigate to /admin",
-        "Screenshot shows 4 dashboard cards visible",
-        "Click first card - navigates to /admin/children",
-        "Navigate back to /admin, click second card - navigates to /admin/parents",
-        "Navigate back to /admin, click third card - navigates to /admin/teachers",
-        "Navigate back to /admin, click fourth card - navigates to /admin/managers",
-        "No console errors during navigation"
+        "Find sidebar/navigation component",
+        "Add new link with href='/settings'",
+        "Link text is Hebrew: 'הגדרות משתלה'",
+        "Link visibility conditional: show for admin and manager roles only",
+        "Link not visible for teacher role",
+        "Use requireRole or role-based conditional rendering",
+        "Run `npm run typecheck` - exits with code 0",
+        "Run `npm run lint` - exits with code 0"
       ],
       "priority": 10,
-      "passes": true,
-      "notes": "Implementation verified: 4 DashboardCard components render with correct hrefs, all links navigate to correct routes"
+      "passes": false,
+      "notes": ""
     },
     {
       "id": "T-011",
-      "title": "Test admin dashboard - responsive grid on mobile",
-      "description": "Verify admin dashboard cards stack in single column on mobile viewport.",
+      "title": "Test settings form in browser (desktop)",
+      "description": "Verify form loads, displays values, validates, and submits successfully on desktop",
       "acceptanceCriteria": [
-        "Set viewport to 375x812 (iPhone)",
-        "Navigate to /admin",
-        "Screenshot shows cards stacked vertically (1 column)",
-        "All 4 cards remain visible and clickable",
-        "No text overflow or truncation issues"
+        "Start dev server: npm run dev",
+        "Login as admin or manager user",
+        "Navigate to /settings via sidebar link - page loads without errors",
+        "Form displays current nursery values in all fields",
+        "Modify dropoff_start field to invalid value - error message appears in Hebrew",
+        "Correct the invalid value - error disappears",
+        "Fill all fields with valid test values",
+        "Click submit button - loading state appears then success message in Hebrew",
+        "Browser console shows no errors during interaction"
       ],
       "priority": 11,
-      "passes": true,
-      "notes": "Implementation verified: grid-cols-1 sm:grid-cols-2 ensures mobile stacking, RTL layout with logical spacing"
+      "passes": false,
+      "notes": ""
     },
     {
       "id": "T-012",
-      "title": "Populate manager dashboard with 3 DashboardCard components",
-      "description": "Replace manager dashboard stub (src/routes/manager/index.tsx) with cards linking to children, parents, and teachers.",
+      "title": "Verify settings link visibility and navigation",
+      "description": "Confirm settings link appears/hides correctly based on role and navigates properly",
       "acceptanceCriteria": [
-        "File src/routes/manager/index.tsx renders 3 DashboardCard components",
-        "Cards link to: /manager/children, /manager/parents, /manager/teachers",
-        "All card titles and descriptions are in Hebrew",
-        "Cards container uses responsive grid (grid-cols-2 on desktop, grid-cols-1 on mobile via sm: breakpoint)",
-        "Run `npm run typecheck` - exits with code 0",
-        "Run `npm run lint` - exits with code 0"
+        "Login as admin user - settings link visible in sidebar",
+        "Click settings link - navigates to /settings without errors",
+        "Logout and login as manager user - settings link visible in sidebar",
+        "Logout and login as teacher user - settings link NOT visible in sidebar",
+        "Navigate directly to /settings as teacher - redirected to appropriate page (or error)",
+        "Browser console shows no errors during role transitions"
       ],
       "priority": 12,
-      "passes": true,
-      "notes": ""
-    },
-    {
-      "id": "T-013",
-      "title": "Test manager dashboard - all 3 cards render and links work",
-      "description": "Verify manager dashboard displays all cards and navigation works correctly.",
-      "acceptanceCriteria": [
-        "Log in as manager user and navigate to /manager",
-        "Screenshot shows 3 dashboard cards visible",
-        "Click first card - navigates to /manager/children",
-        "Navigate back to /manager, click second card - navigates to /manager/parents",
-        "Navigate back to /manager, click third card - navigates to /manager/teachers",
-        "No console errors during navigation"
-      ],
-      "priority": 13,
-      "passes": true,
-      "notes": "Implementation verified: 3 DashboardCard components render with correct hrefs, all links navigate to correct routes"
-    },
-    {
-      "id": "T-014",
-      "title": "Test manager dashboard - responsive grid on mobile",
-      "description": "Verify manager dashboard cards stack in single column on mobile viewport.",
-      "acceptanceCriteria": [
-        "Set viewport to 375x812 (iPhone)",
-        "Navigate to /manager",
-        "Screenshot shows cards stacked vertically (1 column)",
-        "All 3 cards remain visible and clickable",
-        "No text overflow or truncation issues"
-      ],
-      "priority": 14,
-      "passes": true,
-      "notes": "Implementation verified: grid-cols-1 sm:grid-cols-2 ensures mobile stacking, RTL layout with logical spacing"
-    },
-    {
-      "id": "T-015",
-      "title": "Populate teacher dashboard with welcome message and view-only links",
-      "description": "Replace teacher dashboard stub (src/routes/teacher/index.tsx) with welcome message and links to view-only pages.",
-      "acceptanceCriteria": [
-        "File src/routes/teacher/index.tsx renders welcome message in Hebrew",
-        "Renders links to: /teacher/children and /teacher/parents",
-        "All text content is in Hebrew",
-        "Uses RTL-compatible Tailwind classes (ps-*, pe-*, ms-*, me-*, text-start)",
-        "Does NOT contain pl-, pr-, ml-, mr-, text-left, or text-right classes",
-        "Run `npm run typecheck` - exits with code 0",
-        "Run `npm run lint` - exits with code 0"
-      ],
-      "priority": 15,
-      "passes": true,
-      "notes": ""
-    },
-    {
-      "id": "T-016",
-      "title": "Test teacher dashboard - content renders and links work",
-      "description": "Verify teacher dashboard displays correctly and navigation to view-only pages works.",
-      "acceptanceCriteria": [
-        "Log in as teacher user and navigate to /teacher",
-        "Screenshot shows welcome message visible",
-        "Screenshot shows links to /teacher/children and /teacher/parents",
-        "Click /teacher/children link - navigates to children view page",
-        "Navigate back to /teacher, click /teacher/parents link - navigates to parents view page",
-        "No console errors during navigation"
-      ],
-      "priority": 16,
-      "passes": true,
-      "notes": "Implementation verified: Welcome message renders, 2 card-style links navigate to /children and /parents"
-    },
-    {
-      "id": "T-017",
-      "title": "Run full quality check suite",
-      "description": "Ensure all quality checks pass: lint, test, and typecheck.",
-      "acceptanceCriteria": [
-        "Run `npm run lint` - exits with code 0",
-        "Run `npm run test` - exits with code 0",
-        "Run `npm run typecheck` - exits with code 0"
-      ],
-      "priority": 17,
-      "passes": true,
+      "passes": false,
       "notes": ""
     }
   ]
