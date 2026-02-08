@@ -23,6 +23,21 @@ export const getNurseries = createServerFn({ method: 'GET' })
     return nurseries
   })
 
+export const getNurserySettings = createServerFn({ method: 'GET' })
+  .inputValidator(tokenSchema.extend({ nurseryId: z.string().uuid() }))
+  .handler(async ({ data }) => {
+    await requireManagerRole(data.accessToken)
+    const supabase = createServiceClient()
+    const { data: nursery, error } = await supabase
+      .from('nurseries')
+      .select('id, name, dropoff_start, dropoff_end, first_message_time, second_ping_time, timezone')
+      .eq('id', data.nurseryId)
+      .single()
+    if (error) throw new Error(err.fetch_failed)
+    if (!nursery) throw new Error(err.not_found)
+    return nursery
+  })
+
 export const updateNurserySettings = createServerFn({ method: 'POST' })
   .inputValidator(tokenSchema.extend({
     nurseryId: z.string().uuid(),
