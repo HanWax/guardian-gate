@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import { requireAuth } from '~/lib/auth-guard';
 import { useNurseries, useNurserySettings } from '~/lib/queries/nurseries';
 import Layout from '~/components/Layout';
+import { updateNurserySettingsSchema } from '~/lib/schemas/nursery';
 import type { NurserySettingsUpdate } from '~/lib/schemas/nursery';
 
 export const Route = createFileRoute('/settings')({
@@ -89,7 +90,12 @@ function SettingsPage() {
   );
 }
 
-function NurserySettingsForm({ initialData }: { initialData?: NurserySettingsUpdate }) {
+function NurserySettingsForm({ initialData, onSubmit, isPending, serverError }: {
+  initialData?: NurserySettingsUpdate;
+  onSubmit?: (data: NurserySettingsUpdate) => void;
+  isPending?: boolean;
+  serverError?: string | null;
+}) {
   const [formData, setFormData] = useState<NurserySettingsUpdate>(initialData ?? {
     dropoff_start: '',
     dropoff_end: '',
@@ -97,9 +103,44 @@ function NurserySettingsForm({ initialData }: { initialData?: NurserySettingsUpd
     second_ping_time: '',
     timezone: 'Asia/Jerusalem',
   });
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setFieldErrors({});
+    const result = updateNurserySettingsSchema.safeParse(formData);
+    if (!result.success) {
+      const errors: Record<string, string> = {};
+      for (const issue of result.error.issues) {
+        const field = issue.path[0];
+        if (field && !errors[field]) {
+          errors[field] = issue.message;
+        }
+      }
+      setFieldErrors(errors);
+      return;
+    }
+    onSubmit?.(result.data);
+  };
+
+  const updateField = (key: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [key]: value }));
+    setFieldErrors((prev) => {
+      if (!prev[key]) return prev;
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+  };
 
   return (
-    <form className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
+      {serverError ? (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-md" role="alert">
+          <p className="text-sm text-red-700">{serverError}</p>
+        </div>
+      ) : null}
+
       {TIME_FIELDS.map(({ key, label }) => (
         <div key={key}>
           <label htmlFor={key} className="block text-sm font-medium text-gray-700 mb-1">
@@ -109,9 +150,15 @@ function NurserySettingsForm({ initialData }: { initialData?: NurserySettingsUpd
             id={key}
             type="time"
             value={formData[key]}
-            onChange={(e) => setFormData((prev) => ({ ...prev, [key]: e.target.value }))}
-            className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            onChange={(e) => updateField(key, e.target.value)}
+            disabled={isPending}
+            className={`block w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
+              fieldErrors[key] ? 'border-red-500' : 'border-gray-300'
+            }`}
           />
+          {fieldErrors[key] ? (
+            <p className="mt-1 text-sm text-red-600" role="alert">{fieldErrors[key]}</p>
+          ) : null}
         </div>
       ))}
 
@@ -122,14 +169,30 @@ function NurserySettingsForm({ initialData }: { initialData?: NurserySettingsUpd
         <select
           id="timezone"
           value={formData.timezone}
-          onChange={(e) => setFormData((prev) => ({ ...prev, timezone: e.target.value }))}
-          className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+          onChange={(e) => updateField('timezone', e.target.value)}
+          disabled={isPending}
+          className={`block w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
+            fieldErrors.timezone ? 'border-red-500' : 'border-gray-300'
+          }`}
         >
           {TIMEZONE_OPTIONS.map((tz) => (
             <option key={tz.value} value={tz.value}>{tz.label}</option>
           ))}
         </select>
+        {fieldErrors.timezone ? (
+          <p className="mt-1 text-sm text-red-600" role="alert">{fieldErrors.timezone}</p>
+        ) : null}
       </div>
+
+      <button
+        type="submit"
+        disabled={isPending}
+        className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${
+          isPending ? 'bg-gray-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'
+        }`}
+      >
+        {isPending ? 'שומר...' : 'שמירה'}
+      </button>
     </form>
   );
 }
