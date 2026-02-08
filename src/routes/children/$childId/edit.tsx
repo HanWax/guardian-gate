@@ -1,8 +1,9 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { requireAuth } from '~/lib/auth-guard';
 import { useChild, useUpdateChild } from '~/lib/queries/children';
-import { useParentsForChild, useUnassignParent } from '~/lib/queries/children-parents';
+import { useParents } from '~/lib/queries/parents';
+import { useParentsForChild, useUnassignParent, useAssignParent } from '~/lib/queries/children-parents';
 import { ChildForm } from '~/components/ChildForm';
 import Layout from '~/components/Layout';
 
@@ -16,9 +17,28 @@ function EditChild() {
   const navigate = useNavigate();
   const { data: child, isLoading, error } = useChild(childId);
   const { data: assignedParents, isLoading: isLoadingParents } = useParentsForChild(childId);
+  const { data: allParents } = useParents();
   const updateMutation = useUpdateChild();
   const unassignMutation = useUnassignParent();
+  const assignMutation = useAssignParent();
   const [parentToRemove, setParentToRemove] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Filter available parents (not already assigned)
+  const availableParents = useMemo(() => {
+    if (!allParents || !assignedParents) return [];
+    const assignedIds = new Set(assignedParents.map((p) => p.id));
+    return allParents.filter((p) => !assignedIds.has(p.id));
+  }, [allParents, assignedParents]);
+
+  // Filter by search term
+  const filteredParents = useMemo(() => {
+    if (!searchTerm) return availableParents;
+    const term = searchTerm.toLowerCase();
+    return availableParents.filter(
+      (p) => p.name.toLowerCase().includes(term) || p.phone.toLowerCase().includes(term)
+    );
+  }, [availableParents, searchTerm]);
 
   if (isLoading) {
     return (
@@ -93,6 +113,43 @@ function EditChild() {
         ) : (
           <p className="text-gray-500">{"אין הורים שהוקצו"}</p>
         )}
+
+        {/* Add parent dropdown */}
+        <div className="mt-4">
+          <label htmlFor="parent-search" className="block text-sm font-medium text-gray-700 mb-2">
+            {"הוסף הורה"}
+          </label>
+          <input
+            id="parent-search"
+            type="text"
+            placeholder="חפש לפי שם או טלפון..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+          />
+          {searchTerm && filteredParents.length > 0 && (
+            <ul className="mt-2 border border-gray-200 rounded-md max-h-48 overflow-y-auto bg-white shadow-lg">
+              {filteredParents.map((parent) => (
+                <li key={parent.id}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      assignMutation.mutate({ childId, parentId: parent.id });
+                      setSearchTerm('');
+                    }}
+                    className="w-full text-start px-4 py-2 hover:bg-gray-50 flex flex-col"
+                  >
+                    <span className="font-medium">{parent.name}</span>
+                    <span className="text-sm text-gray-500">{parent.phone}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          {searchTerm && filteredParents.length === 0 && (
+            <p className="mt-2 text-sm text-gray-500">{"לא נמצאו הורים"}</p>
+          )}
+        </div>
       </div>
 
       {/* Confirmation dialog */}
