@@ -28,6 +28,7 @@ import { Route as TeachersTeacherIdEditRouteImport } from './routes/teachers/$te
 import { Route as ParentsParentIdEditRouteImport } from './routes/parents/$parentId/edit'
 import { Route as ManagersManagerIdEditRouteImport } from './routes/managers/$managerId.edit'
 import { Route as ChildrenChildIdEditRouteImport } from './routes/children/$childId/edit'
+import { Route as ApiWhatsappWebhookRouteImport } from './routes/api.whatsapp.webhook'
 
 const TeacherRoute = TeacherRouteImport.update({
   id: '/teacher',
@@ -124,6 +125,11 @@ const ChildrenChildIdEditRoute = ChildrenChildIdEditRouteImport.update({
   path: '/children/$childId/edit',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiWhatsappWebhookRoute = ApiWhatsappWebhookRouteImport.update({
+  id: '/api/whatsapp/webhook',
+  path: '/api/whatsapp/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -141,6 +147,7 @@ export interface FileRoutesByFullPath {
   '/managers/': typeof ManagersIndexRoute
   '/parents/': typeof ParentsIndexRoute
   '/teachers/': typeof TeachersIndexRoute
+  '/api/whatsapp/webhook': typeof ApiWhatsappWebhookRoute
   '/children/$childId/edit': typeof ChildrenChildIdEditRoute
   '/managers/$managerId/edit': typeof ManagersManagerIdEditRoute
   '/parents/$parentId/edit': typeof ParentsParentIdEditRoute
@@ -162,6 +169,7 @@ export interface FileRoutesByTo {
   '/managers': typeof ManagersIndexRoute
   '/parents': typeof ParentsIndexRoute
   '/teachers': typeof TeachersIndexRoute
+  '/api/whatsapp/webhook': typeof ApiWhatsappWebhookRoute
   '/children/$childId/edit': typeof ChildrenChildIdEditRoute
   '/managers/$managerId/edit': typeof ManagersManagerIdEditRoute
   '/parents/$parentId/edit': typeof ParentsParentIdEditRoute
@@ -184,6 +192,7 @@ export interface FileRoutesById {
   '/managers/': typeof ManagersIndexRoute
   '/parents/': typeof ParentsIndexRoute
   '/teachers/': typeof TeachersIndexRoute
+  '/api/whatsapp/webhook': typeof ApiWhatsappWebhookRoute
   '/children/$childId/edit': typeof ChildrenChildIdEditRoute
   '/managers/$managerId/edit': typeof ManagersManagerIdEditRoute
   '/parents/$parentId/edit': typeof ParentsParentIdEditRoute
@@ -207,6 +216,7 @@ export interface FileRouteTypes {
     | '/managers/'
     | '/parents/'
     | '/teachers/'
+    | '/api/whatsapp/webhook'
     | '/children/$childId/edit'
     | '/managers/$managerId/edit'
     | '/parents/$parentId/edit'
@@ -228,6 +238,7 @@ export interface FileRouteTypes {
     | '/managers'
     | '/parents'
     | '/teachers'
+    | '/api/whatsapp/webhook'
     | '/children/$childId/edit'
     | '/managers/$managerId/edit'
     | '/parents/$parentId/edit'
@@ -249,6 +260,7 @@ export interface FileRouteTypes {
     | '/managers/'
     | '/parents/'
     | '/teachers/'
+    | '/api/whatsapp/webhook'
     | '/children/$childId/edit'
     | '/managers/$managerId/edit'
     | '/parents/$parentId/edit'
@@ -271,6 +283,7 @@ export interface RootRouteChildren {
   ManagersIndexRoute: typeof ManagersIndexRoute
   ParentsIndexRoute: typeof ParentsIndexRoute
   TeachersIndexRoute: typeof TeachersIndexRoute
+  ApiWhatsappWebhookRoute: typeof ApiWhatsappWebhookRoute
   ChildrenChildIdEditRoute: typeof ChildrenChildIdEditRoute
   ManagersManagerIdEditRoute: typeof ManagersManagerIdEditRoute
   ParentsParentIdEditRoute: typeof ParentsParentIdEditRoute
@@ -412,6 +425,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ChildrenChildIdEditRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/whatsapp/webhook': {
+      id: '/api/whatsapp/webhook'
+      path: '/api/whatsapp/webhook'
+      fullPath: '/api/whatsapp/webhook'
+      preLoaderRoute: typeof ApiWhatsappWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -431,6 +451,7 @@ const rootRouteChildren: RootRouteChildren = {
   ManagersIndexRoute: ManagersIndexRoute,
   ParentsIndexRoute: ParentsIndexRoute,
   TeachersIndexRoute: TeachersIndexRoute,
+  ApiWhatsappWebhookRoute: ApiWhatsappWebhookRoute,
   ChildrenChildIdEditRoute: ChildrenChildIdEditRoute,
   ManagersManagerIdEditRoute: ManagersManagerIdEditRoute,
   ParentsParentIdEditRoute: ParentsParentIdEditRoute,

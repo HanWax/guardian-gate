@@ -1,16 +1,28 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { requireAuth } from '~/lib/auth-guard'
+import { createFileRoute, redirect } from '@tanstack/react-router'
+import { supabase } from '~/lib/supabase'
+import { extractRole } from '~/lib/roles'
 
 export const Route = createFileRoute('/')({
-  beforeLoad: () => requireAuth(),
-  component: Home,
+  beforeLoad: async () => {
+    // During SSR, skip — the client will handle the redirect
+    if (typeof window === 'undefined') return
+
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) throw redirect({ to: '/login' })
+
+    const role = extractRole(session.user.user_metadata as Record<string, unknown>)
+    if (role === 'admin') throw redirect({ to: '/admin' })
+    if (role === 'manager') throw redirect({ to: '/manager' })
+    throw redirect({ to: '/teacher' })
+  },
+  component: IndexRedirect,
 })
 
-function Home() {
+function IndexRedirect() {
+  // This renders briefly during SSR before the client-side redirect kicks in
   return (
-    <div className="p-4">
-      <h1 className="text-3xl font-bold">GuardianGate</h1>
-      <p className="mt-2 text-lg">שלום עולם</p>
+    <div className="min-h-screen flex items-center justify-center">
+      <p className="text-gray-500">{"טוען..."}</p>
     </div>
   )
 }

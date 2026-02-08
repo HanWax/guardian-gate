@@ -1,18 +1,26 @@
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, redirect } from '@tanstack/react-router';
 import React, { useState } from 'react';
 import { supabase, getHebrewErrorMessage } from '~/lib/supabase';
 import { isValidEmail } from '~/lib/validation';
 
 export const Route = createFileRoute('/login')({
+  beforeLoad: async () => {
+    if (typeof window === 'undefined') return;
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) throw redirect({ to: '/' });
+  },
   component: LoginPage,
 });
 
 function LoginPage() {
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [emailError, setEmailError] = useState('');
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [authError, setAuthError] = useState('');
+  const [usePassword, setUsePassword] = useState(false);
+  const isDev = import.meta.env.DEV;
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -41,7 +49,24 @@ function LoginPage() {
     setAuthError('');
     setSuccessMessage('');
 
-    const { error } = await supabase.auth.signInWithOtp({ email });
+    if (isDev && usePassword) {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      setLoading(false);
+      if (error) {
+        const errorCode = error.message?.toLowerCase().replace(/\s+/g, '_') || 'unknown_error';
+        setAuthError(getHebrewErrorMessage(errorCode));
+        return;
+      }
+      window.location.href = '/';
+      return;
+    }
+
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/`,
+      },
+    });
 
     setLoading(false);
 
@@ -55,7 +80,7 @@ function LoginPage() {
     setEmail('');
   };
 
-  const isSubmitDisabled = !email || !isValidEmail(email) || loading;
+  const isSubmitDisabled = !email || !isValidEmail(email) || loading || (isDev && usePassword && !password);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -122,6 +147,24 @@ function LoginPage() {
             )}
           </div>
 
+          {isDev && usePassword && (
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                סיסמה
+              </label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={loading}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                data-testid="password-input"
+              />
+            </div>
+          )}
+
           <button
             type="submit"
             disabled={isSubmitDisabled}
@@ -131,8 +174,18 @@ function LoginPage() {
                 : 'bg-indigo-600 hover:bg-indigo-700'
             }`}
           >
-            {loading ? 'שולח...' : 'שלח קישור התחברות'}
+            {loading ? 'שולח...' : (isDev && usePassword ? 'התחבר עם סיסמה' : 'שלח קישור התחברות')}
           </button>
+
+          {isDev && (
+            <button
+              type="button"
+              onClick={() => setUsePassword(!usePassword)}
+              className="w-full text-center text-sm text-gray-500 hover:text-gray-700 underline"
+            >
+              {usePassword ? 'שלח קישור התחברות במקום' : 'התחבר עם סיסמה (dev)'}
+            </button>
+          )}
         </form>
       </div>
     </div>
