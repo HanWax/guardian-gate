@@ -115,7 +115,7 @@ Child safety check-in system for nurseries. Prevents "forgotten child" fatalitie
 - Search by name or phone number
 - Duplicate phone detection
 - ParentForm component with name + phone inputs
-- Note: children-parents assignment UI not yet built (junction table exists in DB)
+- Children-parents assignment UI complete (bidirectional assignment with searchable dropdowns)
 
 ### 11. [MEDIUM] Teachers CRUD
 
@@ -191,8 +191,7 @@ See docs/plan.md for full details on:
 
 ## Next Up (Recommended Order)
 
-1. **Children-parents assignment UI** — junction table exists, need UI to link parents to children
-2. **Phase 3: WhatsApp Integration** — core safety flow depends on this
+1. **Phase 3: WhatsApp Integration** — core safety flow depends on this
 
 ---
 
