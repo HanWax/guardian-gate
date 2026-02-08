@@ -25,3 +25,7 @@ logs/
 # Compound parallel coordination
 .compound-claims.json
 .compound-lock
+
+# Compound iteration debug logs
+scripts/compound/iteration-logs/
+scripts/compound/loop-state.json

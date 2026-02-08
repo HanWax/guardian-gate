@@ -11,5 +11,10 @@
     "prd": "sonnet",
     "tasks": "haiku",
     "execute": "sonnet"
+  },
+  "iteration": {
+    "timeout": 600,
+    "maxRetries": 2,
+    "maxConsecutiveFailures": 3
   }
 }
