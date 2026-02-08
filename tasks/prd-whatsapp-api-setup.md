@@ -13,38 +13,38 @@ Configure Meta Cloud API credentials and webhook infrastructure to enable WhatsA
 
 ## Tasks
 
-### T-001: Create WhatsApp API client helper
+### T-001: Create WhatsApp API client helper ✅
 **Description:** Build `src/lib/server/whatsapp.ts` with functions for sending template messages and text messages using Meta Cloud API.
 
 **Acceptance Criteria:**
-- [ ] Create `sendTemplateMessage(to: string, templateName: string, languageCode: string, components?: any[])` function
-- [ ] Create `sendTextMessage(to: string, text: string)` function
-- [ ] Both functions use `WHATSAPP_API_TOKEN` and `WHATSAPP_PHONE_NUMBER_ID` from env
-- [ ] Include JSDoc comments documenting parameters and return types
-- [ ] Export helper functions for use in other server code
-- [ ] Quality checks pass (lint, typecheck)
+- [x] Create `sendTemplateMessage(to: string, templateName: string, languageCode: string, components?: any[])` function
+- [x] Create `sendTextMessage(to: string, text: string)` function
+- [x] Both functions use `WHATSAPP_API_TOKEN` and `WHATSAPP_PHONE_NUMBER_ID` from env
+- [x] Include JSDoc comments documenting parameters and return types
+- [x] Export helper functions for use in other server code
+- [x] Quality checks pass (lint, typecheck)
 
-### T-002: Add environment variables and documentation
+### T-002: Add environment variables and documentation ✅
 **Description:** Document required WhatsApp API environment variables in `.env.example` and add setup instructions.
 
 **Acceptance Criteria:**
-- [ ] Add `WHATSAPP_API_TOKEN` to `.env.example` with comment explaining it's from Meta Business Manager
-- [ ] Add `WHATSAPP_PHONE_NUMBER_ID` to `.env.example` with comment explaining it's the WhatsApp Business Phone Number ID
-- [ ] Add `WHATSAPP_VERIFY_TOKEN` to `.env.example` with comment explaining it's a random string for webhook verification
-- [ ] Create `docs/whatsapp-setup.md` with step-by-step Meta Business account setup instructions
-- [ ] Document how to obtain API token and phone number ID from Meta Dashboard
-- [ ] Quality checks pass (lint)
+- [x] Add `WHATSAPP_API_TOKEN` to `.env.example` with comment explaining it's from Meta Business Manager
+- [x] Add `WHATSAPP_PHONE_NUMBER_ID` to `.env.example` with comment explaining it's the WhatsApp Business Phone Number ID
+- [x] Add `WHATSAPP_VERIFY_TOKEN` to `.env.example` with comment explaining it's a random string for webhook verification
+- [x] Create `docs/whatsapp-setup.md` with step-by-step Meta Business account setup instructions
+- [x] Document how to obtain API token and phone number ID from Meta Dashboard
+- [x] Quality checks pass (lint)
 
-### T-003: Create webhook verification endpoint
+### T-003: Create webhook verification endpoint ✅
 **Description:** Implement GET endpoint that responds to Meta's webhook verification challenge with hub.verify_token.
 
 **Acceptance Criteria:**
-- [ ] Create server function in `src/lib/server/whatsapp-webhook.ts` that handles GET requests
-- [ ] Verify `hub.verify_token` matches `WHATSAPP_VERIFY_TOKEN` from env
-- [ ] Return `hub.challenge` value when token matches
-- [ ] Return 403 error when token doesn't match
-- [ ] Add route in `src/routes/api/whatsapp/webhook.ts` that calls the server function
-- [ ] Quality checks pass (lint, typecheck)
+- [x] Create server function in `src/lib/server/whatsapp-webhook.ts` that handles GET requests
+- [x] Verify `hub.verify_token` matches `WHATSAPP_VERIFY_TOKEN` from env
+- [x] Return `hub.challenge` value when token matches
+- [x] Return 403 error when token doesn't match
+- [x] Add route in `src/lib/server/whatsapp-webhook-handler.ts` that calls the server function
+- [x] Quality checks pass (lint, typecheck)
 
 ### T-004: Create webhook message receiver endpoint
 **Description:** Implement POST endpoint that receives and logs incoming WhatsApp message payloads from Meta.
