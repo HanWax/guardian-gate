@@ -73,7 +73,7 @@
         "Dev server running - routeTree.gen.ts includes settings route"
       ],
       "priority": 4,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {
@@ -92,7 +92,7 @@
         "Run `npm run typecheck` - exits with code 0"
       ],
       "priority": 5,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {
