@@ -1,0 +1,341 @@
+{
+  "project": "RoleCall - Managers CRUD",
+  "branchName": "compound/managers-crud",
+  "description": "Implement complete CRUD functionality for managers following teachers CRUD pattern with list, create, edit, and delete operations",
+  "tasks": [
+    {
+      "id": "T-001",
+      "title": "Create managers list page route and component",
+      "description": "Set up the /managers route with initial page structure and auth protection. This establishes the foundation for the managers list view.",
+      "acceptanceCriteria": [
+        "File src/routes/managers/index.tsx created",
+        "Route has beforeLoad hook calling requireAuth()",
+        "requireAuth() checks for admin role",
+        "Component imports and exports correctly",
+        "Run `npm run typecheck` - exits with code 0"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "T-002",
+      "title": "Implement managers list fetch and display",
+      "description": "Add query hook to fetch managers from Supabase with nursery join, and render them in a table with columns for name, phone, and nursery.",
+      "acceptanceCriteria": [
+        "Create or use existing query hook in src/lib/queries/ to fetch managers with nursery data",
+        "Managers list page renders a table with three columns: name, phone, nursery name",
+        "Query hook correctly joins managers table with nurseries table",
+        "Loading state shows during fetch",
+        "Error state shows Hebrew error message using getHebrewErrorMessage()",
+        "Empty state shows when managers list is empty",
+        "Run `npm run typecheck` - exits with code 0",
+        "Run `npm test` - exits with code 0"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "T-003",
+      "title": "Add 'Add Manager' button to list page",
+      "description": "Add button labeled 'הוסף מנהל' to the managers list page that navigates to /managers/new.",
+      "acceptanceCriteria": [
+        "Button with Hebrew text 'הוסף מנהל' appears at top of managers list",
+        "Button has correct styling and positioning matching teachers list pattern",
+        "Clicking button navigates to /managers/new",
+        "Run `npm run typecheck` - exits with code 0"
+      ],
+      "priority": 3,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "T-004",
+      "title": "Create manager creation form route",
+      "description": "Set up the /managers/new route with auth protection and form component structure.",
+      "acceptanceCriteria": [
+        "File src/routes/managers/new.tsx created",
+        "Route has beforeLoad hook calling requireAuth() with admin role check",
+        "Component renders a form with name, phone, and nursery_id fields",
+        "Form imports from existing form components/patterns",
+        "Run `npm run typecheck` - exits with code 0"
+      ],
+      "priority": 4,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "T-005",
+      "title": "Implement phone validation in creation form",
+      "description": "Add Israeli phone number validation to the phone field in the manager creation form using existing validation utilities.",
+      "acceptanceCriteria": [
+        "Phone field uses isValidIsraeliPhone() validation function",
+        "Entering invalid phone (non-Israeli format) shows error message",
+        "Entering valid Israeli phone number clears error message",
+        "Form submit is disabled when phone is invalid",
+        "Validation pattern matches teachers/parents CRUD implementation",
+        "Run `npm run typecheck` - exits with code 0"
+      ],
+      "priority": 5,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "T-006",
+      "title": "Implement nursery dropdown in creation form",
+      "description": "Fetch nurseries list from Supabase and populate dropdown menu in the manager creation form.",
+      "acceptanceCriteria": [
+        "Nursery dropdown fetches list from Supabase nurseries table on page load",
+        "Dropdown displays all nurseries with names",
+        "Nursery field is required - form cannot submit without selection",
+        "Dropdown matches styling of parent/teacher creation forms",
+        "Loading state shows while nurseries fetch",
+        "Run `npm run typecheck` - exits with code 0"
+      ],
+      "priority": 6,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "T-007",
+      "title": "Implement manager creation mutation",
+      "description": "Add server function and mutation hook to save new manager to Supabase managers table.",
+      "acceptanceCriteria": [
+        "Create or use existing mutation hook useCreateManager() in src/lib/queries/",
+        "Mutation calls server function that creates manager record in Supabase",
+        "Form submit calls mutation with name, phone, and nursery_id",
+        "On success: redirects to /managers",
+        "On success: shows Hebrew success message",
+        "On error: shows Hebrew error message using getHebrewErrorMessage()",
+        "Form shows loading state during submission",
+        "Run `npm run typecheck` - exits with code 0",
+        "Run `npm test` - exits with code 0"
+      ],
+      "priority": 7,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "T-008",
+      "title": "Create manager edit form route",
+      "description": "Set up the /managers/$managerId/edit route with auth protection and form component that fetches existing manager data.",
+      "acceptanceCriteria": [
+        "File src/routes/managers/$managerId.edit.tsx created",
+        "Route has beforeLoad hook calling requireAuth() with admin role check",
+        "Route fetches existing manager data by managerId",
+        "Component renders form pre-filled with current manager data",
+        "Phone and nursery fields match creation form structure",
+        "Run `npm run typecheck` - exits with code 0"
+      ],
+      "priority": 8,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "T-009",
+      "title": "Implement manager update mutation",
+      "description": "Add mutation hook to save edited manager details back to Supabase.",
+      "acceptanceCriteria": [
+        "Create or use useUpdateManager() mutation hook in src/lib/queries/",
+        "Form submit calls mutation with managerId and updated fields",
+        "On success: redirects to /managers",
+        "On success: shows Hebrew success message",
+        "On error: shows Hebrew error message",
+        "Phone validation same as creation form",
+        "Nursery dropdown same as creation form",
+        "Run `npm run typecheck` - exits with code 0",
+        "Run `npm test` - exits with code 0"
+      ],
+      "priority": 9,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "T-010",
+      "title": "Add delete button to managers list",
+      "description": "Add delete button/icon to each row in the managers list table.",
+      "acceptanceCriteria": [
+        "Each manager row has delete button/icon",
+        "Delete button is positioned consistently with teachers list",
+        "Delete button is visually distinct and right-aligned for RTL",
+        "Clicking delete button does NOT immediately delete - shows confirmation",
+        "Run `npm run typecheck` - exits with code 0"
+      ],
+      "priority": 10,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "T-011",
+      "title": "Implement delete confirmation dialog",
+      "description": "Show Hebrew confirmation dialog when delete button is clicked, with Hebrew text asking to confirm manager deletion.",
+      "acceptanceCriteria": [
+        "Clicking delete button shows modal/dialog",
+        "Dialog displays Hebrew text: 'האם אתה בטוח שברצונך למחוק את המנהל?'",
+        "Dialog has Cancel and Confirm buttons",
+        "Clicking Cancel closes dialog without deleting",
+        "Clicking Confirm calls delete mutation",
+        "Dialog pattern matches teachers CRUD implementation",
+        "Run `npm run typecheck` - exits with code 0"
+      ],
+      "priority": 11,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "T-012",
+      "title": "Implement manager delete mutation",
+      "description": "Add mutation hook to delete manager from Supabase and refresh the list.",
+      "acceptanceCriteria": [
+        "Create or use useDeleteManager() mutation hook in src/lib/queries/",
+        "Mutation calls server function that deletes manager record",
+        "After deletion: managers list is automatically refreshed",
+        "After deletion: shows Hebrew success message",
+        "On error: shows Hebrew error message",
+        "Refresh uses React Query cache invalidation pattern",
+        "Run `npm run typecheck` - exits with code 0",
+        "Run `npm test` - exits with code 0"
+      ],
+      "priority": 12,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "T-013",
+      "title": "Add managers link to main navigation",
+      "description": "Add 'מנהלים' link to the main navigation menu that appears on all pages.",
+      "acceptanceCriteria": [
+        "Main navigation contains link to /managers",
+        "Link text is 'מנהלים' in Hebrew",
+        "Link only shows for users with admin role",
+        "Link styling matches other nav items",
+        "Clicking link navigates to /managers",
+        "Run `npm run typecheck` - exits with code 0"
+      ],
+      "priority": 13,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "T-014",
+      "title": "Verify managers list RTL layout",
+      "description": "Verify that all managers CRUD pages render correctly with RTL layout and Hebrew text.",
+      "acceptanceCriteria": [
+        "Navigate to http://localhost:3000/managers - page loads",
+        "Table columns are in correct order for RTL (name, phone, nursery, actions on left side)",
+        "All Hebrew text displays correctly without encoding issues",
+        "Add Manager button is positioned correctly for RTL",
+        "Page has dir='rtl' attribute set",
+        "No layout shift or text overflow issues",
+        "Run `npm run typecheck` - exits with code 0"
+      ],
+      "priority": 14,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "T-015",
+      "title": "Verify managers creation flow end-to-end",
+      "description": "Test complete flow of creating a new manager from the list page through form submission to redirect.",
+      "acceptanceCriteria": [
+        "Navigate to http://localhost:3000/managers - page loads",
+        "Click 'הוסף מנהל' button - navigates to /managers/new",
+        "Enter name, valid Israeli phone, select nursery",
+        "Click submit button",
+        "Success message appears",
+        "Page redirects to /managers",
+        "New manager appears in list",
+        "No console errors during flow",
+        "Run `npm run typecheck` - exits with code 0",
+        "Run `npm test` - exits with code 0"
+      ],
+      "priority": 15,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "T-016",
+      "title": "Verify managers edit flow end-to-end",
+      "description": "Test complete flow of editing an existing manager through form pre-fill, edit, and redirect.",
+      "acceptanceCriteria": [
+        "Navigate to /managers - list displays",
+        "Click edit icon/button on a manager row",
+        "Form pre-fills with current manager data (name, phone, nursery)",
+        "Change phone number to different valid Israeli number",
+        "Click submit button",
+        "Success message appears",
+        "Page redirects to /managers",
+        "Manager row shows updated phone number",
+        "No console errors during flow"
+      ],
+      "priority": 16,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "T-017",
+      "title": "Verify managers delete flow end-to-end",
+      "description": "Test complete flow of deleting a manager including confirmation dialog and list refresh.",
+      "acceptanceCriteria": [
+        "Navigate to /managers - list displays",
+        "Click delete button/icon on a manager row",
+        "Hebrew confirmation dialog appears",
+        "Click Cancel button - dialog closes, manager not deleted",
+        "Click delete button again",
+        "Dialog appears again",
+        "Click Confirm button",
+        "Success message appears",
+        "Manager is removed from list",
+        "No console errors during flow"
+      ],
+      "priority": 17,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "T-018",
+      "title": "Verify empty state when no managers exist",
+      "description": "Test that the managers list displays an appropriate empty state message when no managers are present.",
+      "acceptanceCriteria": [
+        "When managers list is empty, appropriate Hebrew message displays",
+        "Empty state message is visible and readable",
+        "'הוסף מנהל' button still appears in empty state",
+        "Clicking button in empty state navigates to /managers/new",
+        "After creating first manager, empty state disappears"
+      ],
+      "priority": 18,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "T-019",
+      "title": "Verify loading states during async operations",
+      "description": "Test that loading spinners/states appear and clear appropriately during manager list fetch and form operations.",
+      "acceptanceCriteria": [
+        "Navigate to /managers - loading state appears briefly during fetch",
+        "Create form submit button shows loading state during submission",
+        "Edit form submit button shows loading state during submission",
+        "Delete action shows loading state during deletion",
+        "Loading states clear when operation completes"
+      ],
+      "priority": 19,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "T-020",
+      "title": "Run all quality checks",
+      "description": "Verify that all linting, testing, and type checking passes for the complete managers CRUD implementation.",
+      "acceptanceCriteria": [
+        "Run `npm run lint` - exits with code 0",
+        "Run `npm run test` - exits with code 0",
+        "Run `npm run typecheck` - exits with code 0",
+        "All three quality checks pass without warnings or errors"
+      ],
+      "priority": 20,
+      "passes": true,
+      "notes": ""
+    }
+  ]
+}

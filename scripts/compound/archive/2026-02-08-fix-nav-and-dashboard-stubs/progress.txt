@@ -486,24 +486,3 @@ Managers CRUD implementation complete:
 
 All implementation and verification tasks complete. Ready for PR creation.
 
-
-## Sat  8 Feb 2026 08:48:00 IST - T-001
-
-- Created nursery settings Zod schema with time format validation
-- Implemented updateNurserySettingsSchema with 5 fields:
-  - dropoff_start, dropoff_end, first_message_time, second_ping_time (HH:mm format)
-  - timezone (non-empty string with trim)
-- Wrote 11 unit tests covering valid/invalid cases, all passing
-- Time validation uses regex: /^([01]\d|2[0-3]):([0-5]\d)$/ for 24-hour format
-
-- Files changed:
-  - Created: src/lib/schemas/nursery.ts
-  - Created: src/lib/schemas/nursery.test.ts
-
-- **Learnings for future iterations:**
-  - Time format validation pattern: HH:mm requires regex for hours (00-23) and minutes (00-59)
-  - Hebrew error messages: "פורמט שעה לא תקין" (invalid time format), "אזור זמן הוא שדה חובה" (timezone required)
-  - Test-first workflow: write failing tests → implement schema → verify tests pass (red → green)
-  - All quality checks pass: lint ✓, test ✓ (69 tests), typecheck ✓
-
----

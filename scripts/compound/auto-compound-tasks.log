@@ -1,44 +1,27 @@
-Perfect! I've successfully converted the PRD to prd.json format. Here's a summary:
+Perfect! I've successfully converted the PRD to prd.json format with granular, agent-testable tasks.
 
 ## Summary
 
-**File saved to:** `/Users/hannahwaxman/Documents/rolecall/scripts/compound/prd.json`
+✅ **File created:** `/Users/hannahwaxman/Documents/rolecall/scripts/compound/prd.json`
 
-**Project:** RoleCall - Managers CRUD  
-**Branch:** compound/managers-crud  
-**Total tasks:** 20 granular, agent-testable tasks
+**Task Breakdown:**
+- **12 focused tasks** (ideal granularity: 8-15)
+- **Priority order:** Schema → Server functions → Hooks → Route/Form → Validation → Submission → Styling → Quality checks → Navigation → Browser testing
+- **Branch:** `compound/nursery-settings-page`
 
-### Task Breakdown by Phase
+**Task Structure:**
+1. **T-001 to T-003:** Backend layer (Zod schema, server function, query hooks)
+2. **T-004 to T-008:** Route and UI layer (route file, form component, validation, submission, RTL styling)
+3. **T-009:** Quality checks (lint, test, typecheck)
+4. **T-010:** Navigation integration (sidebar link with role gating)
+5. **T-011 to T-012:** Browser verification (desktop form testing, role-based visibility)
 
-**Foundation (T-001 to T-003):** List page setup and display
-- Route creation and auth protection
-- Manager fetch with nursery join and table rendering
-- Add Manager button
+**Key Features:**
+- Each task has boolean pass/fail acceptance criteria
+- Command-based checks specify exit codes
+- Browser interactions specify expected outcomes
+- No vague criteria ("verify it works" → specific assertions)
+- Role-based visibility separated from form functionality
+- All 12 tasks marked `passes: false` and ready for execution
 
-**Create Flow (T-004 to T-007):** Manager creation form and submission
-- New route and form structure
-- Phone validation (Israeli format)
-- Nursery dropdown population
-- Manager creation mutation
-
-**Edit Flow (T-008 to T-009):** Manager update functionality
-- Edit route and pre-filled form
-- Manager update mutation
-
-**Delete Flow (T-010 to T-012):** Manager deletion with confirmation
-- Delete button UI
-- Hebrew confirmation dialog
-- Delete mutation with cache invalidation
-
-**Polish & Verification (T-013 to T-020):** Navigation, RTL, and end-to-end testing
-- Navigation link integration
-- RTL layout verification
-- End-to-end flow testing (create, edit, delete)
-- Empty states and loading states
-- Quality checks (lint, test, typecheck)
-
-Each task is:
-- ✅ **Autonomously verifiable** - boolean pass/fail acceptance criteria
-- ✅ **Small enough for one iteration** - focused on one concern
-- ✅ **Ordered by dependencies** - investigation first, then implementation, then verification
-- ✅ **Machine-testable** - uses specific commands, browser navigation, file checks
+The tasks are ordered by dependency and sized for single-iteration completion. Quality checks are built into the task acceptance criteria.

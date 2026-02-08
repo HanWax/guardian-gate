@@ -1,22 +1,21 @@
-Perfect! I've created a comprehensive PRD for the Managers CRUD feature and saved it to `tasks/prd-managers-crud.md`.
+Perfect! I've created the PRD for the nursery settings page at `tasks/prd-nursery-settings-page.md`.
 
 ## Summary
 
-The PRD breaks down the Managers CRUD implementation into **5 focused tasks**:
+The PRD breaks down the feature into **4 focused tasks**:
 
-1. **T-001:** Managers list page at /managers
-2. **T-002:** Create form at /managers/new
-3. **T-003:** Edit form at /managers/$managerId/edit
-4. **T-004:** Delete functionality with Hebrew confirmation
-5. **T-005:** Navigation and polish
+1. **T-001:** Create Zod schema and server functions for validation and persistence
+2. **T-002:** Build React Query hooks following existing patterns
+3. **T-003:** Implement the settings route and form component
+4. **T-004:** Add navigation link to sidebar (admin/manager only)
 
-Each task has clear, verifiable acceptance criteria including browser verification. The PRD emphasizes:
+Each task has clear, verifiable acceptance criteria and includes browser testing where UI is involved. The PRD explicitly calls out:
 
-- **No database changes** (managers table already exists)
-- **Pattern reuse** from teachers CRUD for consistency
-- **Hebrew RTL UI** throughout
-- **Israeli phone validation** matching existing patterns
-- **Admin-only access** with requireAuth protection
-- **2-4 hour completion** target with small, focused tasks
+- ✅ No database migrations needed
+- ✅ Follows existing CRUD patterns (children/parents/teachers)
+- ✅ 3-tier architecture (schema → server → queries)
+- ✅ Hebrew RTL with logical CSS properties
+- ✅ Role-based access (admin/manager only)
+- ✅ Completable in 2-4 hours
 
-All functional requirements are numbered and unambiguous, and the non-goals section clearly defines scope boundaries to prevent feature creep.
+The PRD is ready for conversion to `prd.json` and execution using the `/tasks` skill when you're ready to implement.
