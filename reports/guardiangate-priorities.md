@@ -10,7 +10,7 @@ Child safety check-in system for nurseries. Prevents "forgotten child" fatalitie
 |-------|-------|----------|-----------|
 | Phase 1: Foundation | 5 | 5 | 0 |
 | Phase 2: Admin Dashboard | 6 | 6 | 0 |
-| Phase 3: WhatsApp Integration | 5 | 0 | 5 |
+| Phase 3: WhatsApp Integration | 5 | 3 | 2 |
 | Phase 4-8: Remaining | — | 0 | — |
 
 ---
@@ -150,19 +150,33 @@ Child safety check-in system for nurseries. Prevents "forgotten child" fatalitie
 - Business verification
 - API credentials
 - Webhook configuration
-- **Status: NOT STARTED**
+- **Status: COMPLETE**
+- Created `src/lib/server/whatsapp.ts` with `sendTemplateMessage()` and `sendTextMessage()` functions
+- Environment variables documented in `.env.example`: `WHATSAPP_API_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_VERIFY_TOKEN`
+- Step-by-step setup guide in `docs/whatsapp-setup.md` (Meta Business account, API token, phone number ID, webhook config)
+- 9 unit tests for API client with mocked fetch
 
 ### 13. [HIGH] Webhook endpoint for incoming messages
 
-- Supabase Edge Function
-- Message parsing
-- **Status: NOT STARTED**
+- Webhook verification (GET) and message receiving (POST)
+- Message parsing and signature verification
+- **Status: COMPLETE**
+- GET handler: validates `hub.verify_token` and returns `hub.challenge` for Meta verification
+- POST handler: parses incoming message payload (sender, text, timestamp), verifies `x-hub-signature-256` via HMAC-SHA256
+- API route at `/api/whatsapp/webhook` via `src/routes/api.whatsapp.webhook.ts`
+- Server functions in `src/lib/server/whatsapp-webhook.ts` and `whatsapp-webhook-handler.ts`
+- 16 unit tests covering verification, signature, parsing, and handler logic
 
 ### 14. [HIGH] Message sending functions
 
 - Template message sending
 - Error handling
-- **Status: NOT STARTED**
+- **Status: COMPLETE**
+- `sendTemplateMessage(to, templateName, languageCode, components?)` for pre-approved templates
+- `sendTextMessage(to, text)` for plain text messages
+- Both use Meta Graph API v21.0 with Bearer token auth
+- TypeScript types for `TemplateComponent` and `WhatsAppMessageResponse`
+- Full JSDoc documentation
 
 ### 15. [MEDIUM] Template registration with Meta
 
@@ -191,7 +205,9 @@ See docs/plan.md for full details on:
 
 ## Next Up (Recommended Order)
 
-1. **Phase 3: WhatsApp Integration** — core safety flow depends on this
+1. **Template registration with Meta** — submit Hebrew message templates for approval (can take 24-48h)
+2. **Conversation state management** — track parent conversation flow and sequential child messaging
+3. **Phase 4: Morning Flow** — depends on WhatsApp integration completion
 
 ---
 
@@ -201,12 +217,13 @@ See docs/plan.md for full details on:
 - Estimated cost: ~₪200/month (WhatsApp messages only)
 - All UI must support Hebrew RTL
 - Dashboard pages (`/admin`, `/manager`, `/teacher`) populated with quick-access cards
+- 105 tests passing across all modules (lint, test, typecheck all green)
 
 *Last updated: 2026-02-08*
 
 ---
 
-**Completion Summary (17/17 tasks completed)**
-- All Phase 1 Foundation tasks: ✅ Complete
-- All Phase 2 Admin Dashboard tasks: ✅ Complete
-- Phase 3 WhatsApp Integration: Upcoming (5 tasks remaining)
+**Completion Summary (20/22 tasks completed)**
+- All Phase 1 Foundation tasks: ✅ Complete (5/5)
+- All Phase 2 Admin Dashboard tasks: ✅ Complete (7/7)
+- Phase 3 WhatsApp Integration: In Progress (3/5 complete, 2 remaining)
