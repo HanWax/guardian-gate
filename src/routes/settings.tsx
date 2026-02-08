@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import { requireAuth } from '~/lib/auth-guard';
-import { useNurseries, useNurserySettings } from '~/lib/queries/nurseries';
+import { useNurseries, useNurserySettings, useUpdateNurserySettings } from '~/lib/queries/nurseries';
 import Layout from '~/components/Layout';
 import { updateNurserySettingsSchema } from '~/lib/schemas/nursery';
 import type { NurserySettingsUpdate } from '~/lib/schemas/nursery';
@@ -31,6 +31,8 @@ function SettingsPage() {
   const selectedNurseryId = userSelectedId || nurseries?.[0]?.id || '';
 
   const { data: settings, isLoading: settingsLoading } = useNurserySettings(selectedNurseryId);
+  const updateMutation = useUpdateNurserySettings();
+  const [successMessage, setSuccessMessage] = useState('');
 
   if (nurseriesLoading) {
     return (
@@ -74,16 +76,37 @@ function SettingsPage() {
         {settingsLoading ? (
           <p className="text-gray-500">{"טוען הגדרות..."}</p>
         ) : (
-          <NurserySettingsForm
-            key={selectedNurseryId}
-            initialData={settings ? {
-              dropoff_start: settings.dropoff_start ?? '',
-              dropoff_end: settings.dropoff_end ?? '',
-              first_message_time: settings.first_message_time ?? '',
-              second_ping_time: settings.second_ping_time ?? '',
-              timezone: settings.timezone ?? 'Asia/Jerusalem',
-            } : undefined}
-          />
+          <>
+            {successMessage ? (
+              <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-md" role="status">
+                <p className="text-sm text-green-700">{successMessage}</p>
+              </div>
+            ) : null}
+            <NurserySettingsForm
+              key={selectedNurseryId}
+              initialData={settings ? {
+                dropoff_start: settings.dropoff_start ?? '',
+                dropoff_end: settings.dropoff_end ?? '',
+                first_message_time: settings.first_message_time ?? '',
+                second_ping_time: settings.second_ping_time ?? '',
+                timezone: settings.timezone ?? 'Asia/Jerusalem',
+              } : undefined}
+              onSubmit={(data) => {
+                setSuccessMessage('');
+                updateMutation.mutate({ nurseryId: selectedNurseryId, settings: data }, {
+                  onSuccess: () => setSuccessMessage('ההגדרות נשמרו בהצלחה'),
+                });
+              }}
+              isPending={updateMutation.isPending}
+              serverError={
+                updateMutation.error instanceof Error
+                  ? updateMutation.error.message
+                  : updateMutation.error
+                    ? 'שגיאה בעדכון ההגדרות'
+                    : null
+              }
+            />
+          </>
         )}
       </div>
     </Layout>
