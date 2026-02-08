@@ -480,10 +480,14 @@ WORK_PRD_FILE="$WORK_OUTPUT_DIR/prd.json"
 # Step 7: Update report with completion status
 log "Step 7: Updating report with task completion status..."
 
+# Ensure CWD is valid before proceeding (background shells can lose CWD access)
+cd "$PROJECT_ROOT" 2>/dev/null || {
+  log "WARNING: Cannot access project root, skipping Steps 7-8. Create PR manually."
+  exit 0
+}
+
 if [ "$PARALLEL_MODE" = true ]; then
   # In parallel mode: switch to main repo to update report
-  cd "$PROJECT_ROOT"
-
   acquire_lock
 
   # Pull latest main to get any updates from other parallel workers
@@ -516,13 +520,17 @@ Branch: $BRANCH_NAME
 Do NOT change anything else in the report. Keep all other content exactly as-is."
 
   if [[ "$TOOL" == "amp" ]]; then
-    echo "$UPDATE_PROMPT" | amp --execute --dangerously-allow-all --model "$MODEL_TASKS" 2>&1 | tee -a "$WORK_OUTPUT_DIR/auto-compound-execution.log"
+    echo "$UPDATE_PROMPT" | amp --execute --dangerously-allow-all --model "$MODEL_TASKS" 2>&1 | tee -a "$WORK_OUTPUT_DIR/auto-compound-execution.log" || {
+      log "WARNING: Report update failed (non-fatal). Update manually."
+    }
   else
-    echo "$UPDATE_PROMPT" | claude --dangerously-skip-permissions --model "$MODEL_TASKS" 2>&1 | tee -a "$WORK_OUTPUT_DIR/auto-compound-execution.log"
+    echo "$UPDATE_PROMPT" | claude --dangerously-skip-permissions --model "$MODEL_TASKS" 2>&1 | tee -a "$WORK_OUTPUT_DIR/auto-compound-execution.log" || {
+      log "WARNING: Report update failed (non-fatal). Update manually."
+    }
   fi
 
   # Commit the updated report
-  git add "$LATEST_REPORT"
+  git add "$LATEST_REPORT" 2>/dev/null || true
   git commit -m "docs: update report - $PRIORITY_ITEM complete" || true
   git push origin main 2>/dev/null || true
   log "Report updated"
@@ -539,12 +547,31 @@ fi
 # Step 8: Create PR
 log "Step 8: Creating Pull Request..."
 
+# Ensure CWD is still valid
+cd "$PROJECT_ROOT" 2>/dev/null || {
+  log "WARNING: Cannot access project root for PR creation. Create PR manually."
+  exit 0
+}
+
 if [ "$PARALLEL_MODE" = true ]; then
   # Push from worktree
-  cd "$WORK_DIR"
+  cd "$WORK_DIR" 2>/dev/null || cd "$PROJECT_ROOT"
 fi
 
-git push -u origin "$BRANCH_NAME"
+git push -u origin "$BRANCH_NAME" || {
+  log "WARNING: Push failed. Push manually and create PR."
+  exit 0
+}
+
+PROGRESS_TAIL=""
+if [ -f "$WORK_OUTPUT_DIR/progress.txt" ]; then
+  PROGRESS_TAIL=$(tail -50 "$WORK_OUTPUT_DIR/progress.txt" 2>/dev/null || echo "(progress file unavailable)")
+fi
+
+TASKS_JSON=""
+if [ -f "$WORK_PRD_FILE" ]; then
+  TASKS_JSON=$(jq '.tasks[] | {id, title, passes}' "$WORK_PRD_FILE" 2>/dev/null || echo "(tasks unavailable)")
+fi
 
 PR_BODY="## Compound Product: $PRIORITY_ITEM
 
@@ -555,12 +582,12 @@ $RATIONALE
 
 ### What was done
 \`\`\`
-$(tail -50 "$WORK_OUTPUT_DIR/progress.txt")
+$PROGRESS_TAIL
 \`\`\`
 
 ### Tasks completed
 \`\`\`json
-$(jq '.tasks[] | {id, title, passes}' "$WORK_PRD_FILE")
+$TASKS_JSON
 \`\`\`
 
 ---
@@ -570,7 +597,10 @@ PR_URL=$(gh pr create \
   --title "Compound: $PRIORITY_ITEM" \
   --body "$PR_BODY" \
   --base main \
-  --head "$BRANCH_NAME")
+  --head "$BRANCH_NAME") || {
+  log "WARNING: PR creation failed. Create PR manually for branch $BRANCH_NAME."
+  exit 0
+}
 
 log "✅ Complete! PR created: $PR_URL"
 log "Review the PR and merge if the changes look good."
