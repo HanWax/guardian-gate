@@ -17,6 +17,11 @@ function ManagerDashboard() {
 
         <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
           <DashboardCard
+            title="נוכחות יומית"
+            description="מעקב נוכחות ילדים בזמן אמת"
+            href="/attendance"
+          />
+          <DashboardCard
             title="ילדים"
             description="צפייה וניהול של ילדי הגן"
             href="/children"

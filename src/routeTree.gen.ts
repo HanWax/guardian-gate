@@ -13,6 +13,7 @@ import { Route as TeacherRouteImport } from './routes/teacher'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ManagerRouteImport } from './routes/manager'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as AttendanceRouteImport } from './routes/attendance'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TeachersIndexRouteImport } from './routes/teachers/index'
@@ -48,6 +49,11 @@ const ManagerRoute = ManagerRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AttendanceRoute = AttendanceRouteImport.update({
+  id: '/attendance',
+  path: '/attendance',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -134,6 +140,7 @@ const ApiWhatsappWebhookRoute = ApiWhatsappWebhookRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/attendance': typeof AttendanceRoute
   '/login': typeof LoginRoute
   '/manager': typeof ManagerRoute
   '/settings': typeof SettingsRoute
@@ -156,6 +163,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/attendance': typeof AttendanceRoute
   '/login': typeof LoginRoute
   '/manager': typeof ManagerRoute
   '/settings': typeof SettingsRoute
@@ -179,6 +187,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/attendance': typeof AttendanceRoute
   '/login': typeof LoginRoute
   '/manager': typeof ManagerRoute
   '/settings': typeof SettingsRoute
@@ -203,6 +212,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/attendance'
     | '/login'
     | '/manager'
     | '/settings'
@@ -225,6 +235,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/admin'
+    | '/attendance'
     | '/login'
     | '/manager'
     | '/settings'
@@ -247,6 +258,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin'
+    | '/attendance'
     | '/login'
     | '/manager'
     | '/settings'
@@ -270,6 +282,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
+  AttendanceRoute: typeof AttendanceRoute
   LoginRoute: typeof LoginRoute
   ManagerRoute: typeof ManagerRoute
   SettingsRoute: typeof SettingsRoute
@@ -318,6 +331,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/attendance': {
+      id: '/attendance'
+      path: '/attendance'
+      fullPath: '/attendance'
+      preLoaderRoute: typeof AttendanceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -438,6 +458,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
+  AttendanceRoute: AttendanceRoute,
   LoginRoute: LoginRoute,
   ManagerRoute: ManagerRoute,
   SettingsRoute: SettingsRoute,
