@@ -14,6 +14,7 @@ export default function Navigation() {
         <Link to="/manager" className="rounded px-3 py-2 hover:bg-gray-200">מנהל</Link>
       )}
       <Link to="/teacher" className="rounded px-3 py-2 hover:bg-gray-200">מורה</Link>
+      <Link to="/teacher/attendance" className="rounded px-3 py-2 hover:bg-gray-200">אישור נוכחות</Link>
       {canManage && (
         <>
           <Link to="/attendance" className="rounded px-3 py-2 hover:bg-gray-200">נוכחות יומית</Link>

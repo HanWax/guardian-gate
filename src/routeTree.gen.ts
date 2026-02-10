@@ -9,7 +9,6 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TeacherRouteImport } from './routes/teacher'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ManagerRouteImport } from './routes/manager'
 import { Route as LoginRouteImport } from './routes/login'
@@ -17,10 +16,12 @@ import { Route as AttendanceRouteImport } from './routes/attendance'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TeachersIndexRouteImport } from './routes/teachers/index'
+import { Route as TeacherIndexRouteImport } from './routes/teacher/index'
 import { Route as ParentsIndexRouteImport } from './routes/parents/index'
 import { Route as ManagersIndexRouteImport } from './routes/managers/index'
 import { Route as ChildrenIndexRouteImport } from './routes/children/index'
 import { Route as TeachersNewRouteImport } from './routes/teachers/new'
+import { Route as TeacherAttendanceRouteImport } from './routes/teacher/attendance'
 import { Route as ParentsNewRouteImport } from './routes/parents/new'
 import { Route as ManagersNewRouteImport } from './routes/managers/new'
 import { Route as ChildrenNewRouteImport } from './routes/children/new'
@@ -31,11 +32,6 @@ import { Route as ManagersManagerIdEditRouteImport } from './routes/managers/$ma
 import { Route as ChildrenChildIdEditRouteImport } from './routes/children/$childId/edit'
 import { Route as ApiWhatsappWebhookRouteImport } from './routes/api.whatsapp.webhook'
 
-const TeacherRoute = TeacherRouteImport.update({
-  id: '/teacher',
-  path: '/teacher',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -71,6 +67,11 @@ const TeachersIndexRoute = TeachersIndexRouteImport.update({
   path: '/teachers/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TeacherIndexRoute = TeacherIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => TeacherRoute,
+} as any)
 const ParentsIndexRoute = ParentsIndexRouteImport.update({
   id: '/parents/',
   path: '/parents/',
@@ -89,6 +90,11 @@ const ChildrenIndexRoute = ChildrenIndexRouteImport.update({
 const TeachersNewRoute = TeachersNewRouteImport.update({
   id: '/teachers/new',
   path: '/teachers/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TeacherAttendanceRoute = TeacherAttendanceRouteImport.update({
+  id: '/teacher/attendance',
+  path: '/teacher/attendance',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ParentsNewRoute = ParentsNewRouteImport.update({
@@ -144,15 +150,16 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/manager': typeof ManagerRoute
   '/settings': typeof SettingsRoute
-  '/teacher': typeof TeacherRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/children/new': typeof ChildrenNewRoute
   '/managers/new': typeof ManagersNewRoute
   '/parents/new': typeof ParentsNewRoute
+  '/teacher/attendance': typeof TeacherAttendanceRoute
   '/teachers/new': typeof TeachersNewRoute
   '/children/': typeof ChildrenIndexRoute
   '/managers/': typeof ManagersIndexRoute
   '/parents/': typeof ParentsIndexRoute
+  '/teacher/': typeof TeacherIndexRoute
   '/teachers/': typeof TeachersIndexRoute
   '/api/whatsapp/webhook': typeof ApiWhatsappWebhookRoute
   '/children/$childId/edit': typeof ChildrenChildIdEditRoute
@@ -167,15 +174,16 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/manager': typeof ManagerRoute
   '/settings': typeof SettingsRoute
-  '/teacher': typeof TeacherRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/children/new': typeof ChildrenNewRoute
   '/managers/new': typeof ManagersNewRoute
   '/parents/new': typeof ParentsNewRoute
+  '/teacher/attendance': typeof TeacherAttendanceRoute
   '/teachers/new': typeof TeachersNewRoute
   '/children': typeof ChildrenIndexRoute
   '/managers': typeof ManagersIndexRoute
   '/parents': typeof ParentsIndexRoute
+  '/teacher': typeof TeacherIndexRoute
   '/teachers': typeof TeachersIndexRoute
   '/api/whatsapp/webhook': typeof ApiWhatsappWebhookRoute
   '/children/$childId/edit': typeof ChildrenChildIdEditRoute
@@ -191,15 +199,16 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/manager': typeof ManagerRoute
   '/settings': typeof SettingsRoute
-  '/teacher': typeof TeacherRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/children/new': typeof ChildrenNewRoute
   '/managers/new': typeof ManagersNewRoute
   '/parents/new': typeof ParentsNewRoute
+  '/teacher/attendance': typeof TeacherAttendanceRoute
   '/teachers/new': typeof TeachersNewRoute
   '/children/': typeof ChildrenIndexRoute
   '/managers/': typeof ManagersIndexRoute
   '/parents/': typeof ParentsIndexRoute
+  '/teacher/': typeof TeacherIndexRoute
   '/teachers/': typeof TeachersIndexRoute
   '/api/whatsapp/webhook': typeof ApiWhatsappWebhookRoute
   '/children/$childId/edit': typeof ChildrenChildIdEditRoute
@@ -216,15 +225,16 @@ export interface FileRouteTypes {
     | '/login'
     | '/manager'
     | '/settings'
-    | '/teacher'
     | '/auth/callback'
     | '/children/new'
     | '/managers/new'
     | '/parents/new'
+    | '/teacher/attendance'
     | '/teachers/new'
     | '/children/'
     | '/managers/'
     | '/parents/'
+    | '/teacher/'
     | '/teachers/'
     | '/api/whatsapp/webhook'
     | '/children/$childId/edit'
@@ -239,15 +249,16 @@ export interface FileRouteTypes {
     | '/login'
     | '/manager'
     | '/settings'
-    | '/teacher'
     | '/auth/callback'
     | '/children/new'
     | '/managers/new'
     | '/parents/new'
+    | '/teacher/attendance'
     | '/teachers/new'
     | '/children'
     | '/managers'
     | '/parents'
+    | '/teacher'
     | '/teachers'
     | '/api/whatsapp/webhook'
     | '/children/$childId/edit'
@@ -262,15 +273,16 @@ export interface FileRouteTypes {
     | '/login'
     | '/manager'
     | '/settings'
-    | '/teacher'
     | '/auth/callback'
     | '/children/new'
     | '/managers/new'
     | '/parents/new'
+    | '/teacher/attendance'
     | '/teachers/new'
     | '/children/'
     | '/managers/'
     | '/parents/'
+    | '/teacher/'
     | '/teachers/'
     | '/api/whatsapp/webhook'
     | '/children/$childId/edit'
@@ -286,11 +298,11 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   ManagerRoute: typeof ManagerRoute
   SettingsRoute: typeof SettingsRoute
-  TeacherRoute: typeof TeacherRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   ChildrenNewRoute: typeof ChildrenNewRoute
   ManagersNewRoute: typeof ManagersNewRoute
   ParentsNewRoute: typeof ParentsNewRoute
+  TeacherAttendanceRoute: typeof TeacherAttendanceRoute
   TeachersNewRoute: typeof TeachersNewRoute
   ChildrenIndexRoute: typeof ChildrenIndexRoute
   ManagersIndexRoute: typeof ManagersIndexRoute
@@ -305,13 +317,6 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/teacher': {
-      id: '/teacher'
-      path: '/teacher'
-      fullPath: '/teacher'
-      preLoaderRoute: typeof TeacherRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/settings': {
       id: '/settings'
       path: '/settings'
@@ -361,6 +366,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TeachersIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/teacher/': {
+      id: '/teacher/'
+      path: '/'
+      fullPath: '/teacher/'
+      preLoaderRoute: typeof TeacherIndexRouteImport
+      parentRoute: typeof TeacherRoute
+    }
     '/parents/': {
       id: '/parents/'
       path: '/parents'
@@ -387,6 +399,13 @@ declare module '@tanstack/react-router' {
       path: '/teachers/new'
       fullPath: '/teachers/new'
       preLoaderRoute: typeof TeachersNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/teacher/attendance': {
+      id: '/teacher/attendance'
+      path: '/teacher/attendance'
+      fullPath: '/teacher/attendance'
+      preLoaderRoute: typeof TeacherAttendanceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/parents/new': {
@@ -462,11 +481,11 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   ManagerRoute: ManagerRoute,
   SettingsRoute: SettingsRoute,
-  TeacherRoute: TeacherRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   ChildrenNewRoute: ChildrenNewRoute,
   ManagersNewRoute: ManagersNewRoute,
   ParentsNewRoute: ParentsNewRoute,
+  TeacherAttendanceRoute: TeacherAttendanceRoute,
   TeachersNewRoute: TeachersNewRoute,
   ChildrenIndexRoute: ChildrenIndexRoute,
   ManagersIndexRoute: ManagersIndexRoute,
