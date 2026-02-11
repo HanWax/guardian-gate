@@ -135,6 +135,10 @@ export interface MessageParseResult {
   timestamp?: string;
   messageId?: string;
   messageType?: string;
+  /** Button ID from interactive button reply or payload from template quick reply */
+  buttonReplyId?: string;
+  /** Button title/text from the reply */
+  buttonReplyTitle?: string;
 }
 
 /**
@@ -174,9 +178,33 @@ export function parseIncomingMessage(
     const messageType = message.type;
 
     let messageText: string | undefined;
+    let buttonReplyId: string | undefined;
+    let buttonReplyTitle: string | undefined;
 
     if (messageType === 'text' && message.text?.body) {
       messageText = message.text.body;
+    }
+
+    // Interactive button reply (from sendInteractiveButtonMessage)
+    if (messageType === 'interactive') {
+      const interactive = message.interactive as
+        | { type?: string; button_reply?: { id?: string; title?: string } }
+        | undefined;
+      if (interactive?.type === 'button_reply' && interactive.button_reply) {
+        buttonReplyId = interactive.button_reply.id;
+        buttonReplyTitle = interactive.button_reply.title;
+      }
+    }
+
+    // Template quick reply button (from sendTemplateMessage with buttons)
+    if (messageType === 'button') {
+      const button = message.button as
+        | { text?: string; payload?: string }
+        | undefined;
+      if (button) {
+        buttonReplyId = button.payload;
+        buttonReplyTitle = button.text;
+      }
     }
 
     return {
@@ -186,6 +214,8 @@ export function parseIncomingMessage(
       timestamp,
       messageId,
       messageType,
+      buttonReplyId,
+      buttonReplyTitle,
     };
   } catch (error) {
     console.error('Error parsing incoming message:', error);
@@ -281,6 +311,8 @@ export function handleIncomingMessage(
       timestamp: parsed.timestamp,
       messageId: parsed.messageId,
       messageType: parsed.messageType,
+      buttonReplyId: parsed.buttonReplyId,
+      buttonReplyTitle: parsed.buttonReplyTitle,
     });
   }
 

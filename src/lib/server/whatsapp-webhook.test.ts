@@ -153,6 +153,97 @@ describe('WhatsApp Webhook', () => {
       expect(result.messageText).toBeUndefined();
     });
 
+    it('should parse interactive button_reply message', () => {
+      const payload = {
+        object: 'whatsapp_business_account',
+        entry: [
+          {
+            id: '123456',
+            changes: [
+              {
+                value: {
+                  messaging_product: 'whatsapp',
+                  metadata: {
+                    display_phone_number: '972501234567',
+                    phone_number_id: 'test-phone-id',
+                  },
+                  messages: [
+                    {
+                      from: '972509876543',
+                      id: 'wamid.btn1',
+                      timestamp: '1234567890',
+                      type: 'interactive',
+                      interactive: {
+                        type: 'button_reply',
+                        button_reply: {
+                          id: 'btn_on_way',
+                          title: '✓ בדרך',
+                        },
+                      },
+                    },
+                  ],
+                },
+                field: 'messages',
+              },
+            ],
+          },
+        ],
+      };
+
+      const result = parseIncomingMessage(payload);
+
+      expect(result.success).toBe(true);
+      expect(result.sender).toBe('972509876543');
+      expect(result.messageType).toBe('interactive');
+      expect(result.buttonReplyId).toBe('btn_on_way');
+      expect(result.buttonReplyTitle).toBe('✓ בדרך');
+      expect(result.messageText).toBeUndefined();
+    });
+
+    it('should parse template quick_reply button message', () => {
+      const payload = {
+        object: 'whatsapp_business_account',
+        entry: [
+          {
+            id: '123456',
+            changes: [
+              {
+                value: {
+                  messaging_product: 'whatsapp',
+                  metadata: {
+                    display_phone_number: '972501234567',
+                    phone_number_id: 'test-phone-id',
+                  },
+                  messages: [
+                    {
+                      from: '972509876543',
+                      id: 'wamid.btn2',
+                      timestamp: '1234567890',
+                      type: 'button',
+                      button: {
+                        text: '✓ בדרך',
+                        payload: 'btn_dropping_off',
+                      },
+                    },
+                  ],
+                },
+                field: 'messages',
+              },
+            ],
+          },
+        ],
+      };
+
+      const result = parseIncomingMessage(payload);
+
+      expect(result.success).toBe(true);
+      expect(result.sender).toBe('972509876543');
+      expect(result.messageType).toBe('button');
+      expect(result.buttonReplyId).toBe('btn_dropping_off');
+      expect(result.buttonReplyTitle).toBe('✓ בדרך');
+      expect(result.messageText).toBeUndefined();
+    });
+
     it('should handle payload with non-text message type', () => {
       const payload = {
         object: 'whatsapp_business_account',

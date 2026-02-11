@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { sendTemplateMessage, sendTextMessage } from './whatsapp';
+import { sendTemplateMessage, sendTextMessage, sendInteractiveButtonMessage } from './whatsapp';
 
 // Mock fetch globally
 global.fetch = vi.fn();
@@ -186,6 +186,137 @@ describe('WhatsApp API Client', () => {
       await expect(
         sendTextMessage('972501234567', 'test')
       ).rejects.toThrow('WHATSAPP_PHONE_NUMBER_ID');
+    });
+  });
+
+  describe('sendInteractiveButtonMessage', () => {
+    const buttons = [
+      { id: 'btn_on_way', title: '✓ בדרך' },
+      { id: 'btn_not_today', title: '✗ לא היום' },
+    ];
+
+    it('should send correct interactive button payload', async () => {
+      const mockResponse = {
+        ok: true,
+        json: async () => ({ success: true, message_id: 'msg_int_1' }),
+      };
+      mockFetch.mockResolvedValueOnce(mockResponse);
+
+      const result = await sendInteractiveButtonMessage(
+        '972501234567',
+        'האם הילד/ה בדרך היום?',
+        buttons
+      );
+
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://graph.facebook.com/v21.0/test-phone-id-456/messages',
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer test-token-123',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            messaging_product: 'whatsapp',
+            to: '972501234567',
+            type: 'interactive',
+            interactive: {
+              type: 'button',
+              body: { text: 'האם הילד/ה בדרך היום?' },
+              action: {
+                buttons: [
+                  { type: 'reply', reply: { id: 'btn_on_way', title: '✓ בדרך' } },
+                  { type: 'reply', reply: { id: 'btn_not_today', title: '✗ לא היום' } },
+                ],
+              },
+            },
+          }),
+        }
+      );
+      expect(result).toEqual({ success: true, message_id: 'msg_int_1' });
+    });
+
+    it('should include optional header and footer when provided', async () => {
+      const mockResponse = {
+        ok: true,
+        json: async () => ({ success: true }),
+      };
+      mockFetch.mockResolvedValueOnce(mockResponse);
+
+      await sendInteractiveButtonMessage(
+        '972501234567',
+        'בחר/י אפשרות',
+        [{ id: 'btn_1', title: 'אפשרות א' }],
+        { headerText: 'כותרת', footerText: 'כותרת תחתונה' }
+      );
+
+      const calledBody = JSON.parse(mockFetch.mock.calls[0][1].body);
+      expect(calledBody.interactive.header).toEqual({ type: 'text', text: 'כותרת' });
+      expect(calledBody.interactive.footer).toEqual({ text: 'כותרת תחתונה' });
+    });
+
+    it('should throw error when API returns non-ok response', async () => {
+      const mockResponse = {
+        ok: false,
+        status: 400,
+        statusText: 'Bad Request',
+        json: async () => ({ error: { message: 'Invalid payload' } }),
+      };
+      mockFetch.mockResolvedValueOnce(mockResponse);
+
+      await expect(
+        sendInteractiveButtonMessage('972501234567', 'test', buttons)
+      ).rejects.toThrow('WhatsApp API error');
+    });
+
+    it('should throw error when WHATSAPP_API_TOKEN is not set', async () => {
+      delete process.env.WHATSAPP_API_TOKEN;
+
+      await expect(
+        sendInteractiveButtonMessage('972501234567', 'test', buttons)
+      ).rejects.toThrow('WHATSAPP_API_TOKEN');
+    });
+
+    it('should throw error when WHATSAPP_PHONE_NUMBER_ID is not set', async () => {
+      delete process.env.WHATSAPP_PHONE_NUMBER_ID;
+
+      await expect(
+        sendInteractiveButtonMessage('972501234567', 'test', buttons)
+      ).rejects.toThrow('WHATSAPP_PHONE_NUMBER_ID');
+    });
+
+    it('should throw error when more than 3 buttons provided', async () => {
+      await expect(
+        sendInteractiveButtonMessage('972501234567', 'test', [
+          { id: '1', title: 'א' },
+          { id: '2', title: 'ב' },
+          { id: '3', title: 'ג' },
+          { id: '4', title: 'ד' },
+        ])
+      ).rejects.toThrow('1-3 buttons');
+    });
+
+    it('should throw error when no buttons provided', async () => {
+      await expect(
+        sendInteractiveButtonMessage('972501234567', 'test', [])
+      ).rejects.toThrow('1-3 buttons');
+    });
+
+    it('should throw error when body text exceeds 1024 characters', async () => {
+      const longText = 'א'.repeat(1025);
+
+      await expect(
+        sendInteractiveButtonMessage('972501234567', longText, buttons)
+      ).rejects.toThrow('1024 characters');
+    });
+
+    it('should throw error when button title exceeds 20 characters', async () => {
+      await expect(
+        sendInteractiveButtonMessage('972501234567', 'test', [
+          { id: 'btn_1', title: 'א'.repeat(21) },
+        ])
+      ).rejects.toThrow('20 character limit');
     });
   });
 });
