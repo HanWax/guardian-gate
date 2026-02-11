@@ -1,25 +1,28 @@
-import { createFileRoute, redirect } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { useEffect } from 'react'
 import { supabase } from '~/lib/supabase'
 import { extractRole } from '~/lib/roles'
 
 export const Route = createFileRoute('/')({
-  beforeLoad: async () => {
-    // During SSR, skip — the client will handle the redirect
-    if (typeof window === 'undefined') return
-
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) throw redirect({ to: '/login' })
-
-    const role = extractRole(session.user.user_metadata as Record<string, unknown>)
-    if (role === 'admin') throw redirect({ to: '/admin' })
-    if (role === 'manager') throw redirect({ to: '/manager' })
-    throw redirect({ to: '/teacher' })
-  },
   component: IndexRedirect,
 })
 
 function IndexRedirect() {
-  // This renders briefly during SSR before the client-side redirect kicks in
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        navigate({ to: '/login' })
+        return
+      }
+      const role = extractRole(session.user.user_metadata as Record<string, unknown>)
+      if (role === 'admin') navigate({ to: '/admin' })
+      else if (role === 'manager') navigate({ to: '/manager' })
+      else navigate({ to: '/teacher' })
+    })
+  }, [navigate])
+
   return (
     <div className="min-h-screen flex items-center justify-center">
       <p className="text-gray-500">{"טוען..."}</p>
