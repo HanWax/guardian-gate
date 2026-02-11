@@ -5,6 +5,8 @@
  */
 
 import crypto from 'crypto';
+import { createServiceClient } from './auth';
+import { sendTextMessage } from './whatsapp';
 
 /**
  * Result of webhook verification.
@@ -278,25 +280,110 @@ export function verifyWebhookSignature(
 }
 
 /**
+ * Processes a check-in button response from a parent.
+ *
+ * Looks up the parent by phone, verifies the attendance record,
+ * and updates with their response.
+ */
+export async function processCheckinResponse(
+  senderPhone: string,
+  attendanceId: string,
+  response: 'yes' | 'no'
+): Promise<void> {
+  const supabase = createServiceClient();
+
+  // WhatsApp sends 972..., DB stores +972...
+  const dbPhone = `+${senderPhone}`;
+
+  // Look up parent by phone
+  const { data: parent, error: parentErr } = await supabase
+    .from('parents')
+    .select('id')
+    .eq('phone', dbPhone)
+    .single();
+
+  if (parentErr || !parent) {
+    console.error(`[Checkin] Parent not found for phone ${dbPhone}`);
+    return;
+  }
+
+  // Get attendance record
+  const { data: record, error: recordErr } = await supabase
+    .from('daily_attendance')
+    .select('id, child_id, parent_response')
+    .eq('id', attendanceId)
+    .single();
+
+  if (recordErr || !record) {
+    console.error(`[Checkin] Attendance record ${attendanceId} not found`);
+    return;
+  }
+
+  // Already responded — send acknowledgement
+  if (record.parent_response) {
+    try {
+      await sendTextMessage(senderPhone, 'כבר קיבלנו את תשובתך, תודה!');
+    } catch (err) {
+      console.error('[Checkin] Failed to send already-responded message:', err);
+    }
+    return;
+  }
+
+  // Verify parent is linked to this child
+  const { data: link, error: linkErr } = await supabase
+    .from('children_parents')
+    .select('child_id')
+    .eq('child_id', record.child_id)
+    .eq('parent_id', parent.id)
+    .single();
+
+  if (linkErr || !link) {
+    console.error(`[Checkin] Parent ${parent.id} not linked to child ${record.child_id}`);
+    return;
+  }
+
+  // Update attendance record
+  const parentResponse = response === 'yes' ? 'dropping_off' : 'not_today';
+  const { error: updateErr } = await supabase
+    .from('daily_attendance')
+    .update({
+      parent_response: parentResponse,
+      parent_response_time: new Date().toISOString(),
+    })
+    .eq('id', attendanceId);
+
+  if (updateErr) {
+    console.error(`[Checkin] Failed to update attendance ${attendanceId}:`, updateErr);
+    return;
+  }
+
+  // Send confirmation
+  const confirmText =
+    response === 'yes'
+      ? 'תודה! סימנו שהילד/ה בדרך לגן \u{1F31E}'
+      : 'תודה! סימנו שהילד/ה לא מגיע/ה היום';
+
+  try {
+    await sendTextMessage(senderPhone, confirmText);
+  } catch (err) {
+    console.error('[Checkin] Failed to send confirmation:', err);
+  }
+}
+
+const CHECKIN_BUTTON_REGEX = /^checkin_(yes|no)_([0-9a-f-]{36})$/;
+
+/**
  * Handles incoming WhatsApp message webhook POST.
  *
- * Parses the message payload, logs structured message details, and returns success.
- * This function should be called from the webhook POST endpoint handler.
+ * Parses the message payload, logs structured message details,
+ * processes check-in button responses, and returns success.
  *
  * @param payload - Incoming webhook payload from Meta
  * @returns Result indicating success or failure
- *
- * @example
- * ```ts
- * const result = handleIncomingMessage(requestBody);
- * if (result.success) {
- *   return new Response('OK', { status: 200 });
- * }
- * ```
  */
-export function handleIncomingMessage(
+export async function handleIncomingMessage(
   payload: WhatsAppWebhookPayload
-): { success: boolean } {
+): Promise<{ success: boolean }> {
   const parsed = parseIncomingMessage(payload);
 
   if (!parsed.success) {
@@ -314,6 +401,16 @@ export function handleIncomingMessage(
       buttonReplyId: parsed.buttonReplyId,
       buttonReplyTitle: parsed.buttonReplyTitle,
     });
+
+    // Process check-in button responses
+    if (parsed.buttonReplyId) {
+      const match = parsed.buttonReplyId.match(CHECKIN_BUTTON_REGEX);
+      if (match) {
+        const response = match[1] as 'yes' | 'no';
+        const attendanceId = match[2];
+        await processCheckinResponse(parsed.sender, attendanceId, response);
+      }
+    }
   }
 
   return { success: true };

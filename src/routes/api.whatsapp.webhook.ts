@@ -59,7 +59,7 @@ export const Route = createFileRoute('/api/whatsapp/webhook')({
         }
 
         const payload = JSON.parse(rawBody)
-        const result = handleIncomingMessage(payload)
+        const result = await handleIncomingMessage(payload)
 
         if (!result.success) {
           return new Response('Failed to process message', {

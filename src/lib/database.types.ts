@@ -140,6 +140,7 @@ export type Database = {
           inconsistency_resolved_at: string | null
           inconsistency_resolved_by: string | null
           inconsistency_type: string | null
+          message_sent_at: string | null
           nine_am_alert_sent: boolean | null
           nine_am_explanation: string | null
           nine_am_parent_response: string | null
@@ -161,6 +162,7 @@ export type Database = {
           inconsistency_resolved_at?: string | null
           inconsistency_resolved_by?: string | null
           inconsistency_type?: string | null
+          message_sent_at?: string | null
           nine_am_alert_sent?: boolean | null
           nine_am_explanation?: string | null
           nine_am_parent_response?: string | null
@@ -182,6 +184,7 @@ export type Database = {
           inconsistency_resolved_at?: string | null
           inconsistency_resolved_by?: string | null
           inconsistency_type?: string | null
+          message_sent_at?: string | null
           nine_am_alert_sent?: boolean | null
           nine_am_explanation?: string | null
           nine_am_parent_response?: string | null
@@ -237,6 +240,50 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "managers_nursery_id_fkey"
+            columns: ["nursery_id"]
+            isOneToOne: false
+            referencedRelation: "nurseries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      morning_message_runs: {
+        Row: {
+          completed_at: string | null
+          error_details: string | null
+          id: string
+          messages_failed: number | null
+          messages_sent: number | null
+          nursery_id: string
+          run_date: string
+          started_at: string
+          status: string
+        }
+        Insert: {
+          completed_at?: string | null
+          error_details?: string | null
+          id?: string
+          messages_failed?: number | null
+          messages_sent?: number | null
+          nursery_id: string
+          run_date: string
+          started_at?: string
+          status?: string
+        }
+        Update: {
+          completed_at?: string | null
+          error_details?: string | null
+          id?: string
+          messages_failed?: number | null
+          messages_sent?: number | null
+          nursery_id?: string
+          run_date?: string
+          started_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "morning_message_runs_nursery_id_fkey"
             columns: ["nursery_id"]
             isOneToOne: false
             referencedRelation: "nurseries"

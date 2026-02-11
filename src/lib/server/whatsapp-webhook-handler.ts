@@ -70,7 +70,7 @@ export const POST = createServerFn({ method: 'POST' })
     }
 
     // Handle the message
-    const result = handleIncomingMessage(payload);
+    const result = await handleIncomingMessage(payload);
 
     if (!result.success) {
       return new Response('Failed to process message', {

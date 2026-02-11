@@ -1,9 +1,33 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { verifyWebhook, parseIncomingMessage, verifyWebhookSignature, handleIncomingMessage } from './whatsapp-webhook';
+import { verifyWebhook, parseIncomingMessage, verifyWebhookSignature, handleIncomingMessage, processCheckinResponse } from './whatsapp-webhook';
 import crypto from 'crypto';
+
+// Mock Supabase service client
+const mockSelect = vi.fn().mockReturnThis();
+const mockEq = vi.fn().mockReturnThis();
+const mockSingle = vi.fn();
+const mockUpdate = vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) });
+const mockFrom = vi.fn().mockReturnValue({
+  select: mockSelect,
+  eq: mockEq,
+  single: mockSingle,
+  update: mockUpdate,
+});
+
+vi.mock('./auth', () => ({
+  createServiceClient: () => ({ from: mockFrom }),
+}));
+
+// Mock WhatsApp sending
+const mockSendTextMessage = vi.fn().mockResolvedValue({});
+vi.mock('./whatsapp', () => ({
+  sendTextMessage: (...args: unknown[]) => mockSendTextMessage(...args),
+  sendInteractiveButtonMessage: vi.fn(),
+}));
 
 // Mock console.log to test message logging
 const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
 describe('WhatsApp Webhook', () => {
   beforeEach(() => {
@@ -330,7 +354,7 @@ describe('WhatsApp Webhook', () => {
   });
 
   describe('handleIncomingMessage', () => {
-    it('should log parsed message details when message is received', () => {
+    it('should log parsed message details when message is received', async () => {
       const payload = {
         object: 'whatsapp_business_account',
         entry: [
@@ -363,7 +387,7 @@ describe('WhatsApp Webhook', () => {
         ],
       };
 
-      const result = handleIncomingMessage(payload);
+      const result = await handleIncomingMessage(payload);
 
       expect(result.success).toBe(true);
       expect(consoleLogSpy).toHaveBeenCalledWith(
@@ -378,7 +402,7 @@ describe('WhatsApp Webhook', () => {
       );
     });
 
-    it('should return success without logging when no messages in payload', () => {
+    it('should return success without logging when no messages in payload', async () => {
       const payload = {
         object: 'whatsapp_business_account',
         entry: [
@@ -401,7 +425,7 @@ describe('WhatsApp Webhook', () => {
       };
 
       consoleLogSpy.mockClear();
-      const result = handleIncomingMessage(payload);
+      const result = await handleIncomingMessage(payload);
 
       expect(result.success).toBe(true);
       expect(consoleLogSpy).not.toHaveBeenCalledWith(
@@ -410,7 +434,7 @@ describe('WhatsApp Webhook', () => {
       );
     });
 
-    it('should handle non-text messages by logging type only', () => {
+    it('should handle non-text messages by logging type only', async () => {
       const payload = {
         object: 'whatsapp_business_account',
         entry: [
@@ -444,7 +468,7 @@ describe('WhatsApp Webhook', () => {
       };
 
       consoleLogSpy.mockClear();
-      const result = handleIncomingMessage(payload);
+      const result = await handleIncomingMessage(payload);
 
       expect(result.success).toBe(true);
       expect(consoleLogSpy).toHaveBeenCalledWith(
@@ -455,6 +479,107 @@ describe('WhatsApp Webhook', () => {
           messageType: 'image',
         })
       );
+    });
+  });
+
+  describe('processCheckinResponse', () => {
+    beforeEach(() => {
+      mockFrom.mockClear();
+      mockSendTextMessage.mockClear();
+      consoleErrorSpy.mockClear();
+    });
+
+    it('should update attendance and send confirmation for "yes" response', async () => {
+      const attendanceId = '11111111-1111-1111-1111-111111111111';
+
+      // Mock chained calls for: parents lookup, attendance lookup, children_parents link, attendance update
+      const mockUpdateEq = vi.fn().mockResolvedValue({ error: null });
+      mockFrom
+        .mockReturnValueOnce({
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({ data: { id: 'parent-1' }, error: null }),
+            }),
+          }),
+        })
+        .mockReturnValueOnce({
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({
+                data: { id: attendanceId, child_id: 'child-1', parent_response: null },
+                error: null,
+              }),
+            }),
+          }),
+        })
+        .mockReturnValueOnce({
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({ data: { child_id: 'child-1' }, error: null }),
+              }),
+            }),
+          }),
+        })
+        .mockReturnValueOnce({
+          update: vi.fn().mockReturnValue({
+            eq: mockUpdateEq,
+          }),
+        });
+
+      await processCheckinResponse('972509876543', attendanceId, 'yes');
+
+      expect(mockSendTextMessage).toHaveBeenCalledWith(
+        '972509876543',
+        expect.stringContaining('בדרך לגן')
+      );
+    });
+
+    it('should send already-responded message when parent_response is set', async () => {
+      const attendanceId = '22222222-2222-2222-2222-222222222222';
+
+      mockFrom
+        .mockReturnValueOnce({
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({ data: { id: 'parent-1' }, error: null }),
+            }),
+          }),
+        })
+        .mockReturnValueOnce({
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({
+                data: { id: attendanceId, child_id: 'child-1', parent_response: 'dropping_off' },
+                error: null,
+              }),
+            }),
+          }),
+        });
+
+      await processCheckinResponse('972509876543', attendanceId, 'yes');
+
+      expect(mockSendTextMessage).toHaveBeenCalledWith(
+        '972509876543',
+        'כבר קיבלנו את תשובתך, תודה!'
+      );
+    });
+
+    it('should log error when parent not found', async () => {
+      mockFrom.mockReturnValueOnce({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({ data: null, error: { message: 'not found' } }),
+          }),
+        }),
+      });
+
+      await processCheckinResponse('972500000000', 'some-id', 'yes');
+
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Parent not found'),
+      );
+      expect(mockSendTextMessage).not.toHaveBeenCalled();
     });
   });
 });

@@ -31,6 +31,7 @@ import { Route as ParentsParentIdEditRouteImport } from './routes/parents/$paren
 import { Route as ManagersManagerIdEditRouteImport } from './routes/managers/$managerId.edit'
 import { Route as ChildrenChildIdEditRouteImport } from './routes/children/$childId/edit'
 import { Route as ApiWhatsappWebhookRouteImport } from './routes/api.whatsapp.webhook'
+import { Route as ApiCronMorningMessagesRouteImport } from './routes/api.cron.morning-messages'
 
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
@@ -142,6 +143,11 @@ const ApiWhatsappWebhookRoute = ApiWhatsappWebhookRouteImport.update({
   path: '/api/whatsapp/webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiCronMorningMessagesRoute = ApiCronMorningMessagesRouteImport.update({
+  id: '/api/cron/morning-messages',
+  path: '/api/cron/morning-messages',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -161,6 +167,7 @@ export interface FileRoutesByFullPath {
   '/parents/': typeof ParentsIndexRoute
   '/teacher/': typeof TeacherIndexRoute
   '/teachers/': typeof TeachersIndexRoute
+  '/api/cron/morning-messages': typeof ApiCronMorningMessagesRoute
   '/api/whatsapp/webhook': typeof ApiWhatsappWebhookRoute
   '/children/$childId/edit': typeof ChildrenChildIdEditRoute
   '/managers/$managerId/edit': typeof ManagersManagerIdEditRoute
@@ -185,6 +192,7 @@ export interface FileRoutesByTo {
   '/parents': typeof ParentsIndexRoute
   '/teacher': typeof TeacherIndexRoute
   '/teachers': typeof TeachersIndexRoute
+  '/api/cron/morning-messages': typeof ApiCronMorningMessagesRoute
   '/api/whatsapp/webhook': typeof ApiWhatsappWebhookRoute
   '/children/$childId/edit': typeof ChildrenChildIdEditRoute
   '/managers/$managerId/edit': typeof ManagersManagerIdEditRoute
@@ -210,6 +218,7 @@ export interface FileRoutesById {
   '/parents/': typeof ParentsIndexRoute
   '/teacher/': typeof TeacherIndexRoute
   '/teachers/': typeof TeachersIndexRoute
+  '/api/cron/morning-messages': typeof ApiCronMorningMessagesRoute
   '/api/whatsapp/webhook': typeof ApiWhatsappWebhookRoute
   '/children/$childId/edit': typeof ChildrenChildIdEditRoute
   '/managers/$managerId/edit': typeof ManagersManagerIdEditRoute
@@ -236,6 +245,7 @@ export interface FileRouteTypes {
     | '/parents/'
     | '/teacher/'
     | '/teachers/'
+    | '/api/cron/morning-messages'
     | '/api/whatsapp/webhook'
     | '/children/$childId/edit'
     | '/managers/$managerId/edit'
@@ -260,6 +270,7 @@ export interface FileRouteTypes {
     | '/parents'
     | '/teacher'
     | '/teachers'
+    | '/api/cron/morning-messages'
     | '/api/whatsapp/webhook'
     | '/children/$childId/edit'
     | '/managers/$managerId/edit'
@@ -284,6 +295,7 @@ export interface FileRouteTypes {
     | '/parents/'
     | '/teacher/'
     | '/teachers/'
+    | '/api/cron/morning-messages'
     | '/api/whatsapp/webhook'
     | '/children/$childId/edit'
     | '/managers/$managerId/edit'
@@ -308,6 +320,7 @@ export interface RootRouteChildren {
   ManagersIndexRoute: typeof ManagersIndexRoute
   ParentsIndexRoute: typeof ParentsIndexRoute
   TeachersIndexRoute: typeof TeachersIndexRoute
+  ApiCronMorningMessagesRoute: typeof ApiCronMorningMessagesRoute
   ApiWhatsappWebhookRoute: typeof ApiWhatsappWebhookRoute
   ChildrenChildIdEditRoute: typeof ChildrenChildIdEditRoute
   ManagersManagerIdEditRoute: typeof ManagersManagerIdEditRoute
@@ -471,6 +484,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiWhatsappWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/cron/morning-messages': {
+      id: '/api/cron/morning-messages'
+      path: '/api/cron/morning-messages'
+      fullPath: '/api/cron/morning-messages'
+      preLoaderRoute: typeof ApiCronMorningMessagesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -491,6 +511,7 @@ const rootRouteChildren: RootRouteChildren = {
   ManagersIndexRoute: ManagersIndexRoute,
   ParentsIndexRoute: ParentsIndexRoute,
   TeachersIndexRoute: TeachersIndexRoute,
+  ApiCronMorningMessagesRoute: ApiCronMorningMessagesRoute,
   ApiWhatsappWebhookRoute: ApiWhatsappWebhookRoute,
   ChildrenChildIdEditRoute: ChildrenChildIdEditRoute,
   ManagersManagerIdEditRoute: ManagersManagerIdEditRoute,
