@@ -2,6 +2,7 @@ import { createFileRoute, Link } from '@tanstack/react-router';
 import React, { useState } from 'react';
 import { requireRole } from '~/lib/auth-guard';
 import { useManagers, useDeleteManager } from '~/lib/queries/managers';
+import Layout from '~/components/Layout';
 
 export const Route = createFileRoute('/managers/')({
   beforeLoad: () => requireRole('admin'),
@@ -22,23 +23,23 @@ function ManagersPage() {
   const [confirmId, setConfirmId] = useState<string | null>(null);
 
   if (isLoading) {
-    return <LoadingSkeleton />;
+    return <Layout><LoadingSkeleton /></Layout>;
   }
 
   if (error) {
     return (
-      <PageShell>
+      <Layout><PageShell>
         <div className="p-4 bg-red-50 border border-red-200 rounded-md" role="alert">
           <p className="text-sm text-red-700">
             {error instanceof Error ? error.message : 'שגיאה בטעינת נתונים'}
           </p>
         </div>
-      </PageShell>
+      </PageShell></Layout>
     );
   }
 
   return (
-    <PageShell>
+    <Layout><PageShell>
       {!managers || managers.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-gray-500 text-lg">אין מנהלים במערכת עדיין</p>
@@ -87,7 +88,7 @@ function ManagersPage() {
           </table>
         </div>
       )}
-    </PageShell>
+    </PageShell></Layout>
   );
 }
 

@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { requireRole } from '~/lib/auth-guard';
 import { useManager, useUpdateManager } from '~/lib/queries/managers';
 import { ManagerForm } from '~/components/ManagerForm';
+import Layout from '~/components/Layout';
 
 export const Route = createFileRoute('/managers/$managerId/edit')({
   beforeLoad: () => requireRole('admin'),
@@ -16,7 +17,7 @@ function EditManagerPage() {
 
   if (isLoading) {
     return (
-      <div className="max-w-lg mx-auto p-4 sm:p-6">
+      <Layout><div className="max-w-lg mx-auto p-4 sm:p-6">
         <div className="h-8 w-32 bg-gray-200 rounded animate-pulse mb-6" />
         <div className="space-y-5">
           {[1, 2, 3].map((i) => (
@@ -26,24 +27,24 @@ function EditManagerPage() {
             </div>
           ))}
         </div>
-      </div>
+      </div></Layout>
     );
   }
 
   if (fetchError || !manager) {
     return (
-      <div className="max-w-lg mx-auto p-4 sm:p-6">
+      <Layout><div className="max-w-lg mx-auto p-4 sm:p-6">
         <div className="p-4 bg-red-50 border border-red-200 rounded-md" role="alert">
           <p className="text-sm text-red-700">
             {fetchError instanceof Error ? fetchError.message : 'מנהל לא נמצא/ה'}
           </p>
         </div>
-      </div>
+      </div></Layout>
     );
   }
 
   return (
-    <ManagerForm
+    <Layout><ManagerForm
       manager={manager}
       onSubmit={(data) => {
         updateMutation.mutate(
@@ -63,6 +64,6 @@ function EditManagerPage() {
             ? 'שגיאה בעדכון מנהל'
             : null
       }
-    />
+    /></Layout>
   );
 }
