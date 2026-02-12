@@ -1,7 +1,7 @@
 import { createServerFn } from '@tanstack/react-start'
 import { z } from 'zod'
 import { childCreateSchema, childUpdateSchema } from '../schemas/child'
-import { createServiceClient, requireAuth, requireManagerRole, resolveNurseryId } from './auth'
+import { createServiceClient, requireAuth, requireAdminRole, resolveNurseryId } from './auth'
 
 const err = {
   not_found: 'ילד/ה לא נמצא/א',
@@ -40,21 +40,27 @@ export const getChild = createServerFn({ method: 'GET' })
 export const createChild = createServerFn({ method: 'POST' })
   .inputValidator(tokenSchema.extend({ child: childCreateSchema }))
   .handler(async ({ data }) => {
-    const user = await requireManagerRole(data.accessToken)
+    const user = await requireAdminRole(data.accessToken)
     const { role } = await requireAuth(data.accessToken)
-    const nurseryId = await resolveNurseryId(user, role)
+    const nurseryId = data.child.nursery_id ?? await resolveNurseryId(user, role)
     if (!nurseryId) throw new Error('אדמין חייב לציין גן')
     const supabase = createServiceClient()
+    const { data: childId, error: rpcError } = await supabase.rpc('create_child_with_parents', {
+      p_name: data.child.name,
+      p_nursery_id: nurseryId,
+      p_parent_ids: data.child.parent_ids,
+    })
+    if (rpcError) throw new Error(err.create_failed)
     const { data: child, error } = await supabase
-      .from('children').insert({ name: data.child.name, nursery_id: nurseryId }).select().single()
-    if (error) throw new Error(err.create_failed)
+      .from('children').select('*').eq('id', childId).single()
+    if (error || !child) throw new Error(err.create_failed)
     return child
   })
 
 export const updateChild = createServerFn({ method: 'POST' })
   .inputValidator(tokenSchema.extend({ id: z.string().uuid(), child: childUpdateSchema }))
   .handler(async ({ data }) => {
-    await requireManagerRole(data.accessToken)
+    await requireAdminRole(data.accessToken)
     const supabase = createServiceClient()
     const { data: child, error } = await supabase
       .from('children').update({ name: data.child.name }).eq('id', data.id).select().single()
@@ -66,7 +72,7 @@ export const updateChild = createServerFn({ method: 'POST' })
 export const deleteChild = createServerFn({ method: 'POST' })
   .inputValidator(tokenSchema.extend({ id: z.string().uuid() }))
   .handler(async ({ data }) => {
-    await requireManagerRole(data.accessToken)
+    await requireAdminRole(data.accessToken)
     const supabase = createServiceClient()
     const { error } = await supabase.from('children').delete().eq('id', data.id)
     if (error) throw new Error(err.delete_failed)

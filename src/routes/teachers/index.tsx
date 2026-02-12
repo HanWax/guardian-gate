@@ -2,11 +2,13 @@ import { createFileRoute, Link } from '@tanstack/react-router';
 import React, { useState } from 'react';
 import { requireRole } from '~/lib/auth-guard';
 import { useTeachers, useDeleteTeacher } from '~/lib/queries/teachers';
-import type { Teacher } from '~/lib/database.types';
+import type { Database } from '~/lib/database.types';
+
+type Teacher = Database['public']['Tables']['teachers']['Row'];
 import Layout from '~/components/Layout';
 
 export const Route = createFileRoute('/teachers/')({
-  beforeLoad: () => requireRole('admin', 'manager'),
+  beforeLoad: () => requireRole('admin'),
   component: TeachersPage,
 });
 

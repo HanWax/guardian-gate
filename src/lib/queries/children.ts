@@ -7,6 +7,7 @@ import {
   deleteChild,
 } from '../server/children';
 import { getAccessToken } from './utils';
+import { childrenParentsKeys } from './children-parents';
 import type { ChildCreate, ChildUpdate } from '../schemas/child';
 import type { Database } from '../database.types';
 
@@ -48,6 +49,7 @@ export function useCreateChild() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: childKeys.all });
+      queryClient.invalidateQueries({ queryKey: childrenParentsKeys.all });
     },
   });
 }

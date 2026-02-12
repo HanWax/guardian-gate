@@ -401,6 +401,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_child_with_parents: {
+        Args: { p_name: string; p_nursery_id: string; p_parent_ids: string[] }
+        Returns: string
+      }
       get_manager_nursery_id: { Args: never; Returns: string }
       get_teacher_nursery_id: { Args: never; Returns: string }
       get_user_role: { Args: never; Returns: string }
@@ -539,12 +543,4 @@ export const Constants = {
     Enums: {},
   },
 } as const
-
-export type Teacher = Database['public']['Tables']['teachers']['Row']
-export type TeacherInsert = Database['public']['Tables']['teachers']['Insert']
-export type TeacherUpdate = Database['public']['Tables']['teachers']['Update']
-
-export type Manager = Database['public']['Tables']['managers']['Row']
-export type ManagerInsert = Database['public']['Tables']['managers']['Insert']
-export type ManagerUpdate = Database['public']['Tables']['managers']['Update']
 
