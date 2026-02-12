@@ -1,7 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useEffect, useRef } from 'react'
 import { requireRole } from '~/lib/auth-guard'
-import { useAttendanceByDate, useEnsureTodayRecords } from '~/lib/queries/attendance'
+import { useAttendanceByDate } from '~/lib/queries/attendance'
 import Layout from '~/components/Layout'
 
 export const Route = createFileRoute('/attendance')({
@@ -74,15 +73,6 @@ function parentResponseLabel(response: string | null): string {
 function AttendanceDashboard() {
   const today = new Date().toISOString().split('T')[0]
   const { data: records, isLoading, error } = useAttendanceByDate(today)
-  const ensureMutation = useEnsureTodayRecords()
-  const ensuredRef = useRef(false)
-
-  useEffect(() => {
-    if (!ensuredRef.current) {
-      ensuredRef.current = true
-      ensureMutation.mutate()
-    }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (isLoading) {
     return (

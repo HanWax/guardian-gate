@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { requireRole } from '~/lib/auth-guard'
-import { useTeacherAttendanceToday, useConfirmAttendance } from '~/lib/queries/attendance'
+import { useTeacherAttendanceToday } from '~/lib/queries/attendance'
 import Layout from '~/components/Layout'
 
 export const Route = createFileRoute('/teacher/attendance')({
@@ -56,7 +56,6 @@ function groupRecords(records: AttendanceRecord[]): Section[] {
 
 function TeacherAttendance() {
   const { data: records, isLoading, error } = useTeacherAttendanceToday()
-  const confirmMutation = useConfirmAttendance()
 
   if (isLoading) {
     return (
@@ -93,7 +92,7 @@ function TeacherAttendance() {
     <Layout>
       <div className="max-w-3xl">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold">אישור נוכחות</h1>
+          <h1 className="text-2xl font-bold">סטטוס נוכחות</h1>
           <p className="mt-1 text-gray-600">{todayFormatted}</p>
         </div>
 
@@ -139,22 +138,10 @@ function TeacherAttendance() {
                                   : 'טרם התקבלה תגובה מההורה'}
                             </p>
                           </div>
-                          {s.key === 'awaiting' ? (
-                            <button
-                              onClick={() => confirmMutation.mutate({ attendanceId: r.id, confirmed: true })}
-                              disabled={confirmMutation.isPending}
-                              className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
-                            >
-                              אשר הגעה
-                            </button>
-                          ) : s.key === 'confirmed' ? (
-                            <button
-                              onClick={() => confirmMutation.mutate({ attendanceId: r.id, confirmed: false })}
-                              disabled={confirmMutation.isPending}
-                              className="rounded-lg bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 disabled:opacity-50"
-                            >
-                              בטל אישור
-                            </button>
+                          {s.key === 'confirmed' ? (
+                            <span className="rounded-lg bg-green-100 px-3 py-1 text-sm font-medium text-green-800">
+                              אושר
+                            </span>
                           ) : null}
                         </div>
                       </div>
