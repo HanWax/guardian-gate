@@ -36,11 +36,6 @@ function AdminDashboard() {
             description="צפייה וניהול של כל המורות במערכת"
             href="/teachers"
           />
-          <DashboardCard
-            title="מנהלים"
-            description="צפייה וניהול של כל המנהלים במערכת"
-            href="/managers"
-          />
         </div>
       </div>
     </Layout>

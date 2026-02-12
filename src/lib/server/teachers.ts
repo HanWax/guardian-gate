@@ -1,7 +1,7 @@
 import { createServerFn } from '@tanstack/react-start'
 import { z } from 'zod'
 import { teacherCreateSchema, teacherUpdateSchema } from '../schemas/teacher'
-import { createServiceClient, requireManagerRole } from './auth'
+import { createServiceClient, requireAdminRole } from './auth'
 
 const err = {
   not_found: 'מורה לא נמצא/ה',
@@ -16,7 +16,7 @@ const tokenSchema = z.object({ accessToken: z.string().min(1) })
 export const getTeachers = createServerFn({ method: 'GET' })
   .inputValidator(tokenSchema.extend({ nursery_id: z.string().uuid().optional() }))
   .handler(async ({ data }) => {
-    await requireManagerRole(data.accessToken)
+    await requireAdminRole(data.accessToken)
     const supabase = createServiceClient()
     let query = supabase.from('teachers').select('*').order('name', { ascending: true })
     if (data.nursery_id) query = query.eq('nursery_id', data.nursery_id)
@@ -28,7 +28,7 @@ export const getTeachers = createServerFn({ method: 'GET' })
 export const getTeacher = createServerFn({ method: 'GET' })
   .inputValidator(tokenSchema.extend({ id: z.string().uuid() }))
   .handler(async ({ data }) => {
-    await requireManagerRole(data.accessToken)
+    await requireAdminRole(data.accessToken)
     const supabase = createServiceClient()
     const { data: teacher, error } = await supabase
       .from('teachers').select('*').eq('id', data.id).single()
@@ -39,7 +39,7 @@ export const getTeacher = createServerFn({ method: 'GET' })
 export const createTeacher = createServerFn({ method: 'POST' })
   .inputValidator(tokenSchema.extend({ teacher: teacherCreateSchema }))
   .handler(async ({ data }) => {
-    await requireManagerRole(data.accessToken)
+    await requireAdminRole(data.accessToken)
     const supabase = createServiceClient()
     const { data: teacher, error } = await supabase
       .from('teachers').insert(data.teacher).select().single()
@@ -50,7 +50,7 @@ export const createTeacher = createServerFn({ method: 'POST' })
 export const updateTeacher = createServerFn({ method: 'POST' })
   .inputValidator(tokenSchema.extend({ id: z.string().uuid(), teacher: teacherUpdateSchema }))
   .handler(async ({ data }) => {
-    await requireManagerRole(data.accessToken)
+    await requireAdminRole(data.accessToken)
     const supabase = createServiceClient()
     const { data: teacher, error } = await supabase
       .from('teachers').update(data.teacher).eq('id', data.id).select().single()
@@ -62,7 +62,7 @@ export const updateTeacher = createServerFn({ method: 'POST' })
 export const deleteTeacher = createServerFn({ method: 'POST' })
   .inputValidator(tokenSchema.extend({ id: z.string().uuid() }))
   .handler(async ({ data }) => {
-    await requireManagerRole(data.accessToken)
+    await requireAdminRole(data.accessToken)
     const supabase = createServiceClient()
     const { error } = await supabase.from('teachers').delete().eq('id', data.id)
     if (error) throw new Error(err.delete_failed)

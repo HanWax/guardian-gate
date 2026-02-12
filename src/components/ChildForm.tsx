@@ -8,7 +8,7 @@ type Teacher = Database['public']['Tables']['teachers']['Row']
 
 interface ChildFormProps {
   initialData?: Child
-  onSubmit: (data: { name: string; parent_ids?: string[]; teacher_id?: string | null }) => void
+  onSubmit: (data: { name: string; parent_ids?: string[]; teacher_id: string }) => void
   isPending: boolean
   serverError?: string | null
   availableParents?: Parent[]
@@ -43,8 +43,7 @@ export function ChildForm({ initialData, onSubmit, isPending, serverError, avail
     e.preventDefault()
     setErrors({})
 
-    const teacherValue = teacherId || null
-    const payload = { name, teacher_id: teacherValue, ...(isCreateMode ? { parent_ids: selectedParentIds } : {}) }
+    const payload = { name, teacher_id: teacherId, ...(isCreateMode ? { parent_ids: selectedParentIds } : {}) }
 
     const schema = initialData ? childUpdateSchema : childCreateSchema
     const result = schema.safeParse(payload)
@@ -89,17 +88,20 @@ export function ChildForm({ initialData, onSubmit, isPending, serverError, avail
         <select
           id="teacher-id"
           value={teacherId}
-          onChange={(e) => setTeacherId(e.target.value)}
+          onChange={(e) => { setTeacherId(e.target.value); setErrors((prev) => { const { teacher_id: _, ...rest } = prev; return rest }) }}
           disabled={isPending || isLoadingTeachers}
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+          className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
+            errors.teacher_id ? 'border-red-500' : 'border-gray-300'
+          }`}
         >
-          <option value="">{"ללא מורה"}</option>
+          <option value="">{"בחר מורה..."}</option>
           {availableTeachers?.map((teacher) => (
             <option key={teacher.id} value={teacher.id}>
               {teacher.name}
             </option>
           ))}
         </select>
+        {errors.teacher_id && <p className="mt-2 text-sm text-red-600" role="alert">{errors.teacher_id}</p>}
       </div>
 
       {isCreateMode && (

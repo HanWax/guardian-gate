@@ -2,7 +2,7 @@ import { createServerFn } from '@tanstack/react-start'
 import { z } from 'zod'
 import { parentCreateSchema, parentUpdateSchema } from '../schemas/parent'
 import { normalizePhone } from '../parents'
-import { createServiceClient, requireAuth, requireManagerRole, resolveNurseryId } from './auth'
+import { createServiceClient, requireAuth, requireAdminRole, resolveNurseryId } from './auth'
 
 const err = {
   not_found: 'הורה לא נמצא',
@@ -63,7 +63,7 @@ export const getParent = createServerFn({ method: 'GET' })
 export const createParent = createServerFn({ method: 'POST' })
   .inputValidator(tokenSchema.extend({ parent: parentCreateSchema }))
   .handler(async ({ data }) => {
-    await requireManagerRole(data.accessToken)
+    await requireAdminRole(data.accessToken)
     const supabase = createServiceClient()
     const { data: parent, error } = await supabase
       .from('parents')
@@ -76,7 +76,7 @@ export const createParent = createServerFn({ method: 'POST' })
 export const updateParent = createServerFn({ method: 'POST' })
   .inputValidator(tokenSchema.extend({ id: z.string().uuid(), parent: parentUpdateSchema }))
   .handler(async ({ data }) => {
-    await requireManagerRole(data.accessToken)
+    await requireAdminRole(data.accessToken)
     const supabase = createServiceClient()
     const { data: parent, error } = await supabase
       .from('parents')
@@ -90,7 +90,7 @@ export const updateParent = createServerFn({ method: 'POST' })
 export const deleteParent = createServerFn({ method: 'POST' })
   .inputValidator(tokenSchema.extend({ id: z.string().uuid() }))
   .handler(async ({ data }) => {
-    await requireManagerRole(data.accessToken)
+    await requireAdminRole(data.accessToken)
     const supabase = createServiceClient()
     const { error } = await supabase.from('parents').delete().eq('id', data.id)
     if (error) throw new Error(err.delete_failed)

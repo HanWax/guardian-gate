@@ -15,12 +15,6 @@ export async function requireAuth(accessToken: string) {
   return { user, role: user.user_metadata?.role as string | undefined }
 }
 
-export async function requireManagerRole(accessToken: string) {
-  const { user, role } = await requireAuth(accessToken)
-  if (role !== 'admin' && role !== 'manager') throw new Error('אין לך הרשאה לבצע פעולה זו')
-  return user
-}
-
 export async function requireAdminRole(accessToken: string) {
   const { user, role } = await requireAuth(accessToken)
   if (role !== 'admin') throw new Error('אין לך הרשאה לבצע פעולה זו')
@@ -28,7 +22,7 @@ export async function requireAdminRole(accessToken: string) {
 }
 
 export async function resolveNurseryId(user: { id: string }, role: string | undefined): Promise<string | null> {
-  const table = role === 'admin' ? 'admins' : role === 'manager' ? 'managers' : role === 'teacher' ? 'teachers' : null
+  const table = role === 'admin' ? 'admins' : role === 'teacher' ? 'teachers' : null
   if (!table) throw new Error('לא נמצא גן משויך למשתמש')
 
   const supabase = createServiceClient()

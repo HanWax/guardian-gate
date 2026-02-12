@@ -175,8 +175,8 @@ export function teacherSummaryMessage(
   return { text }
 }
 
-/** Flow 6 — Manager escalation (inconsistency alert) */
-export function managerEscalationMessage(
+/** Flow 6 — Admin escalation (inconsistency alert) */
+export function adminEscalationMessage(
   nurseryName: string,
   childName: string,
   parentClaim: string,

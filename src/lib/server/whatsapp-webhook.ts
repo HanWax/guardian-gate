@@ -25,7 +25,7 @@ import {
   verifySuccessMessage,
   verifyRetryMessage,
   otherExplanationPromptMessage,
-  managerEscalationMessage,
+  adminEscalationMessage,
   parentExplanationForwardMessage,
   namesMatch,
 } from './message-templates';
@@ -536,7 +536,7 @@ async function handleFreeText(
     } else {
       const attempts = await incrementVerificationAttempts(parent.id);
       if (attempts >= 3) {
-        // Escalate to manager after 3 failed attempts
+        // Escalate to admin after 3 failed attempts
         await flagInconsistency(
           convo.attendance_id,
           record.child_id,
@@ -615,7 +615,7 @@ async function forwardExplanationToTeacher(
 }
 
 // ---------------------------------------------------------------------------
-// Inconsistency detection + manager escalation
+// Inconsistency detection + admin escalation
 // ---------------------------------------------------------------------------
 
 async function flagInconsistency(
@@ -635,7 +635,7 @@ async function flagInconsistency(
     })
     .eq('id', attendanceId);
 
-  // Look up child → nursery → managers + teachers for escalation
+  // Look up child → nursery → admins + teachers for escalation
   const { data: child } = await supabase
     .from('children')
     .select('name, nursery_id')
@@ -643,9 +643,9 @@ async function flagInconsistency(
     .single();
   if (!child) return;
 
-  const [nurseryResult, managersResult, teachersResult, parentResult] = await Promise.all([
+  const [nurseryResult, adminsResult, teachersResult, parentResult] = await Promise.all([
     supabase.from('nurseries').select('name').eq('id', child.nursery_id).single(),
-    supabase.from('managers').select('phone').eq('nursery_id', child.nursery_id),
+    supabase.from('admins').select('phone').eq('nursery_id', child.nursery_id),
     supabase.from('teachers').select('phone').eq('nursery_id', child.nursery_id).limit(1),
     supabase
       .from('children_parents')
@@ -655,12 +655,12 @@ async function flagInconsistency(
   ]);
 
   const nurseryName = nurseryResult.data?.name ?? '';
-  const managers = managersResult.data ?? [];
+  const admins = adminsResult.data ?? [];
   const teacherPhone = teachersResult.data?.[0]?.phone ?? '';
   const parentRow = parentResult.data?.[0]?.parents as unknown as { phone: string } | null;
   const parentPhone = parentRow?.phone ?? '';
 
-  const msg = managerEscalationMessage(
+  const msg = adminEscalationMessage(
     nurseryName,
     child.name,
     parentClaim,
@@ -669,11 +669,11 @@ async function flagInconsistency(
     teacherPhone
   );
 
-  for (const manager of managers) {
+  for (const admin of admins) {
     try {
-      await sendTextMessage(toWhatsAppPhone(manager.phone), msg.text);
+      await sendTextMessage(toWhatsAppPhone(admin.phone), msg.text);
     } catch (err) {
-      console.error(`[Escalation] Failed to send to manager ${manager.phone}:`, err);
+      console.error(`[Escalation] Failed to send to admin ${admin.phone}:`, err);
     }
   }
 }

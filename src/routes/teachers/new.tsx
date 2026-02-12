@@ -7,7 +7,7 @@ import Layout from '~/components/Layout';
 const DEFAULT_NURSERY_ID = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
 
 export const Route = createFileRoute('/teachers/new')({
-  beforeLoad: () => requireRole('admin', 'manager'),
+  beforeLoad: () => requireRole('admin'),
   component: NewTeacherPage,
 });
 

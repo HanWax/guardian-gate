@@ -75,21 +75,21 @@ export type Database = {
           id: string
           name: string
           nursery_id: string
-          teacher_id: string | null
+          teacher_id: string
         }
         Insert: {
           created_at?: string | null
           id?: string
           name: string
           nursery_id: string
-          teacher_id?: string | null
+          teacher_id: string
         }
         Update: {
           created_at?: string | null
           id?: string
           name?: string
           nursery_id?: string
-          teacher_id?: string | null
+          teacher_id?: string
         }
         Relationships: [
           {
@@ -270,41 +270,6 @@ export type Database = {
           },
         ]
       }
-      managers: {
-        Row: {
-          created_at: string | null
-          id: string
-          name: string
-          nursery_id: string
-          phone: string
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          name: string
-          nursery_id: string
-          phone: string
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          name?: string
-          nursery_id?: string
-          phone?: string
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "managers_nursery_id_fkey"
-            columns: ["nursery_id"]
-            isOneToOne: false
-            referencedRelation: "nurseries"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       morning_message_runs: {
         Row: {
           completed_at: string | null
@@ -450,7 +415,6 @@ export type Database = {
         Args: { p_name: string; p_nursery_id: string; p_parent_ids: string[] }
         Returns: string
       }
-      get_manager_nursery_id: { Args: never; Returns: string }
       get_teacher_nursery_id: { Args: never; Returns: string }
       get_user_role: { Args: never; Returns: string }
     }

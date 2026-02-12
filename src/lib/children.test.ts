@@ -2,19 +2,22 @@ import { describe, it, expect } from 'vitest'
 import { createChildSchema, updateChildSchema } from './children'
 
 const validParentIds = ['00000000-0000-0000-0000-000000000001']
+const validTeacherId = '00000000-0000-0000-0000-000000000002'
 
 describe('createChildSchema', () => {
-  it('accepts a valid name with parent_ids', () => {
+  it('accepts a valid name with parent_ids and teacher_id', () => {
     const result = createChildSchema.safeParse({
       name: 'דניאל',
+      teacher_id: validTeacherId,
       parent_ids: validParentIds,
     })
     expect(result.success).toBe(true)
   })
 
-  it('accepts a 2-character name with parent_ids', () => {
+  it('accepts a 2-character name with parent_ids and teacher_id', () => {
     const result = createChildSchema.safeParse({
       name: 'אב',
+      teacher_id: validTeacherId,
       parent_ids: validParentIds,
     })
     expect(result.success).toBe(true)
@@ -23,6 +26,7 @@ describe('createChildSchema', () => {
   it('rejects an empty name', () => {
     const result = createChildSchema.safeParse({
       name: '',
+      teacher_id: validTeacherId,
       parent_ids: validParentIds,
     })
     expect(result.success).toBe(false)
@@ -31,6 +35,7 @@ describe('createChildSchema', () => {
   it('rejects a single character name', () => {
     const result = createChildSchema.safeParse({
       name: 'א',
+      teacher_id: validTeacherId,
       parent_ids: validParentIds,
     })
     expect(result.success).toBe(false)
@@ -39,6 +44,7 @@ describe('createChildSchema', () => {
   it('rejects missing parent_ids', () => {
     const result = createChildSchema.safeParse({
       name: 'דניאל',
+      teacher_id: validTeacherId,
     })
     expect(result.success).toBe(false)
   })
@@ -46,30 +52,44 @@ describe('createChildSchema', () => {
   it('rejects empty parent_ids array', () => {
     const result = createChildSchema.safeParse({
       name: 'דניאל',
+      teacher_id: validTeacherId,
       parent_ids: [],
+    })
+    expect(result.success).toBe(false)
+  })
+
+  it('rejects missing teacher_id', () => {
+    const result = createChildSchema.safeParse({
+      name: 'דניאל',
+      parent_ids: validParentIds,
     })
     expect(result.success).toBe(false)
   })
 })
 
 describe('updateChildSchema', () => {
-  it('accepts a valid name', () => {
-    const result = updateChildSchema.safeParse({ name: 'דניאל' })
+  it('accepts a valid name with teacher_id', () => {
+    const result = updateChildSchema.safeParse({ name: 'דניאל', teacher_id: validTeacherId })
     expect(result.success).toBe(true)
   })
 
-  it('accepts a 2-character name', () => {
-    const result = updateChildSchema.safeParse({ name: 'אב' })
+  it('accepts a 2-character name with teacher_id', () => {
+    const result = updateChildSchema.safeParse({ name: 'אב', teacher_id: validTeacherId })
     expect(result.success).toBe(true)
   })
 
   it('rejects an empty name', () => {
-    const result = updateChildSchema.safeParse({ name: '' })
+    const result = updateChildSchema.safeParse({ name: '', teacher_id: validTeacherId })
     expect(result.success).toBe(false)
   })
 
   it('rejects a single character name', () => {
-    const result = updateChildSchema.safeParse({ name: 'א' })
+    const result = updateChildSchema.safeParse({ name: 'א', teacher_id: validTeacherId })
+    expect(result.success).toBe(false)
+  })
+
+  it('rejects missing teacher_id', () => {
+    const result = updateChildSchema.safeParse({ name: 'דניאל' })
     expect(result.success).toBe(false)
   })
 })

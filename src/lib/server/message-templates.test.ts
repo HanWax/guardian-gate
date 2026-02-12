@@ -12,7 +12,7 @@ import {
   confirmDroppingOffMessage,
   confirmNotTodayMessage,
   teacherSummaryMessage,
-  managerEscalationMessage,
+  adminEscalationMessage,
   parentExplanationForwardMessage,
   namesMatch,
 } from './message-templates'
@@ -134,8 +134,8 @@ describe('message-templates', () => {
       expect(msg.text).toContain('(אין)')
     })
 
-    it('managerEscalationMessage includes all fields', () => {
-      const msg = managerEscalationMessage(
+    it('adminEscalationMessage includes all fields', () => {
+      const msg = adminEscalationMessage(
         'גן שקד', 'דניאל', 'בכיתה', 'לא אושרה הגעה',
         '+972521234567', '+972524445566'
       )

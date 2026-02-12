@@ -35,7 +35,7 @@ export const getFamilies = createServerFn({ method: 'GET' })
         children: {
           id: string
           name: string
-          teacher_id: string | null
+          teacher_id: string
           teachers: { id: string; name: string } | null
         } | null
       }>
