@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect, type FormEvent, type Ref } from 'react'
 import { Link } from '@tanstack/react-router'
 import { teacherCreateSchema } from '~/lib/schemas/teacher'
-import type { Teacher } from '~/lib/database.types'
+import type { Database } from '~/lib/database.types'
+
+type Teacher = Database['public']['Tables']['teachers']['Row']
 
 interface TeacherFormProps {
   teacher?: Teacher

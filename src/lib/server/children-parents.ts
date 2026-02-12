@@ -8,6 +8,7 @@ const err = {
   assign_failed: 'שגיאה בשיוך הורה לילד/ה. אנא נסה שוב',
   unassign_failed: 'שגיאה בביטול שיוך הורה מילד/ה. אנא נסה שוב',
   already_assigned: 'ההורה כבר משויך/ת לילד/ה זה/ו',
+  last_parent: 'לא ניתן להסיר את ההורה האחרון של ילד/ה',
 } as const
 
 const tokenSchema = z.object({ accessToken: z.string().min(1) })
@@ -73,6 +74,13 @@ export const unassignParentFromChild = createServerFn({ method: 'POST' })
   .handler(async ({ data }) => {
     await requireAuth(data.accessToken)
     const supabase = createServiceClient()
+
+    // Prevent removing the last parent
+    const { count } = await supabase
+      .from('children_parents')
+      .select('*', { count: 'exact', head: true })
+      .eq('child_id', data.assignment.child_id)
+    if (count !== null && count <= 1) throw new Error(err.last_parent)
 
     const { error } = await supabase
       .from('children_parents')

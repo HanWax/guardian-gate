@@ -1,17 +1,20 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
-import { requireAuth } from '~/lib/auth-guard';
+import { requireRole } from '~/lib/auth-guard';
 import { useCreateChild } from '~/lib/queries/children';
+import { useParents } from '~/lib/queries/parents';
 import { ChildForm } from '~/components/ChildForm';
 import Layout from '~/components/Layout';
+import type { ChildCreate } from '~/lib/schemas/child';
 
 export const Route = createFileRoute('/children/new')({
-  beforeLoad: () => requireAuth(),
+  beforeLoad: () => requireRole('admin'),
   component: NewChild,
 });
 
 function NewChild() {
   const navigate = useNavigate();
   const createMutation = useCreateChild();
+  const { data: parents, isLoading: isLoadingParents } = useParents();
 
   return (
     <Layout>
@@ -26,7 +29,7 @@ function NewChild() {
 
       <ChildForm
         onSubmit={(data) => {
-          createMutation.mutate(data, {
+          createMutation.mutate(data as ChildCreate, {
             onSuccess: () => {
               navigate({ to: '/children' });
             },
@@ -40,6 +43,8 @@ function NewChild() {
               ? 'שגיאה ביצירת רשומת ילד/ה'
               : null
         }
+        availableParents={parents}
+        isLoadingParents={isLoadingParents}
       />
     </div>
     </Layout>

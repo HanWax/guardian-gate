@@ -7,8 +7,10 @@ import {
   deleteTeacher,
 } from '../server/teachers';
 import { getAccessToken } from './utils';
-import type { Teacher } from '../database.types';
 import type { TeacherCreate, TeacherUpdate } from '../schemas/teacher';
+import type { Database } from '../database.types';
+
+type Teacher = Database['public']['Tables']['teachers']['Row'];
 
 export const teacherKeys = {
   all: ['teachers'] as const,

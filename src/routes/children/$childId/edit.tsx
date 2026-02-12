@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import { useState, useMemo } from 'react';
-import { requireAuth } from '~/lib/auth-guard';
+import { requireRole } from '~/lib/auth-guard';
 import { useChild, useUpdateChild } from '~/lib/queries/children';
 import { useParents } from '~/lib/queries/parents';
 import { useParentsForChild, useUnassignParent, useAssignParent } from '~/lib/queries/children-parents';
@@ -8,7 +8,7 @@ import { ChildForm } from '~/components/ChildForm';
 import Layout from '~/components/Layout';
 
 export const Route = createFileRoute('/children/$childId/edit')({
-  beforeLoad: () => requireAuth(),
+  beforeLoad: () => requireRole('admin'),
   component: EditChild,
 });
 
@@ -97,18 +97,25 @@ function EditChild() {
           <p className="text-gray-500">{"טוען..."}</p>
         ) : assignedParents && assignedParents.length > 0 ? (
           <ul className="space-y-2">
-            {assignedParents.map((parent) => (
-              <li key={parent.id} className="flex items-center justify-between bg-gray-50 p-3 rounded">
-                <span>{parent.name}</span>
-                <button
-                  type="button"
-                  onClick={() => setParentToRemove(parent.id)}
-                  className="text-red-600 hover:text-red-800 text-sm"
-                >
-                  {"הסר"}
-                </button>
-              </li>
-            ))}
+            {assignedParents.map((parent) => {
+              const isSoleParent = assignedParents.length <= 1
+              return (
+                <li key={parent.id} className="flex items-center justify-between bg-gray-50 p-3 rounded">
+                  <span>{parent.name}</span>
+                  {isSoleParent ? (
+                    <span className="text-gray-400 text-sm">{"הורה יחיד"}</span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setParentToRemove(parent.id)}
+                      className="text-red-600 hover:text-red-800 text-sm"
+                    >
+                      {"הסר"}
+                    </button>
+                  )}
+                </li>
+              )
+            })}
           </ul>
         ) : (
           <p className="text-gray-500">{"אין הורים שהוקצו"}</p>
