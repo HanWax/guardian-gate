@@ -31,6 +31,8 @@ import { Route as ParentsParentIdEditRouteImport } from './routes/parents/$paren
 import { Route as ManagersManagerIdEditRouteImport } from './routes/managers/$managerId.edit'
 import { Route as ChildrenChildIdEditRouteImport } from './routes/children/$childId/edit'
 import { Route as ApiWhatsappWebhookRouteImport } from './routes/api.whatsapp.webhook'
+import { Route as ApiCronSecondPingRouteImport } from './routes/api.cron.second-ping'
+import { Route as ApiCronNineAmCheckRouteImport } from './routes/api.cron.nine-am-check'
 import { Route as ApiCronMorningMessagesRouteImport } from './routes/api.cron.morning-messages'
 
 const SettingsRoute = SettingsRouteImport.update({
@@ -69,9 +71,9 @@ const TeachersIndexRoute = TeachersIndexRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const TeacherIndexRoute = TeacherIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => TeacherRoute,
+  id: '/teacher/',
+  path: '/teacher/',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ParentsIndexRoute = ParentsIndexRouteImport.update({
   id: '/parents/',
@@ -143,6 +145,16 @@ const ApiWhatsappWebhookRoute = ApiWhatsappWebhookRouteImport.update({
   path: '/api/whatsapp/webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiCronSecondPingRoute = ApiCronSecondPingRouteImport.update({
+  id: '/api/cron/second-ping',
+  path: '/api/cron/second-ping',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCronNineAmCheckRoute = ApiCronNineAmCheckRouteImport.update({
+  id: '/api/cron/nine-am-check',
+  path: '/api/cron/nine-am-check',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiCronMorningMessagesRoute = ApiCronMorningMessagesRouteImport.update({
   id: '/api/cron/morning-messages',
   path: '/api/cron/morning-messages',
@@ -168,6 +180,8 @@ export interface FileRoutesByFullPath {
   '/teacher/': typeof TeacherIndexRoute
   '/teachers/': typeof TeachersIndexRoute
   '/api/cron/morning-messages': typeof ApiCronMorningMessagesRoute
+  '/api/cron/nine-am-check': typeof ApiCronNineAmCheckRoute
+  '/api/cron/second-ping': typeof ApiCronSecondPingRoute
   '/api/whatsapp/webhook': typeof ApiWhatsappWebhookRoute
   '/children/$childId/edit': typeof ChildrenChildIdEditRoute
   '/managers/$managerId/edit': typeof ManagersManagerIdEditRoute
@@ -193,6 +207,8 @@ export interface FileRoutesByTo {
   '/teacher': typeof TeacherIndexRoute
   '/teachers': typeof TeachersIndexRoute
   '/api/cron/morning-messages': typeof ApiCronMorningMessagesRoute
+  '/api/cron/nine-am-check': typeof ApiCronNineAmCheckRoute
+  '/api/cron/second-ping': typeof ApiCronSecondPingRoute
   '/api/whatsapp/webhook': typeof ApiWhatsappWebhookRoute
   '/children/$childId/edit': typeof ChildrenChildIdEditRoute
   '/managers/$managerId/edit': typeof ManagersManagerIdEditRoute
@@ -219,6 +235,8 @@ export interface FileRoutesById {
   '/teacher/': typeof TeacherIndexRoute
   '/teachers/': typeof TeachersIndexRoute
   '/api/cron/morning-messages': typeof ApiCronMorningMessagesRoute
+  '/api/cron/nine-am-check': typeof ApiCronNineAmCheckRoute
+  '/api/cron/second-ping': typeof ApiCronSecondPingRoute
   '/api/whatsapp/webhook': typeof ApiWhatsappWebhookRoute
   '/children/$childId/edit': typeof ChildrenChildIdEditRoute
   '/managers/$managerId/edit': typeof ManagersManagerIdEditRoute
@@ -246,6 +264,8 @@ export interface FileRouteTypes {
     | '/teacher/'
     | '/teachers/'
     | '/api/cron/morning-messages'
+    | '/api/cron/nine-am-check'
+    | '/api/cron/second-ping'
     | '/api/whatsapp/webhook'
     | '/children/$childId/edit'
     | '/managers/$managerId/edit'
@@ -271,6 +291,8 @@ export interface FileRouteTypes {
     | '/teacher'
     | '/teachers'
     | '/api/cron/morning-messages'
+    | '/api/cron/nine-am-check'
+    | '/api/cron/second-ping'
     | '/api/whatsapp/webhook'
     | '/children/$childId/edit'
     | '/managers/$managerId/edit'
@@ -296,6 +318,8 @@ export interface FileRouteTypes {
     | '/teacher/'
     | '/teachers/'
     | '/api/cron/morning-messages'
+    | '/api/cron/nine-am-check'
+    | '/api/cron/second-ping'
     | '/api/whatsapp/webhook'
     | '/children/$childId/edit'
     | '/managers/$managerId/edit'
@@ -319,8 +343,11 @@ export interface RootRouteChildren {
   ChildrenIndexRoute: typeof ChildrenIndexRoute
   ManagersIndexRoute: typeof ManagersIndexRoute
   ParentsIndexRoute: typeof ParentsIndexRoute
+  TeacherIndexRoute: typeof TeacherIndexRoute
   TeachersIndexRoute: typeof TeachersIndexRoute
   ApiCronMorningMessagesRoute: typeof ApiCronMorningMessagesRoute
+  ApiCronNineAmCheckRoute: typeof ApiCronNineAmCheckRoute
+  ApiCronSecondPingRoute: typeof ApiCronSecondPingRoute
   ApiWhatsappWebhookRoute: typeof ApiWhatsappWebhookRoute
   ChildrenChildIdEditRoute: typeof ChildrenChildIdEditRoute
   ManagersManagerIdEditRoute: typeof ManagersManagerIdEditRoute
@@ -381,10 +408,10 @@ declare module '@tanstack/react-router' {
     }
     '/teacher/': {
       id: '/teacher/'
-      path: '/'
+      path: '/teacher'
       fullPath: '/teacher/'
       preLoaderRoute: typeof TeacherIndexRouteImport
-      parentRoute: typeof TeacherRoute
+      parentRoute: typeof rootRouteImport
     }
     '/parents/': {
       id: '/parents/'
@@ -484,6 +511,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiWhatsappWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/cron/second-ping': {
+      id: '/api/cron/second-ping'
+      path: '/api/cron/second-ping'
+      fullPath: '/api/cron/second-ping'
+      preLoaderRoute: typeof ApiCronSecondPingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/cron/nine-am-check': {
+      id: '/api/cron/nine-am-check'
+      path: '/api/cron/nine-am-check'
+      fullPath: '/api/cron/nine-am-check'
+      preLoaderRoute: typeof ApiCronNineAmCheckRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/cron/morning-messages': {
       id: '/api/cron/morning-messages'
       path: '/api/cron/morning-messages'
@@ -510,8 +551,11 @@ const rootRouteChildren: RootRouteChildren = {
   ChildrenIndexRoute: ChildrenIndexRoute,
   ManagersIndexRoute: ManagersIndexRoute,
   ParentsIndexRoute: ParentsIndexRoute,
+  TeacherIndexRoute: TeacherIndexRoute,
   TeachersIndexRoute: TeachersIndexRoute,
   ApiCronMorningMessagesRoute: ApiCronMorningMessagesRoute,
+  ApiCronNineAmCheckRoute: ApiCronNineAmCheckRoute,
+  ApiCronSecondPingRoute: ApiCronSecondPingRoute,
   ApiWhatsappWebhookRoute: ApiWhatsappWebhookRoute,
   ChildrenChildIdEditRoute: ChildrenChildIdEditRoute,
   ManagersManagerIdEditRoute: ManagersManagerIdEditRoute,

@@ -6,7 +6,34 @@
 
 import crypto from 'crypto';
 import { createServiceClient } from './auth';
-import { sendTextMessage } from './whatsapp';
+import {
+  getConversationState,
+  setConversationState,
+  incrementVerificationAttempts,
+  resetConversationState,
+} from './conversation-manager';
+import {
+  CHECKIN_BUTTON_REGEX,
+  EXPLAIN_SKIP_REGEX,
+  NINE_AM_ALERT_REGEX,
+  confirmDroppingOffMessage,
+  explanationPromptMessage,
+  explanationReceivedMessage,
+  confirmNotTodayMessage,
+  alreadyRespondedMessage,
+  verifyInClassMessage,
+  verifySuccessMessage,
+  verifyRetryMessage,
+  otherExplanationPromptMessage,
+  managerEscalationMessage,
+  parentExplanationForwardMessage,
+  namesMatch,
+} from './message-templates';
+import { toDbPhone, toWhatsAppPhone } from './phone-utils';
+import {
+  sendTextMessage,
+  sendInteractiveButtonMessage,
+} from './whatsapp';
 
 /**
  * Result of webhook verification.
@@ -251,10 +278,11 @@ export function verifyWebhookSignature(
   payload: string,
   signature: string
 ): boolean {
-  const apiToken = process.env.WHATSAPP_API_TOKEN;
+  // Meta signs webhook payloads with the App Secret, not the API token
+  const appSecret = process.env.WHATSAPP_APP_SECRET;
 
-  if (!apiToken) {
-    console.error('WHATSAPP_API_TOKEN not set, cannot verify signature');
+  if (!appSecret) {
+    console.error('WHATSAPP_APP_SECRET not set, cannot verify signature');
     return false;
   }
 
@@ -264,7 +292,7 @@ export function verifyWebhookSignature(
 
   const signatureHash = signature.replace('sha256=', '');
 
-  const hmac = crypto.createHmac('sha256', apiToken);
+  const hmac = crypto.createHmac('sha256', appSecret);
   hmac.update(payload);
   const expectedHash = hmac.digest('hex');
 
@@ -279,72 +307,69 @@ export function verifyWebhookSignature(
   return crypto.timingSafeEqual(signatureBuffer, expectedBuffer);
 }
 
-/**
- * Processes a check-in button response from a parent.
- *
- * Looks up the parent by phone, verifies the attendance record,
- * and updates with their response.
- */
+// ---------------------------------------------------------------------------
+// Lookup helper
+// ---------------------------------------------------------------------------
+
+async function lookupParent(senderPhone: string) {
+  const supabase = createServiceClient();
+  const dbPhone = toDbPhone(senderPhone);
+  const { data } = await supabase
+    .from('parents')
+    .select('id, name, phone')
+    .eq('phone', dbPhone)
+    .single();
+  return data;
+}
+
+// ---------------------------------------------------------------------------
+// Check-in response handler (morning + second ping)
+// ---------------------------------------------------------------------------
+
 export async function processCheckinResponse(
   senderPhone: string,
   attendanceId: string,
   response: 'yes' | 'no'
 ): Promise<void> {
   const supabase = createServiceClient();
+  const parent = await lookupParent(senderPhone);
 
-  // WhatsApp sends 972..., DB stores +972...
-  const dbPhone = `+${senderPhone}`;
-
-  // Look up parent by phone
-  const { data: parent, error: parentErr } = await supabase
-    .from('parents')
-    .select('id')
-    .eq('phone', dbPhone)
-    .single();
-
-  if (parentErr || !parent) {
-    console.error(`[Checkin] Parent not found for phone ${dbPhone}`);
+  if (!parent) {
+    console.error(`[Checkin] Parent not found for phone ${toDbPhone(senderPhone)}`);
     return;
   }
 
-  // Get attendance record
-  const { data: record, error: recordErr } = await supabase
+  const { data: record } = await supabase
     .from('daily_attendance')
     .select('id, child_id, parent_response')
     .eq('id', attendanceId)
     .single();
 
-  if (recordErr || !record) {
+  if (!record) {
     console.error(`[Checkin] Attendance record ${attendanceId} not found`);
     return;
   }
 
-  // Already responded — send acknowledgement
   if (record.parent_response) {
-    try {
-      await sendTextMessage(senderPhone, 'כבר קיבלנו את תשובתך, תודה!');
-    } catch (err) {
-      console.error('[Checkin] Failed to send already-responded message:', err);
-    }
+    await sendTextMessage(senderPhone, alreadyRespondedMessage().text);
     return;
   }
 
-  // Verify parent is linked to this child
-  const { data: link, error: linkErr } = await supabase
+  // Verify parent→child link
+  const { data: link } = await supabase
     .from('children_parents')
     .select('child_id')
     .eq('child_id', record.child_id)
     .eq('parent_id', parent.id)
     .single();
 
-  if (linkErr || !link) {
+  if (!link) {
     console.error(`[Checkin] Parent ${parent.id} not linked to child ${record.child_id}`);
     return;
   }
 
-  // Update attendance record
   const parentResponse = response === 'yes' ? 'dropping_off' : 'not_today';
-  const { error: updateErr } = await supabase
+  await supabase
     .from('daily_attendance')
     .update({
       parent_response: parentResponse,
@@ -352,34 +377,316 @@ export async function processCheckinResponse(
     })
     .eq('id', attendanceId);
 
-  if (updateErr) {
-    console.error(`[Checkin] Failed to update attendance ${attendanceId}:`, updateErr);
-    return;
-  }
+  if (response === 'yes') {
+    await sendTextMessage(senderPhone, confirmDroppingOffMessage().text);
+    await resetConversationState(parent.id);
+  } else {
+    // "Not today" → ask for explanation
+    const { data: child } = await supabase
+      .from('children')
+      .select('name')
+      .eq('id', record.child_id)
+      .single();
 
-  // Send confirmation
-  const confirmText =
-    response === 'yes'
-      ? 'תודה! סימנו שהילד/ה בדרך לגן \u{1F31E}'
-      : 'תודה! סימנו שהילד/ה לא מגיע/ה היום';
-
-  try {
-    await sendTextMessage(senderPhone, confirmText);
-  } catch (err) {
-    console.error('[Checkin] Failed to send confirmation:', err);
+    const msg = explanationPromptMessage(child?.name ?? '', attendanceId);
+    await sendInteractiveButtonMessage(senderPhone, msg.text, msg.buttons!);
+    await setConversationState(parent.id, 'awaiting_explanation', attendanceId);
   }
 }
 
-const CHECKIN_BUTTON_REGEX = /^checkin_(yes|no)_([0-9a-f-]{36})$/;
+// ---------------------------------------------------------------------------
+// Explanation skip handler
+// ---------------------------------------------------------------------------
+
+async function handleExplanationSkip(
+  senderPhone: string,
+  attendanceId: string
+): Promise<void> {
+  const parent = await lookupParent(senderPhone);
+  if (!parent) return;
+
+  await sendTextMessage(senderPhone, confirmNotTodayMessage().text);
+  await resetConversationState(parent.id);
+
+  // Clear any pending explanation expectation
+  const supabase = createServiceClient();
+  await supabase
+    .from('daily_attendance')
+    .update({ parent_explanation: null })
+    .eq('id', attendanceId);
+}
+
+// ---------------------------------------------------------------------------
+// 9am alert response handler
+// ---------------------------------------------------------------------------
+
+async function handleNineAmResponse(
+  senderPhone: string,
+  attendanceId: string,
+  action: 'inclass' | 'withme' | 'other'
+): Promise<void> {
+  const supabase = createServiceClient();
+  const parent = await lookupParent(senderPhone);
+  if (!parent) return;
+
+  const responseMap = {
+    inclass: 'in_class',
+    withme: 'with_me',
+    other: 'other',
+  } as const;
+
+  await supabase
+    .from('daily_attendance')
+    .update({ nine_am_parent_response: responseMap[action] })
+    .eq('id', attendanceId);
+
+  if (action === 'inclass') {
+    // High friction: ask parent to type child's name
+    await sendTextMessage(senderPhone, verifyInClassMessage().text);
+    await setConversationState(parent.id, 'awaiting_name_verify', attendanceId);
+  } else if (action === 'withme') {
+    // Check for inconsistency: teacher says arrived but parent says "with me"
+    const { data: record } = await supabase
+      .from('daily_attendance')
+      .select('child_id, teacher_confirmed')
+      .eq('id', attendanceId)
+      .single();
+
+    if (record?.teacher_confirmed) {
+      await flagInconsistency(
+        attendanceId,
+        record.child_id,
+        'teacher_confirmed_parent_says_with_me',
+        'איתי',
+        'אושרה הגעה'
+      );
+    }
+
+    await sendTextMessage(senderPhone, confirmNotTodayMessage().text);
+    await resetConversationState(parent.id);
+  } else {
+    // "Other" → ask for free-text explanation
+    await sendTextMessage(senderPhone, otherExplanationPromptMessage().text);
+    await setConversationState(parent.id, 'awaiting_other_explain', attendanceId);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Free text handler (routes based on conversation state)
+// ---------------------------------------------------------------------------
+
+async function handleFreeText(
+  senderPhone: string,
+  text: string
+): Promise<void> {
+  const parent = await lookupParent(senderPhone);
+  if (!parent) return;
+
+  const convo = await getConversationState(parent.id);
+  if (!convo || convo.state === 'idle') return;
+
+  const supabase = createServiceClient();
+
+  if (convo.state === 'awaiting_explanation') {
+    // Parent explaining why child isn't coming
+    if (convo.attendance_id) {
+      await supabase
+        .from('daily_attendance')
+        .update({ parent_explanation: text })
+        .eq('id', convo.attendance_id);
+
+      await forwardExplanationToTeacher(convo.attendance_id, parent, text);
+    }
+
+    await sendTextMessage(senderPhone, explanationReceivedMessage().text);
+    await resetConversationState(parent.id);
+  } else if (convo.state === 'awaiting_name_verify') {
+    // Parent typing child's name to verify "in class" claim
+    if (!convo.attendance_id) return;
+
+    const { data: record } = await supabase
+      .from('daily_attendance')
+      .select('child_id, teacher_confirmed')
+      .eq('id', convo.attendance_id)
+      .single();
+    if (!record) return;
+
+    const { data: child } = await supabase
+      .from('children')
+      .select('name')
+      .eq('id', record.child_id)
+      .single();
+    if (!child) return;
+
+    if (namesMatch(text, child.name)) {
+      await sendTextMessage(senderPhone, verifySuccessMessage().text);
+
+      // Check inconsistency: parent says in class but teacher hasn't confirmed
+      if (!record.teacher_confirmed) {
+        await flagInconsistency(
+          convo.attendance_id,
+          record.child_id,
+          'parent_says_in_class_teacher_not_confirmed',
+          'בכיתה',
+          'לא אושרה הגעה'
+        );
+      }
+
+      await resetConversationState(parent.id);
+    } else {
+      const attempts = await incrementVerificationAttempts(parent.id);
+      if (attempts >= 3) {
+        // Escalate to manager after 3 failed attempts
+        await flagInconsistency(
+          convo.attendance_id,
+          record.child_id,
+          'name_verification_failed',
+          'בכיתה (אימות נכשל)',
+          record.teacher_confirmed ? 'אושרה הגעה' : 'לא אושרה הגעה'
+        );
+        await sendTextMessage(senderPhone, verifySuccessMessage().text);
+        await resetConversationState(parent.id);
+      } else {
+        await sendTextMessage(senderPhone, verifyRetryMessage().text);
+      }
+    }
+  } else if (convo.state === 'awaiting_other_explain') {
+    // Free-text explanation for "other" in 9am alert
+    if (convo.attendance_id) {
+      await supabase
+        .from('daily_attendance')
+        .update({ nine_am_explanation: text })
+        .eq('id', convo.attendance_id);
+
+      await forwardExplanationToTeacher(convo.attendance_id, parent, text);
+    }
+
+    await sendTextMessage(senderPhone, explanationReceivedMessage().text);
+    await resetConversationState(parent.id);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Forward explanation to nursery teachers
+// ---------------------------------------------------------------------------
+
+async function forwardExplanationToTeacher(
+  attendanceId: string,
+  parent: { id: string; name: string; phone: string },
+  explanation: string
+): Promise<void> {
+  const supabase = createServiceClient();
+
+  // Get child + nursery from attendance
+  const { data: record } = await supabase
+    .from('daily_attendance')
+    .select('child_id')
+    .eq('id', attendanceId)
+    .single();
+  if (!record) return;
+
+  const { data: child } = await supabase
+    .from('children')
+    .select('name, nursery_id')
+    .eq('id', record.child_id)
+    .single();
+  if (!child) return;
+
+  const { data: teachers } = await supabase
+    .from('teachers')
+    .select('phone')
+    .eq('nursery_id', child.nursery_id);
+  if (!teachers?.length) return;
+
+  const msg = parentExplanationForwardMessage(
+    child.name,
+    parent.name,
+    explanation,
+    parent.phone
+  );
+
+  for (const teacher of teachers) {
+    try {
+      await sendTextMessage(toWhatsAppPhone(teacher.phone), msg.text);
+    } catch (err) {
+      console.error(`[Forward] Failed to send to teacher ${teacher.phone}:`, err);
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Inconsistency detection + manager escalation
+// ---------------------------------------------------------------------------
+
+async function flagInconsistency(
+  attendanceId: string,
+  childId: string,
+  type: string,
+  parentClaim: string,
+  teacherStatus: string
+): Promise<void> {
+  const supabase = createServiceClient();
+
+  await supabase
+    .from('daily_attendance')
+    .update({
+      inconsistency: true,
+      inconsistency_type: type,
+    })
+    .eq('id', attendanceId);
+
+  // Look up child → nursery → managers + teachers for escalation
+  const { data: child } = await supabase
+    .from('children')
+    .select('name, nursery_id')
+    .eq('id', childId)
+    .single();
+  if (!child) return;
+
+  const [nurseryResult, managersResult, teachersResult, parentResult] = await Promise.all([
+    supabase.from('nurseries').select('name').eq('id', child.nursery_id).single(),
+    supabase.from('managers').select('phone').eq('nursery_id', child.nursery_id),
+    supabase.from('teachers').select('phone').eq('nursery_id', child.nursery_id).limit(1),
+    supabase
+      .from('children_parents')
+      .select('parents(phone)')
+      .eq('child_id', childId)
+      .limit(1),
+  ]);
+
+  const nurseryName = nurseryResult.data?.name ?? '';
+  const managers = managersResult.data ?? [];
+  const teacherPhone = teachersResult.data?.[0]?.phone ?? '';
+  const parentRow = parentResult.data?.[0]?.parents as unknown as { phone: string } | null;
+  const parentPhone = parentRow?.phone ?? '';
+
+  const msg = managerEscalationMessage(
+    nurseryName,
+    child.name,
+    parentClaim,
+    teacherStatus,
+    parentPhone,
+    teacherPhone
+  );
+
+  for (const manager of managers) {
+    try {
+      await sendTextMessage(toWhatsAppPhone(manager.phone), msg.text);
+    } catch (err) {
+      console.error(`[Escalation] Failed to send to manager ${manager.phone}:`, err);
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Main handler — state machine
+// ---------------------------------------------------------------------------
 
 /**
  * Handles incoming WhatsApp message webhook POST.
  *
- * Parses the message payload, logs structured message details,
- * processes check-in button responses, and returns success.
- *
- * @param payload - Incoming webhook payload from Meta
- * @returns Result indicating success or failure
+ * Routes button replies by ID pattern, and free-text messages
+ * by the parent's conversation state.
  */
 export async function handleIncomingMessage(
   payload: WhatsAppWebhookPayload
@@ -390,27 +697,56 @@ export async function handleIncomingMessage(
     return { success: false };
   }
 
-  // Only log if there's an actual message
-  if (parsed.sender) {
-    console.log('[WhatsApp Message Received]', {
-      sender: parsed.sender,
-      messageText: parsed.messageText,
-      timestamp: parsed.timestamp,
-      messageId: parsed.messageId,
-      messageType: parsed.messageType,
-      buttonReplyId: parsed.buttonReplyId,
-      buttonReplyTitle: parsed.buttonReplyTitle,
-    });
+  if (!parsed.sender) {
+    return { success: true };
+  }
 
-    // Process check-in button responses
+  console.log('[WhatsApp Message Received]', {
+    sender: parsed.sender,
+    messageText: parsed.messageText,
+    timestamp: parsed.timestamp,
+    messageId: parsed.messageId,
+    messageType: parsed.messageType,
+    buttonReplyId: parsed.buttonReplyId,
+    buttonReplyTitle: parsed.buttonReplyTitle,
+  });
+
+  try {
+    // 1. Button reply → match against patterns
     if (parsed.buttonReplyId) {
-      const match = parsed.buttonReplyId.match(CHECKIN_BUTTON_REGEX);
-      if (match) {
-        const response = match[1] as 'yes' | 'no';
-        const attendanceId = match[2];
-        await processCheckinResponse(parsed.sender, attendanceId, response);
+      const checkinMatch = parsed.buttonReplyId.match(CHECKIN_BUTTON_REGEX);
+      if (checkinMatch) {
+        await processCheckinResponse(
+          parsed.sender,
+          checkinMatch[2],
+          checkinMatch[1] as 'yes' | 'no'
+        );
+        return { success: true };
+      }
+
+      const skipMatch = parsed.buttonReplyId.match(EXPLAIN_SKIP_REGEX);
+      if (skipMatch) {
+        await handleExplanationSkip(parsed.sender, skipMatch[1]);
+        return { success: true };
+      }
+
+      const nineAmMatch = parsed.buttonReplyId.match(NINE_AM_ALERT_REGEX);
+      if (nineAmMatch) {
+        await handleNineAmResponse(
+          parsed.sender,
+          nineAmMatch[2],
+          nineAmMatch[1] as 'inclass' | 'withme' | 'other'
+        );
+        return { success: true };
       }
     }
+
+    // 2. Free text → route via conversation state
+    if (parsed.messageText) {
+      await handleFreeText(parsed.sender, parsed.messageText);
+    }
+  } catch (err) {
+    console.error('[Webhook] Error processing message:', err);
   }
 
   return { success: true };

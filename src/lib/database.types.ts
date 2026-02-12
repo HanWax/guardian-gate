@@ -95,6 +95,7 @@ export type Database = {
       }
       conversation_state: {
         Row: {
+          attendance_id: string | null
           current_child_index: number | null
           id: string
           parent_id: string
@@ -103,6 +104,7 @@ export type Database = {
           verification_attempts: number | null
         }
         Insert: {
+          attendance_id?: string | null
           current_child_index?: number | null
           id?: string
           parent_id: string
@@ -111,6 +113,7 @@ export type Database = {
           verification_attempts?: number | null
         }
         Update: {
+          attendance_id?: string | null
           current_child_index?: number | null
           id?: string
           parent_id?: string
@@ -120,9 +123,16 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "conversation_state_attendance_id_fkey"
+            columns: ["attendance_id"]
+            isOneToOne: false
+            referencedRelation: "daily_attendance"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "conversation_state_parent_id_fkey"
             columns: ["parent_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "parents"
             referencedColumns: ["id"]
           },
@@ -147,6 +157,7 @@ export type Database = {
           parent_explanation: string | null
           parent_response: string | null
           parent_response_time: string | null
+          second_ping_sent_at: string | null
           teacher_confirmed: boolean | null
           teacher_confirmed_by: string | null
           teacher_confirmed_time: string | null
@@ -169,6 +180,7 @@ export type Database = {
           parent_explanation?: string | null
           parent_response?: string | null
           parent_response_time?: string | null
+          second_ping_sent_at?: string | null
           teacher_confirmed?: boolean | null
           teacher_confirmed_by?: string | null
           teacher_confirmed_time?: string | null
@@ -191,6 +203,7 @@ export type Database = {
           parent_explanation?: string | null
           parent_response?: string | null
           parent_response_time?: string | null
+          second_ping_sent_at?: string | null
           teacher_confirmed?: boolean | null
           teacher_confirmed_by?: string | null
           teacher_confirmed_time?: string | null
@@ -299,6 +312,7 @@ export type Database = {
           first_message_time: string
           id: string
           name: string
+          nine_am_check_time: string
           second_ping_time: string
           timezone: string | null
         }
@@ -309,6 +323,7 @@ export type Database = {
           first_message_time: string
           id?: string
           name: string
+          nine_am_check_time?: string
           second_ping_time: string
           timezone?: string | null
         }
@@ -319,6 +334,7 @@ export type Database = {
           first_message_time?: string
           id?: string
           name?: string
+          nine_am_check_time?: string
           second_ping_time?: string
           timezone?: string | null
         }

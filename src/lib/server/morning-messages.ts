@@ -1,4 +1,5 @@
 import { createServiceClient } from './auth'
+import { toWhatsAppPhone } from './phone-utils'
 import { sendInteractiveButtonMessage } from './whatsapp'
 
 /**
@@ -42,13 +43,6 @@ export function isWithinTolerance(
   const diff = Math.abs(curTotal - tarTotal)
   // Handle midnight wrap (e.g., 23:55 vs 00:05)
   return Math.min(diff, 1440 - diff) <= minutes
-}
-
-/**
- * Strips leading '+' from phone for WhatsApp API (DB stores +972..., API wants 972...).
- */
-function toWhatsAppPhone(dbPhone: string): string {
-  return dbPhone.replace(/^\+/, '')
 }
 
 /**
