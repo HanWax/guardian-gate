@@ -16,12 +16,10 @@ import { Route as AttendanceRouteImport } from './routes/attendance'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TeachersIndexRouteImport } from './routes/teachers/index'
-import { Route as TeacherIndexRouteImport } from './routes/teacher/index'
 import { Route as ParentsIndexRouteImport } from './routes/parents/index'
 import { Route as ManagersIndexRouteImport } from './routes/managers/index'
 import { Route as ChildrenIndexRouteImport } from './routes/children/index'
 import { Route as TeachersNewRouteImport } from './routes/teachers/new'
-import { Route as TeacherAttendanceRouteImport } from './routes/teacher/attendance'
 import { Route as ParentsNewRouteImport } from './routes/parents/new'
 import { Route as ManagersNewRouteImport } from './routes/managers/new'
 import { Route as ChildrenNewRouteImport } from './routes/children/new'
@@ -70,11 +68,6 @@ const TeachersIndexRoute = TeachersIndexRouteImport.update({
   path: '/teachers/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TeacherIndexRoute = TeacherIndexRouteImport.update({
-  id: '/teacher/',
-  path: '/teacher/',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ParentsIndexRoute = ParentsIndexRouteImport.update({
   id: '/parents/',
   path: '/parents/',
@@ -93,11 +86,6 @@ const ChildrenIndexRoute = ChildrenIndexRouteImport.update({
 const TeachersNewRoute = TeachersNewRouteImport.update({
   id: '/teachers/new',
   path: '/teachers/new',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TeacherAttendanceRoute = TeacherAttendanceRouteImport.update({
-  id: '/teacher/attendance',
-  path: '/teacher/attendance',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ParentsNewRoute = ParentsNewRouteImport.update({
@@ -172,12 +160,10 @@ export interface FileRoutesByFullPath {
   '/children/new': typeof ChildrenNewRoute
   '/managers/new': typeof ManagersNewRoute
   '/parents/new': typeof ParentsNewRoute
-  '/teacher/attendance': typeof TeacherAttendanceRoute
   '/teachers/new': typeof TeachersNewRoute
   '/children/': typeof ChildrenIndexRoute
   '/managers/': typeof ManagersIndexRoute
   '/parents/': typeof ParentsIndexRoute
-  '/teacher/': typeof TeacherIndexRoute
   '/teachers/': typeof TeachersIndexRoute
   '/api/cron/morning-messages': typeof ApiCronMorningMessagesRoute
   '/api/cron/nine-am-check': typeof ApiCronNineAmCheckRoute
@@ -199,12 +185,10 @@ export interface FileRoutesByTo {
   '/children/new': typeof ChildrenNewRoute
   '/managers/new': typeof ManagersNewRoute
   '/parents/new': typeof ParentsNewRoute
-  '/teacher/attendance': typeof TeacherAttendanceRoute
   '/teachers/new': typeof TeachersNewRoute
   '/children': typeof ChildrenIndexRoute
   '/managers': typeof ManagersIndexRoute
   '/parents': typeof ParentsIndexRoute
-  '/teacher': typeof TeacherIndexRoute
   '/teachers': typeof TeachersIndexRoute
   '/api/cron/morning-messages': typeof ApiCronMorningMessagesRoute
   '/api/cron/nine-am-check': typeof ApiCronNineAmCheckRoute
@@ -227,12 +211,10 @@ export interface FileRoutesById {
   '/children/new': typeof ChildrenNewRoute
   '/managers/new': typeof ManagersNewRoute
   '/parents/new': typeof ParentsNewRoute
-  '/teacher/attendance': typeof TeacherAttendanceRoute
   '/teachers/new': typeof TeachersNewRoute
   '/children/': typeof ChildrenIndexRoute
   '/managers/': typeof ManagersIndexRoute
   '/parents/': typeof ParentsIndexRoute
-  '/teacher/': typeof TeacherIndexRoute
   '/teachers/': typeof TeachersIndexRoute
   '/api/cron/morning-messages': typeof ApiCronMorningMessagesRoute
   '/api/cron/nine-am-check': typeof ApiCronNineAmCheckRoute
@@ -256,12 +238,10 @@ export interface FileRouteTypes {
     | '/children/new'
     | '/managers/new'
     | '/parents/new'
-    | '/teacher/attendance'
     | '/teachers/new'
     | '/children/'
     | '/managers/'
     | '/parents/'
-    | '/teacher/'
     | '/teachers/'
     | '/api/cron/morning-messages'
     | '/api/cron/nine-am-check'
@@ -283,12 +263,10 @@ export interface FileRouteTypes {
     | '/children/new'
     | '/managers/new'
     | '/parents/new'
-    | '/teacher/attendance'
     | '/teachers/new'
     | '/children'
     | '/managers'
     | '/parents'
-    | '/teacher'
     | '/teachers'
     | '/api/cron/morning-messages'
     | '/api/cron/nine-am-check'
@@ -310,12 +288,10 @@ export interface FileRouteTypes {
     | '/children/new'
     | '/managers/new'
     | '/parents/new'
-    | '/teacher/attendance'
     | '/teachers/new'
     | '/children/'
     | '/managers/'
     | '/parents/'
-    | '/teacher/'
     | '/teachers/'
     | '/api/cron/morning-messages'
     | '/api/cron/nine-am-check'
@@ -338,12 +314,10 @@ export interface RootRouteChildren {
   ChildrenNewRoute: typeof ChildrenNewRoute
   ManagersNewRoute: typeof ManagersNewRoute
   ParentsNewRoute: typeof ParentsNewRoute
-  TeacherAttendanceRoute: typeof TeacherAttendanceRoute
   TeachersNewRoute: typeof TeachersNewRoute
   ChildrenIndexRoute: typeof ChildrenIndexRoute
   ManagersIndexRoute: typeof ManagersIndexRoute
   ParentsIndexRoute: typeof ParentsIndexRoute
-  TeacherIndexRoute: typeof TeacherIndexRoute
   TeachersIndexRoute: typeof TeachersIndexRoute
   ApiCronMorningMessagesRoute: typeof ApiCronMorningMessagesRoute
   ApiCronNineAmCheckRoute: typeof ApiCronNineAmCheckRoute
@@ -406,13 +380,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TeachersIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/teacher/': {
-      id: '/teacher/'
-      path: '/teacher'
-      fullPath: '/teacher/'
-      preLoaderRoute: typeof TeacherIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/parents/': {
       id: '/parents/'
       path: '/parents'
@@ -439,13 +406,6 @@ declare module '@tanstack/react-router' {
       path: '/teachers/new'
       fullPath: '/teachers/new'
       preLoaderRoute: typeof TeachersNewRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/teacher/attendance': {
-      id: '/teacher/attendance'
-      path: '/teacher/attendance'
-      fullPath: '/teacher/attendance'
-      preLoaderRoute: typeof TeacherAttendanceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/parents/new': {
@@ -546,12 +506,10 @@ const rootRouteChildren: RootRouteChildren = {
   ChildrenNewRoute: ChildrenNewRoute,
   ManagersNewRoute: ManagersNewRoute,
   ParentsNewRoute: ParentsNewRoute,
-  TeacherAttendanceRoute: TeacherAttendanceRoute,
   TeachersNewRoute: TeachersNewRoute,
   ChildrenIndexRoute: ChildrenIndexRoute,
   ManagersIndexRoute: ManagersIndexRoute,
   ParentsIndexRoute: ParentsIndexRoute,
-  TeacherIndexRoute: TeacherIndexRoute,
   TeachersIndexRoute: TeachersIndexRoute,
   ApiCronMorningMessagesRoute: ApiCronMorningMessagesRoute,
   ApiCronNineAmCheckRoute: ApiCronNineAmCheckRoute,

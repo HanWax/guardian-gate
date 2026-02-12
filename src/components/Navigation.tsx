@@ -1,34 +1,14 @@
 import { Link } from '@tanstack/react-router'
-import { useAuth } from '~/lib/auth-context'
 
 export default function Navigation() {
-  const { role } = useAuth()
-  const canManage = role === 'admin' || role === 'manager'
-
   return (
     <nav className="flex flex-col gap-2">
-      {role === 'admin' && (
-        <Link to="/admin" className="rounded px-3 py-2 hover:bg-gray-200">ניהול</Link>
-      )}
-      {canManage && (
-        <Link to="/manager" className="rounded px-3 py-2 hover:bg-gray-200">מנהל</Link>
-      )}
-      <Link to="/teacher" className="rounded px-3 py-2 hover:bg-gray-200">מורה</Link>
-      <Link to="/teacher/attendance" className="rounded px-3 py-2 hover:bg-gray-200">אישור נוכחות</Link>
-      {canManage && (
-        <>
-          <Link to="/attendance" className="rounded px-3 py-2 hover:bg-gray-200">נוכחות יומית</Link>
-          <Link to="/children" className="rounded px-3 py-2 hover:bg-gray-200">ילדים</Link>
-          <Link to="/parents" className="rounded px-3 py-2 hover:bg-gray-200">הורים</Link>
-          <Link to="/teachers" className="rounded px-3 py-2 hover:bg-gray-200">מורות</Link>
-        </>
-      )}
-      {role === 'admin' && (
-        <Link to="/managers" className="rounded px-3 py-2 hover:bg-gray-200">מנהלים</Link>
-      )}
-      {canManage && (
-        <Link to="/settings" className="rounded px-3 py-2 hover:bg-gray-200">הגדרות משתלה</Link>
-      )}
+      <Link to="/admin" className="rounded px-3 py-2 hover:bg-gray-200">ניהול</Link>
+      <Link to="/attendance" className="rounded px-3 py-2 hover:bg-gray-200">ילדים חסרים</Link>
+      <Link to="/children" className="rounded px-3 py-2 hover:bg-gray-200">ילדים</Link>
+      <Link to="/parents" className="rounded px-3 py-2 hover:bg-gray-200">הורים</Link>
+      <Link to="/teachers" className="rounded px-3 py-2 hover:bg-gray-200">מורות</Link>
+      <Link to="/settings" className="rounded px-3 py-2 hover:bg-gray-200">הגדרות משתלה</Link>
     </nav>
   )
 }

@@ -1,5 +1,5 @@
 /// <reference types="vite/client" />
-import { HeadContent, Link, Outlet, Scripts, createRootRoute, useMatchRoute } from '@tanstack/react-router'
+import { HeadContent, Link, Outlet, Scripts, createRootRoute } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
@@ -42,8 +42,7 @@ function RootComponent() {
 }
 
 function AppNav() {
-  const { user, role, loading, signOut } = useAuth()
-  const matchRoute = useMatchRoute()
+  const { user, loading, signOut } = useAuth()
 
   if (loading || !user) return null
 
@@ -51,19 +50,7 @@ function AppNav() {
     <nav className="bg-white border-b border-gray-200">
       <div className="max-w-5xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-14">
-          <div className="flex items-center gap-6">
-            <Link to="/" className="text-lg font-bold text-gray-900">GuardianGate</Link>
-            {(role === 'admin' || role === 'manager') && (
-              <Link to="/teachers"
-                className={`text-sm font-medium px-3 py-1.5 rounded-md ${
-                  matchRoute({ to: '/teachers', fuzzy: true })
-                    ? 'bg-indigo-50 text-indigo-700'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                }`}>
-                ניהול צוות
-              </Link>
-            )}
-          </div>
+          <Link to="/" className="text-lg font-bold text-gray-900">GuardianGate</Link>
           <button onClick={signOut} className="text-sm text-gray-500 hover:text-gray-700">
             התנתקות
           </button>

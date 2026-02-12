@@ -17,8 +17,8 @@ function AdminDashboard() {
 
         <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
           <DashboardCard
-            title="נוכחות יומית"
-            description="מעקב נוכחות ילדים בזמן אמת"
+            title="ילדים חסרים"
+            description="צפייה בילדים שלא זוהו היום"
             href="/attendance"
           />
           <DashboardCard

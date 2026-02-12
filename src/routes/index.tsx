@@ -17,9 +17,12 @@ function IndexRedirect() {
         return
       }
       const role = extractRole(session.user.user_metadata as Record<string, unknown>)
-      if (role === 'admin') navigate({ to: '/admin' })
-      else if (role === 'manager') navigate({ to: '/manager' })
-      else navigate({ to: '/teacher' })
+      if (role !== 'admin') {
+        supabase.auth.signOut()
+        navigate({ to: '/login' })
+        return
+      }
+      navigate({ to: '/admin' })
     })
   }, [navigate])
 
