@@ -6,7 +6,6 @@ export const childSchema = z.object({
 })
 
 export const childCreateSchema = childSchema.extend({
-  nursery_id: z.string().uuid('יש לבחור גן').optional(),
   parent_ids: z.array(z.string().uuid()).min(1, 'יש לבחור לפחות הורה אחד'),
 })
 export const childUpdateSchema = childSchema

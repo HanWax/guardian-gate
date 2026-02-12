@@ -133,6 +133,9 @@ INSERT INTO auth.identities (id, user_id, identity_data, provider, provider_id, 
 -- Staff (linked to auth users)
 -- ============================================================
 
+INSERT INTO admins (id, nursery_id, phone, name, user_id) VALUES
+  ('dd000001-0000-0000-0000-000000000001', 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', '+972501234567', 'מנהל מערכת', 'd0000001-0000-0000-0000-000000000001');
+
 INSERT INTO managers (id, nursery_id, phone, name, user_id) VALUES
   ('bb000001-0000-0000-0000-000000000001', 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', '+972581112233', 'דינה מזרחי', 'd0000002-0000-0000-0000-000000000002');
 

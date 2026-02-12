@@ -28,9 +28,7 @@ export async function requireAdminRole(accessToken: string) {
 }
 
 export async function resolveNurseryId(user: { id: string }, role: string | undefined): Promise<string | null> {
-  if (role === 'admin') return null
-
-  const table = role === 'manager' ? 'managers' : role === 'teacher' ? 'teachers' : null
+  const table = role === 'admin' ? 'admins' : role === 'manager' ? 'managers' : role === 'teacher' ? 'teachers' : null
   if (!table) throw new Error('לא נמצא גן משויך למשתמש')
 
   const supabase = createServiceClient()

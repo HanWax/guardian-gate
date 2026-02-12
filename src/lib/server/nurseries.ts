@@ -1,7 +1,7 @@
 import { createServerFn } from '@tanstack/react-start'
 import { z } from 'zod'
 import { updateNurserySettingsSchema } from '../schemas/nursery'
-import { createServiceClient, requireManagerRole } from './auth'
+import { createServiceClient, requireAuth, requireManagerRole, resolveNurseryId } from './auth'
 
 const err = {
   fetch_failed: 'שגיאה בטעינת גנים. אנא נסה שוב',
@@ -10,6 +10,22 @@ const err = {
 } as const
 
 const tokenSchema = z.object({ accessToken: z.string().min(1) })
+
+export const getMyNursery = createServerFn({ method: 'GET' })
+  .inputValidator(tokenSchema)
+  .handler(async ({ data }) => {
+    const { user, role } = await requireAuth(data.accessToken)
+    const nurseryId = await resolveNurseryId(user, role)
+    if (!nurseryId) return null
+    const supabase = createServiceClient()
+    const { data: nursery, error } = await supabase
+      .from('nurseries')
+      .select('id, name')
+      .eq('id', nurseryId)
+      .single()
+    if (error) throw new Error(err.fetch_failed)
+    return nursery
+  })
 
 export const getNurseries = createServerFn({ method: 'GET' })
   .inputValidator(tokenSchema)

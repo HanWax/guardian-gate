@@ -133,6 +133,9 @@ function FamiliesList() {
                     {"ילדים"}
                   </th>
                   <th scope="col" className="px-3 py-3.5 text-start text-sm font-semibold text-gray-900">
+                    {"מורה"}
+                  </th>
+                  <th scope="col" className="px-3 py-3.5 text-start text-sm font-semibold text-gray-900">
                     {"פעולות"}
                   </th>
                 </tr>
@@ -151,6 +154,18 @@ function FamiliesList() {
                         ? family.children.map((c) => c.name).join(', ')
                         : <span className="text-gray-400">{"ללא ילדים"}</span>
                       }
+                    </td>
+                    <td className="px-3 py-4 text-sm text-gray-500">
+                      {(() => {
+                        const teacherNames = [...new Set(
+                          family.children
+                            .map((c) => c.teacher_name)
+                            .filter((n): n is string => n !== null)
+                        )]
+                        return teacherNames.length > 0
+                          ? teacherNames.join(', ')
+                          : <span className="text-gray-400">{"-"}</span>
+                      })()}
                     </td>
                     <td className="whitespace-nowrap px-3 py-4 text-sm">
                       {confirmId === family.id ? (

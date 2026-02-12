@@ -40,10 +40,10 @@ export const getChild = createServerFn({ method: 'GET' })
 export const createChild = createServerFn({ method: 'POST' })
   .inputValidator(tokenSchema.extend({ child: childCreateSchema }))
   .handler(async ({ data }) => {
-    const user = await requireAdminRole(data.accessToken)
-    const { role } = await requireAuth(data.accessToken)
-    const nurseryId = data.child.nursery_id ?? await resolveNurseryId(user, role)
-    if (!nurseryId) throw new Error('אדמין חייב לציין גן')
+    const { user, role } = await requireAuth(data.accessToken)
+    if (role !== 'admin') throw new Error('אין לך הרשאה לבצע פעולה זו')
+    const nurseryId = await resolveNurseryId(user, role)
+    if (!nurseryId) throw new Error('לא נמצא גן משויך למשתמש')
     const supabase = createServiceClient()
     const { data: childId, error: rpcError } = await supabase.rpc('create_child_with_parents', {
       p_name: data.child.name,

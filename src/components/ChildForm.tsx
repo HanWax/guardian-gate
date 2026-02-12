@@ -1,7 +1,5 @@
 import { useState, useMemo, type FormEvent } from 'react'
 import { childCreateSchema, childUpdateSchema } from '~/lib/schemas/child'
-import { useAuth } from '~/lib/auth-context'
-import { useNurseries } from '~/lib/queries/nurseries'
 import type { Database } from '~/lib/database.types'
 
 type Child = Database['public']['Tables']['children']['Row']
@@ -10,7 +8,7 @@ type Teacher = Database['public']['Tables']['teachers']['Row']
 
 interface ChildFormProps {
   initialData?: Child
-  onSubmit: (data: { name: string; nursery_id?: string; parent_ids?: string[]; teacher_id?: string | null }) => void
+  onSubmit: (data: { name: string; parent_ids?: string[]; teacher_id?: string | null }) => void
   isPending: boolean
   serverError?: string | null
   availableParents?: Parent[]
@@ -20,13 +18,9 @@ interface ChildFormProps {
 }
 
 export function ChildForm({ initialData, onSubmit, isPending, serverError, availableParents, isLoadingParents, availableTeachers, isLoadingTeachers }: ChildFormProps) {
-  const { role } = useAuth()
-  const isAdmin = role === 'admin'
-  const nurseriesQuery = useNurseries()
   const isCreateMode = !initialData
 
   const [name, setName] = useState(initialData?.name ?? '')
-  const [nurseryId, setNurseryId] = useState(initialData?.nursery_id ?? '')
   const [teacherId, setTeacherId] = useState<string>(initialData?.teacher_id ?? '')
   const [selectedParentIds, setSelectedParentIds] = useState<string[]>([])
   const [parentSearch, setParentSearch] = useState('')
@@ -50,9 +44,7 @@ export function ChildForm({ initialData, onSubmit, isPending, serverError, avail
     setErrors({})
 
     const teacherValue = teacherId || null
-    const payload = isAdmin
-      ? { name, nursery_id: nurseryId || undefined, teacher_id: teacherValue, ...(isCreateMode ? { parent_ids: selectedParentIds } : {}) }
-      : { name, teacher_id: teacherValue, ...(isCreateMode ? { parent_ids: selectedParentIds } : {}) }
+    const payload = { name, teacher_id: teacherValue, ...(isCreateMode ? { parent_ids: selectedParentIds } : {}) }
 
     const schema = initialData ? childUpdateSchema : childCreateSchema
     const result = schema.safeParse(payload)
@@ -66,11 +58,6 @@ export function ChildForm({ initialData, onSubmit, isPending, serverError, avail
       return
     }
 
-    if (isAdmin && !initialData && !nurseryId) {
-      setErrors({ nursery_id: 'יש לבחור גן' })
-      return
-    }
-
     onSubmit(payload)
   }
 
@@ -79,31 +66,6 @@ export function ChildForm({ initialData, onSubmit, isPending, serverError, avail
       {serverError && (
         <div className="p-4 bg-red-50 border border-red-200 rounded-md" role="alert">
           <p className="text-sm text-red-700">{serverError}</p>
-        </div>
-      )}
-
-      {isAdmin && !initialData && (
-        <div>
-          <label htmlFor="nursery-id" className="block text-sm font-medium text-gray-700">
-            גן
-          </label>
-          <select
-            id="nursery-id"
-            value={nurseryId}
-            onChange={(e) => { setNurseryId(e.target.value); setErrors((prev) => { const { nursery_id: _, ...rest } = prev; return rest }) }}
-            disabled={isPending || nurseriesQuery.isLoading}
-            className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
-              errors.nursery_id ? 'border-red-500' : 'border-gray-300'
-            }`}
-          >
-            <option value="">בחר גן</option>
-            {nurseriesQuery.data?.map((nursery) => (
-              <option key={nursery.id} value={nursery.id}>
-                {nursery.name}
-              </option>
-            ))}
-          </select>
-          {errors.nursery_id && <p className="mt-2 text-sm text-red-600" role="alert">{errors.nursery_id}</p>}
         </div>
       )}
 

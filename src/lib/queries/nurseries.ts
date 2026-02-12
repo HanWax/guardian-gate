@@ -1,14 +1,25 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getNurseries, getNurserySettings, updateNurserySettings } from '../server/nurseries';
+import { getMyNursery, getNurseries, getNurserySettings, updateNurserySettings } from '../server/nurseries';
 import { getAccessToken } from './utils';
 import type { updateNurserySettingsSchema } from '../schemas/nursery';
 import type { z } from 'zod';
 
 export const nurseryKeys = {
   all: ['nurseries'] as const,
+  mine: () => [...nurseryKeys.all, 'mine'] as const,
   list: () => [...nurseryKeys.all, 'list'] as const,
   detail: (id: string) => [...nurseryKeys.all, 'detail', id] as const,
 };
+
+export function useMyNursery() {
+  return useQuery({
+    queryKey: nurseryKeys.mine(),
+    queryFn: async () => {
+      const accessToken = await getAccessToken();
+      return getMyNursery({ data: { accessToken } });
+    },
+  });
+}
 
 export function useNurseries() {
   return useQuery({

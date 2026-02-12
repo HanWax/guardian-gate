@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { requireAuth } from '~/lib/auth-guard'
+import { useMyNursery } from '~/lib/queries/nurseries'
 import Layout from '~/components/Layout'
 import DashboardCard from '~/components/DashboardCard'
 
@@ -9,10 +10,14 @@ export const Route = createFileRoute('/admin')({
 })
 
 function AdminDashboard() {
+  const { data: nursery } = useMyNursery()
+
   return (
     <Layout>
       <div className="p-4 sm:p-6">
-        <h1 className="text-2xl font-bold">לוח בקרה - מנהל מערכת</h1>
+        <h1 className="text-2xl font-bold">
+          {nursery ? `לוח בקרה - ${nursery.name}` : 'לוח בקרה - מנהל מערכת'}
+        </h1>
         <p className="mt-2 text-gray-600">ברוכים הבאים ללוח הבקרה של מנהל המערכת</p>
 
         <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
