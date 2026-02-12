@@ -51,6 +51,9 @@ export const createChild = createServerFn({ method: 'POST' })
       p_parent_ids: data.child.parent_ids,
     })
     if (rpcError) throw new Error(err.create_failed)
+    if (data.child.teacher_id) {
+      await supabase.from('children').update({ teacher_id: data.child.teacher_id }).eq('id', childId)
+    }
     const { data: child, error } = await supabase
       .from('children').select('*').eq('id', childId).single()
     if (error || !child) throw new Error(err.create_failed)
@@ -63,7 +66,7 @@ export const updateChild = createServerFn({ method: 'POST' })
     await requireAdminRole(data.accessToken)
     const supabase = createServiceClient()
     const { data: child, error } = await supabase
-      .from('children').update({ name: data.child.name }).eq('id', data.id).select().single()
+      .from('children').update({ name: data.child.name, teacher_id: data.child.teacher_id ?? null }).eq('id', data.id).select().single()
     if (error) throw new Error(err.update_failed)
     if (!child) throw new Error(err.not_found)
     return child

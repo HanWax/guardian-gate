@@ -4,7 +4,7 @@ import { useCreateParent } from '~/lib/queries/parents';
 import { ParentForm } from '~/components/ParentForm';
 import Layout from '~/components/Layout';
 
-export const Route = createFileRoute('/parents/new')({
+export const Route = createFileRoute('/families/parents/new')({
   beforeLoad: () => requireAuth(),
   component: NewParent,
 });
@@ -25,8 +25,8 @@ function NewParent() {
     <Layout>
     <div className="max-w-4xl">
       <div className="mb-6">
-        <Link to="/parents" className="text-indigo-600 hover:text-indigo-900 text-sm">
-          {'\u2190'} חזרה לרשימת ההורים
+        <Link to="/families" className="text-indigo-600 hover:text-indigo-900 text-sm">
+          {'\u2190'} חזרה למשפחות
         </Link>
       </div>
 
@@ -36,7 +36,7 @@ function NewParent() {
         onSubmit={(data) => {
           createMutation.mutate(data, {
             onSuccess: () => {
-              navigate({ to: '/parents' });
+              navigate({ to: '/families' });
             },
           });
         }}

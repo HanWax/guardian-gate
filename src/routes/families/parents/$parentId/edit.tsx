@@ -5,7 +5,7 @@ import { ParentForm } from '~/components/ParentForm';
 import Layout from '~/components/Layout';
 import { AssignedChildren } from '~/components/AssignedChildren';
 
-export const Route = createFileRoute('/parents/$parentId/edit')({
+export const Route = createFileRoute('/families/parents/$parentId/edit')({
   beforeLoad: () => requireAuth(),
   component: EditParent,
 });
@@ -28,8 +28,8 @@ function EditParent() {
     return (
       <Layout>
         <h1 className="text-2xl font-bold mb-4">הורה לא נמצא</h1>
-        <Link to="/parents" className="text-indigo-600 hover:text-indigo-900">
-          {'\u2190'} חזרה לרשימת ההורים
+        <Link to="/families" className="text-indigo-600 hover:text-indigo-900">
+          {'\u2190'} חזרה למשפחות
         </Link>
       </Layout>
     );
@@ -47,8 +47,8 @@ function EditParent() {
     <Layout>
     <div className="max-w-4xl">
       <div className="mb-6">
-        <Link to="/parents" className="text-indigo-600 hover:text-indigo-900 text-sm">
-          {'\u2190'} חזרה לרשימת ההורים
+        <Link to="/families" className="text-indigo-600 hover:text-indigo-900 text-sm">
+          {'\u2190'} חזרה למשפחות
         </Link>
       </div>
 
@@ -59,7 +59,7 @@ function EditParent() {
         onSubmit={(data) => {
           updateMutation.mutate({ id: parentId, parent: data }, {
             onSuccess: () => {
-              navigate({ to: '/parents' });
+              navigate({ to: '/families' });
             },
           });
         }}

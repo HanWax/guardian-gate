@@ -8,6 +8,7 @@ import {
 import { getAccessToken } from './utils'
 import { childKeys } from './children'
 import { parentKeys } from './parents'
+import { familyKeys } from './families'
 import type { Database } from '../database.types'
 
 type Parent = Database['public']['Tables']['parents']['Row']
@@ -56,6 +57,7 @@ export function useAssignParent() {
       queryClient.invalidateQueries({ queryKey: childrenParentsKeys.all })
       queryClient.invalidateQueries({ queryKey: childKeys.all })
       queryClient.invalidateQueries({ queryKey: parentKeys.all })
+      queryClient.invalidateQueries({ queryKey: familyKeys.all })
     },
   })
 }
@@ -73,6 +75,7 @@ export function useUnassignParent() {
       queryClient.invalidateQueries({ queryKey: childrenParentsKeys.all })
       queryClient.invalidateQueries({ queryKey: childKeys.all })
       queryClient.invalidateQueries({ queryKey: parentKeys.all })
+      queryClient.invalidateQueries({ queryKey: familyKeys.all })
     },
   })
 }

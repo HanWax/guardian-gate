@@ -6,17 +6,20 @@ import type { Database } from '~/lib/database.types'
 
 type Child = Database['public']['Tables']['children']['Row']
 type Parent = Database['public']['Tables']['parents']['Row']
+type Teacher = Database['public']['Tables']['teachers']['Row']
 
 interface ChildFormProps {
   initialData?: Child
-  onSubmit: (data: { name: string; nursery_id?: string; parent_ids?: string[] }) => void
+  onSubmit: (data: { name: string; nursery_id?: string; parent_ids?: string[]; teacher_id?: string | null }) => void
   isPending: boolean
   serverError?: string | null
   availableParents?: Parent[]
   isLoadingParents?: boolean
+  availableTeachers?: Teacher[]
+  isLoadingTeachers?: boolean
 }
 
-export function ChildForm({ initialData, onSubmit, isPending, serverError, availableParents, isLoadingParents }: ChildFormProps) {
+export function ChildForm({ initialData, onSubmit, isPending, serverError, availableParents, isLoadingParents, availableTeachers, isLoadingTeachers }: ChildFormProps) {
   const { role } = useAuth()
   const isAdmin = role === 'admin'
   const nurseriesQuery = useNurseries()
@@ -24,6 +27,7 @@ export function ChildForm({ initialData, onSubmit, isPending, serverError, avail
 
   const [name, setName] = useState(initialData?.name ?? '')
   const [nurseryId, setNurseryId] = useState(initialData?.nursery_id ?? '')
+  const [teacherId, setTeacherId] = useState<string>(initialData?.teacher_id ?? '')
   const [selectedParentIds, setSelectedParentIds] = useState<string[]>([])
   const [parentSearch, setParentSearch] = useState('')
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -45,9 +49,10 @@ export function ChildForm({ initialData, onSubmit, isPending, serverError, avail
     e.preventDefault()
     setErrors({})
 
+    const teacherValue = teacherId || null
     const payload = isAdmin
-      ? { name, nursery_id: nurseryId || undefined, ...(isCreateMode ? { parent_ids: selectedParentIds } : {}) }
-      : { name, ...(isCreateMode ? { parent_ids: selectedParentIds } : {}) }
+      ? { name, nursery_id: nurseryId || undefined, teacher_id: teacherValue, ...(isCreateMode ? { parent_ids: selectedParentIds } : {}) }
+      : { name, teacher_id: teacherValue, ...(isCreateMode ? { parent_ids: selectedParentIds } : {}) }
 
     const schema = initialData ? childUpdateSchema : childCreateSchema
     const result = schema.safeParse(payload)
@@ -113,6 +118,26 @@ export function ChildForm({ initialData, onSubmit, isPending, serverError, avail
             errors.name ? 'border-red-500' : 'border-gray-300'
           }`} />
         {errors.name && <p className="mt-2 text-sm text-red-600" role="alert">{errors.name}</p>}
+      </div>
+
+      <div>
+        <label htmlFor="teacher-id" className="block text-sm font-medium text-gray-700">
+          {"מורה אחראית"}
+        </label>
+        <select
+          id="teacher-id"
+          value={teacherId}
+          onChange={(e) => setTeacherId(e.target.value)}
+          disabled={isPending || isLoadingTeachers}
+          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+        >
+          <option value="">{"ללא מורה"}</option>
+          {availableTeachers?.map((teacher) => (
+            <option key={teacher.id} value={teacher.id}>
+              {teacher.name}
+            </option>
+          ))}
+        </select>
       </div>
 
       {isCreateMode && (

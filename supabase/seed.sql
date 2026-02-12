@@ -57,15 +57,88 @@ INSERT INTO children_parents (child_id, parent_id) VALUES
   ('c0000005-0000-0000-0000-000000000005', 'aa000004-0000-0000-0000-000000000004');
 
 -- ============================================================
--- Staff (no user_id since we don't have auth.users in seed)
+-- Auth Users (admin, manager, teacher)
+-- All use password: password123
 -- ============================================================
 
-INSERT INTO managers (id, nursery_id, phone, name) VALUES
-  ('bb000001-0000-0000-0000-000000000001', 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', '+972581112233', 'דינה מזרחי');
+INSERT INTO auth.users (
+  instance_id, id, aud, role, email, encrypted_password,
+  email_confirmed_at, created_at, updated_at,
+  raw_app_meta_data, raw_user_meta_data,
+  confirmation_token, recovery_token, email_change, email_change_token_new,
+  email_change_token_current, phone_change, phone_change_token,
+  reauthentication_token, is_sso_user, is_anonymous
+) VALUES
+  (
+    '00000000-0000-0000-0000-000000000000',
+    'd0000001-0000-0000-0000-000000000001',
+    'authenticated', 'authenticated',
+    'admin@test.com',
+    crypt('password123', gen_salt('bf')),
+    now(), now(), now(),
+    '{"provider": "email", "providers": ["email"]}',
+    '{"email": "admin@test.com", "email_verified": true, "phone_verified": false, "sub": "d0000001-0000-0000-0000-000000000001", "role": "admin"}',
+    '', '', '', '', '', '', '', '', false, false
+  ),
+  (
+    '00000000-0000-0000-0000-000000000000',
+    'd0000002-0000-0000-0000-000000000002',
+    'authenticated', 'authenticated',
+    'manager@test.com',
+    crypt('password123', gen_salt('bf')),
+    now(), now(), now(),
+    '{"provider": "email", "providers": ["email"]}',
+    '{"email": "manager@test.com", "email_verified": true, "phone_verified": false, "sub": "d0000002-0000-0000-0000-000000000002", "role": "manager"}',
+    '', '', '', '', '', '', '', '', false, false
+  ),
+  (
+    '00000000-0000-0000-0000-000000000000',
+    'd0000003-0000-0000-0000-000000000003',
+    'authenticated', 'authenticated',
+    'teacher@test.com',
+    crypt('password123', gen_salt('bf')),
+    now(), now(), now(),
+    '{"provider": "email", "providers": ["email"]}',
+    '{"email": "teacher@test.com", "email_verified": true, "phone_verified": false, "sub": "d0000003-0000-0000-0000-000000000003", "role": "teacher"}',
+    '', '', '', '', '', '', '', '', false, false
+  );
 
-INSERT INTO teachers (id, nursery_id, phone, name) VALUES
-  ('cc000001-0000-0000-0000-000000000001', 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', '+972524445566', 'ענת ברק'),
-  ('cc000002-0000-0000-0000-000000000002', 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', '+972507778899', 'תמר רוזן');
+INSERT INTO auth.identities (id, user_id, identity_data, provider, provider_id, last_sign_in_at, created_at, updated_at) VALUES
+  (
+    'd0000001-0000-0000-0000-000000000001',
+    'd0000001-0000-0000-0000-000000000001',
+    '{"sub": "d0000001-0000-0000-0000-000000000001", "email": "admin@test.com", "email_verified": true}',
+    'email',
+    'd0000001-0000-0000-0000-000000000001',
+    now(), now(), now()
+  ),
+  (
+    'd0000002-0000-0000-0000-000000000002',
+    'd0000002-0000-0000-0000-000000000002',
+    '{"sub": "d0000002-0000-0000-0000-000000000002", "email": "manager@test.com", "email_verified": true}',
+    'email',
+    'd0000002-0000-0000-0000-000000000002',
+    now(), now(), now()
+  ),
+  (
+    'd0000003-0000-0000-0000-000000000003',
+    'd0000003-0000-0000-0000-000000000003',
+    '{"sub": "d0000003-0000-0000-0000-000000000003", "email": "teacher@test.com", "email_verified": true}',
+    'email',
+    'd0000003-0000-0000-0000-000000000003',
+    now(), now(), now()
+  );
+
+-- ============================================================
+-- Staff (linked to auth users)
+-- ============================================================
+
+INSERT INTO managers (id, nursery_id, phone, name, user_id) VALUES
+  ('bb000001-0000-0000-0000-000000000001', 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', '+972581112233', 'דינה מזרחי', 'd0000002-0000-0000-0000-000000000002');
+
+INSERT INTO teachers (id, nursery_id, phone, name, user_id) VALUES
+  ('cc000001-0000-0000-0000-000000000001', 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', '+972524445566', 'ענת ברק', 'd0000003-0000-0000-0000-000000000003'),
+  ('cc000002-0000-0000-0000-000000000002', 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', '+972507778899', 'תמר רוזן', NULL);
 
 -- ============================================================
 -- Daily Attendance: 3 days of sample data

@@ -22,14 +22,9 @@ function ManagerDashboard() {
             href="/attendance"
           />
           <DashboardCard
-            title="ילדים"
-            description="צפייה וניהול של ילדי הגן"
-            href="/children"
-          />
-          <DashboardCard
-            title="הורים"
-            description="צפייה וניהול של הורי הילדים בגן"
-            href="/parents"
+            title="משפחות"
+            description="צפייה וניהול של הורים וילדים בגן"
+            href="/families"
           />
           <DashboardCard
             title="מורות"

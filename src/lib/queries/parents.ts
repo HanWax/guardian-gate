@@ -7,6 +7,7 @@ import {
   deleteParent,
 } from '../server/parents';
 import { getAccessToken } from './utils';
+import { familyKeys } from './families';
 import type { ParentCreate, ParentUpdate } from '../schemas/parent';
 import type { Database } from '../database.types';
 
@@ -48,6 +49,7 @@ export function useCreateParent() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: parentKeys.all });
+      queryClient.invalidateQueries({ queryKey: familyKeys.all });
     },
   });
 }
@@ -61,6 +63,7 @@ export function useUpdateParent() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: parentKeys.all });
+      queryClient.invalidateQueries({ queryKey: familyKeys.all });
     },
   });
 }
@@ -74,6 +77,7 @@ export function useDeleteParent() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: parentKeys.all });
+      queryClient.invalidateQueries({ queryKey: familyKeys.all });
     },
   });
 }

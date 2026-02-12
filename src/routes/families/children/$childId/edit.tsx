@@ -3,11 +3,12 @@ import { useState, useMemo } from 'react';
 import { requireRole } from '~/lib/auth-guard';
 import { useChild, useUpdateChild } from '~/lib/queries/children';
 import { useParents } from '~/lib/queries/parents';
+import { useTeachers } from '~/lib/queries/teachers';
 import { useParentsForChild, useUnassignParent, useAssignParent } from '~/lib/queries/children-parents';
 import { ChildForm } from '~/components/ChildForm';
 import Layout from '~/components/Layout';
 
-export const Route = createFileRoute('/children/$childId/edit')({
+export const Route = createFileRoute('/families/children/$childId/edit')({
   beforeLoad: () => requireRole('admin'),
   component: EditChild,
 });
@@ -18,6 +19,7 @@ function EditChild() {
   const { data: child, isLoading, error } = useChild(childId);
   const { data: assignedParents, isLoading: isLoadingParents } = useParentsForChild(childId);
   const { data: allParents } = useParents();
+  const { data: teachers, isLoading: isLoadingTeachers } = useTeachers();
   const updateMutation = useUpdateChild();
   const unassignMutation = useUnassignParent();
   const assignMutation = useAssignParent();
@@ -52,8 +54,8 @@ function EditChild() {
     return (
       <Layout>
         <h1 className="text-2xl font-bold mb-4">ילד/ה לא נמצא/א</h1>
-        <Link to="/children" className="text-indigo-600 hover:text-indigo-900">
-          {'\u2192'} חזרה לרשימת הילדים
+        <Link to="/families" className="text-indigo-600 hover:text-indigo-900">
+          {'\u2192'} חזרה למשפחות
         </Link>
       </Layout>
     );
@@ -63,8 +65,8 @@ function EditChild() {
     <Layout>
     <div className="max-w-4xl">
       <div className="mb-6">
-        <Link to="/children" className="text-indigo-600 hover:text-indigo-900 text-sm">
-          {'\u2192'} חזרה לרשימת הילדים
+        <Link to="/families" className="text-indigo-600 hover:text-indigo-900 text-sm">
+          {'\u2192'} חזרה למשפחות
         </Link>
       </div>
 
@@ -75,7 +77,7 @@ function EditChild() {
         onSubmit={(data) => {
           updateMutation.mutate({ id: childId, child: data }, {
             onSuccess: () => {
-              navigate({ to: '/children' });
+              navigate({ to: '/families' });
             },
           });
         }}
@@ -87,6 +89,8 @@ function EditChild() {
               ? 'שגיאה בעדכון פרטי הילד/ה'
               : null
         }
+        availableTeachers={teachers}
+        isLoadingTeachers={isLoadingTeachers}
       />
 
       {/* Parent assignment section */}

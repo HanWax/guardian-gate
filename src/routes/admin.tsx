@@ -22,14 +22,9 @@ function AdminDashboard() {
             href="/attendance"
           />
           <DashboardCard
-            title="ילדים"
-            description="צפייה וניהול של כל הילדים במערכת"
-            href="/children"
-          />
-          <DashboardCard
-            title="הורים"
-            description="צפייה וניהול של כל ההורים במערכת"
-            href="/parents"
+            title="משפחות"
+            description="צפייה וניהול של הורים וילדים במערכת"
+            href="/families"
           />
           <DashboardCard
             title="מורות"

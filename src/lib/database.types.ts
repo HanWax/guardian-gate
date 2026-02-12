@@ -40,18 +40,21 @@ export type Database = {
           id: string
           name: string
           nursery_id: string
+          teacher_id: string | null
         }
         Insert: {
           created_at?: string | null
           id?: string
           name: string
           nursery_id: string
+          teacher_id?: string | null
         }
         Update: {
           created_at?: string | null
           id?: string
           name?: string
           nursery_id?: string
+          teacher_id?: string | null
         }
         Relationships: [
           {
@@ -59,6 +62,13 @@ export type Database = {
             columns: ["nursery_id"]
             isOneToOne: false
             referencedRelation: "nurseries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "children_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
             referencedColumns: ["id"]
           },
         ]
