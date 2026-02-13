@@ -128,7 +128,7 @@ After logging in, the admin sees the dashboard at `/admin` with the nursery name
 | **ילדים חסרים** (Missing children) | `/attendance` | Today's unaccounted-for children |
 | **משפחות** (Families) | `/families` | Parents and their children |
 | **מורות** (Teachers) | `/teachers` | Teacher staff list |
-| **הגדרות משתלה** (Nursery settings) | `/settings` | Message schedule and timezone |
+| **הגדרות גן** (Nursery Settings) | `/settings` | Message schedule and timezone |
 
 ---
 
@@ -254,7 +254,7 @@ For a nursery that opens at 8:00 AM:
 
 ### How to update
 
-1. Navigate to **הגדרות משתלה** (Nursery settings) in the sidebar.
+1. Navigate to **הגדרות גן** (Nursery Settings) in the sidebar.
 2. Adjust the time fields using the time picker inputs.
 3. Click **"שמירה"** (Save).
 4. A green banner confirms: "ההגדרות נשמרו בהצלחה" (Settings saved successfully).

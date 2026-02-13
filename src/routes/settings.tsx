@@ -54,7 +54,7 @@ function SettingsPage() {
   return (
     <Layout>
       <div className="max-w-md">
-        <h1 className="text-2xl font-bold mb-6">{"הגדרות משתלה"}</h1>
+        <h1 className="text-2xl font-bold mb-6">{"הגדרות גן"}</h1>
 
         {nurseries.length > 1 ? (
           <div className="mb-6">

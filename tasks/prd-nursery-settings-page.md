@@ -48,13 +48,13 @@ Build a settings page where admins and managers can configure nursery timing par
 - [ ] **Verify in browser:** Form loads, displays current values, validates inputs, saves successfully
 
 ### T-004: Add settings navigation link to sidebar
-**Description:** Add "הגדרות משתלה" (Nursery Settings) link to the navigation sidebar, visible only to admin and manager roles.
+**Description:** Add "הגדרות גן" (Nursery Settings) link to the navigation sidebar, visible only to admin and manager roles.
 
 **Acceptance Criteria:**
 - [ ] Settings link added to sidebar navigation in appropriate component
 - [ ] Link visible only to admin and manager roles (not teachers)
 - [ ] Link navigates to `/settings` route
-- [ ] Link uses Hebrew text "הגדרות משתלה"
+- [ ] Link uses Hebrew text "הגדרות גן"
 - [ ] Quality checks pass
 - [ ] **Verify in browser:** Link appears for admin/manager, hidden for teacher, navigates correctly
 
