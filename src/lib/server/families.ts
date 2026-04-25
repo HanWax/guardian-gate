@@ -1,6 +1,6 @@
 import { createServerFn } from '@tanstack/react-start'
 import { z } from 'zod'
-import { createServiceClient, requireAuth, resolveNurseryId } from './auth'
+import { createServiceClient, requireAuth } from './auth'
 
 const err = {
   fetch_failed: 'שגיאה בטעינת נתוני משפחות. אנא נסה שוב',
@@ -8,11 +8,10 @@ const err = {
 
 const tokenSchema = z.object({ accessToken: z.string().min(1) })
 
-export const getFamilies = createServerFn({ method: 'GET' })
+export const getFamilies = createServerFn({ method: 'POST' })
   .inputValidator(tokenSchema.extend({ teacherId: z.string().uuid().optional() }))
   .handler(async ({ data }) => {
-    const { user, role } = await requireAuth(data.accessToken)
-    const nurseryId = await resolveNurseryId(user, role)
+    const { nurseryId } = await requireAuth(data.accessToken)
     const supabase = createServiceClient()
 
     let query = supabase

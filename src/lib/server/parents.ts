@@ -2,7 +2,7 @@ import { createServerFn } from '@tanstack/react-start'
 import { z } from 'zod'
 import { parentCreateSchema, parentUpdateSchema } from '../schemas/parent'
 import { normalizePhone } from '../parents'
-import { createServiceClient, requireAuth, requireAdminRole, resolveNurseryId } from './auth'
+import { createServiceClient, requireAuth, requireAdminRole } from './auth'
 
 const err = {
   not_found: 'הורה לא נמצא',
@@ -11,63 +11,122 @@ const err = {
   delete_failed: 'שגיאה במחיקת הורה. אנא נסה שוב',
   fetch_failed: 'שגיאה בטעינת נתונים. אנא נסה שוב',
 } as const
+const unauthorized = 'אין לך הרשאה לבצע פעולה זו'
 
 const tokenSchema = z.object({ accessToken: z.string().min(1) })
 
-export const getParents = createServerFn({ method: 'GET' })
+async function assertParentWritableByNursery(
+  supabase: ReturnType<typeof createServiceClient>,
+  parentId: string,
+  nurseryId: string,
+) {
+  const { data: parent, error: parentError } = await supabase
+    .from('parents')
+    .select('id, owner_nursery_id')
+    .eq('id', parentId)
+    .maybeSingle()
+
+  if (parentError || !parent) throw new Error(err.not_found)
+  if (parent.owner_nursery_id === nurseryId) return
+
+  const { data: links, error: linksError } = await supabase
+    .from('children_parents')
+    .select('children!inner(nursery_id)')
+    .eq('parent_id', parentId)
+
+  if (linksError) throw new Error(err.fetch_failed)
+
+  const nurseryIds = [...new Set(
+    (links ?? [])
+      .map((link) => {
+        const child = Array.isArray(link.children) ? link.children[0] : link.children
+        return child?.nursery_id
+      })
+      .filter((id): id is string => typeof id === 'string'),
+  )]
+
+  if (nurseryIds.length === 0) throw new Error(unauthorized)
+  if (nurseryIds.some((id) => id !== nurseryId)) throw new Error(unauthorized)
+}
+
+export const getParents = createServerFn({ method: 'POST' })
   .inputValidator(tokenSchema)
   .handler(async ({ data }) => {
-    const { user, role } = await requireAuth(data.accessToken)
-    const nurseryId = await resolveNurseryId(user, role)
+    const { nurseryId } = await requireAuth(data.accessToken)
     const supabase = createServiceClient()
+    const { data: linkedParents, error: linkedError } = await supabase
+      .from('parents')
+      .select('id, name, phone, children_parents!inner(children!inner(nursery_id))')
+      .eq('children_parents.children.nursery_id', nurseryId)
+      .order('name', { ascending: true })
 
-    if (nurseryId) {
-      const { data: parents, error } = await supabase
-        .from('parents')
-        .select('*, children_parents!inner(children!inner(nursery_id))')
-        .eq('children_parents.children.nursery_id', nurseryId)
-        .order('name', { ascending: true })
+    if (linkedError) throw new Error(err.fetch_failed)
 
-      if (error) {
-        const { data: all, error: fallbackError } = await supabase
-          .from('parents').select('*').order('name', { ascending: true })
-        if (fallbackError) throw new Error(err.fetch_failed)
-        return all
-      }
+    const { data: ownedParents, error: ownedError } = await supabase
+      .from('parents')
+      .select('id, name, phone')
+      .eq('owner_nursery_id', nurseryId)
+      .order('name', { ascending: true })
 
-      const seen = new Set<string>()
-      return parents.filter((p) => {
-        if (seen.has(p.id)) return false
-        seen.add(p.id)
-        return true
-      })
+    if (ownedError) throw new Error(err.fetch_failed)
+
+    const byId = new Map<string, { id: string; name: string; phone: string }>()
+    for (const parent of [...(linkedParents ?? []), ...(ownedParents ?? [])]) {
+      byId.set(parent.id, { id: parent.id, name: parent.name, phone: parent.phone })
     }
 
-    const { data: parents, error } = await supabase
-      .from('parents').select('*').order('name', { ascending: true })
-    if (error) throw new Error(err.fetch_failed)
-    return parents
+    return [...byId.values()].sort((a, b) => a.name.localeCompare(b.name, 'he'))
   })
 
-export const getParent = createServerFn({ method: 'GET' })
+export const getParent = createServerFn({ method: 'POST' })
   .inputValidator(tokenSchema.extend({ id: z.string().uuid() }))
   .handler(async ({ data }) => {
-    await requireAuth(data.accessToken)
+    const { nurseryId } = await requireAuth(data.accessToken)
     const supabase = createServiceClient()
-    const { data: parent, error } = await supabase
-      .from('parents').select('*').eq('id', data.id).single()
-    if (error || !parent) throw new Error(err.not_found)
-    return parent
+    const { data: parent, error: parentError } = await supabase
+      .from('parents')
+      .select('id, name, phone, owner_nursery_id')
+      .eq('id', data.id)
+      .maybeSingle()
+
+    if (parentError || !parent) throw new Error(err.not_found)
+    if (parent.owner_nursery_id === nurseryId) {
+      return { id: parent.id, name: parent.name, phone: parent.phone }
+    }
+
+    const { data: links, error: linksError } = await supabase
+      .from('children_parents')
+      .select('children!inner(nursery_id)')
+      .eq('parent_id', data.id)
+
+    if (linksError) throw new Error(err.fetch_failed)
+
+    const linkedToNursery = (links ?? []).some((link) => {
+      const child = Array.isArray(link.children) ? link.children[0] : link.children
+      return child?.nursery_id === nurseryId
+    })
+
+    if (!linkedToNursery) throw new Error(err.not_found)
+
+    return {
+      id: parent.id,
+      name: parent.name,
+      phone: parent.phone,
+    }
   })
 
 export const createParent = createServerFn({ method: 'POST' })
   .inputValidator(tokenSchema.extend({ parent: parentCreateSchema }))
   .handler(async ({ data }) => {
-    await requireAdminRole(data.accessToken)
+    const { nurseryId } = await requireAdminRole(data.accessToken)
     const supabase = createServiceClient()
     const { data: parent, error } = await supabase
       .from('parents')
-      .insert({ name: data.parent.name, phone: normalizePhone(data.parent.phone) })
+      .insert({
+        name: data.parent.name,
+        phone: normalizePhone(data.parent.phone),
+        owner_nursery_id: nurseryId,
+      })
       .select().single()
     if (error) throw new Error(err.create_failed)
     return parent
@@ -76,8 +135,9 @@ export const createParent = createServerFn({ method: 'POST' })
 export const updateParent = createServerFn({ method: 'POST' })
   .inputValidator(tokenSchema.extend({ id: z.string().uuid(), parent: parentUpdateSchema }))
   .handler(async ({ data }) => {
-    await requireAdminRole(data.accessToken)
+    const { nurseryId } = await requireAdminRole(data.accessToken)
     const supabase = createServiceClient()
+    await assertParentWritableByNursery(supabase, data.id, nurseryId)
     const { data: parent, error } = await supabase
       .from('parents')
       .update({ name: data.parent.name, phone: normalizePhone(data.parent.phone) })
@@ -90,8 +150,9 @@ export const updateParent = createServerFn({ method: 'POST' })
 export const deleteParent = createServerFn({ method: 'POST' })
   .inputValidator(tokenSchema.extend({ id: z.string().uuid() }))
   .handler(async ({ data }) => {
-    await requireAdminRole(data.accessToken)
+    const { nurseryId } = await requireAdminRole(data.accessToken)
     const supabase = createServiceClient()
+    await assertParentWritableByNursery(supabase, data.id, nurseryId)
     const { error } = await supabase.from('parents').delete().eq('id', data.id)
     if (error) throw new Error(err.delete_failed)
     return { success: true }

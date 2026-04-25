@@ -36,10 +36,10 @@ function deriveActionTaken(record: {
   return 'ממתין לשליחת הודעה'
 }
 
-export const getMissingChildren = createServerFn({ method: 'GET' })
+export const getMissingChildren = createServerFn({ method: 'POST' })
   .inputValidator(tokenSchema.extend({ date: z.string().min(1) }))
   .handler(async ({ data }): Promise<MissingChild[]> => {
-    await requireAdminRole(data.accessToken)
+    const { nurseryId } = await requireAdminRole(data.accessToken)
 
     const supabase = createServiceClient()
 
@@ -50,9 +50,10 @@ export const getMissingChildren = createServerFn({ method: 'GET' })
         id, child_id, parent_response, teacher_confirmed,
         inconsistency, inconsistency_type, inconsistency_resolved,
         nine_am_alert_sent, second_ping_sent_at, message_sent_at,
-        children(id, name, nursery_id, children_parents(parents(id, name, phone)))
+        children!inner(id, name, nursery_id, children_parents(parents(id, name, phone)))
       `)
       .eq('date', data.date)
+      .eq('children.nursery_id', nurseryId)
       .order('created_at', { ascending: true })
 
     if (error) throw new Error(err.fetch_failed)

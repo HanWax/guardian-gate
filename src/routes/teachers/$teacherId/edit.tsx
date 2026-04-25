@@ -4,8 +4,6 @@ import { useTeacher, useUpdateTeacher } from '~/lib/queries/teachers';
 import { TeacherForm } from '~/components/TeacherForm';
 import Layout from '~/components/Layout';
 
-const DEFAULT_NURSERY_ID = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
-
 export const Route = createFileRoute('/teachers/$teacherId/edit')({
   beforeLoad: () => requireRole('admin'),
   component: EditTeacherPage,
@@ -48,7 +46,7 @@ function EditTeacherPage() {
   return (
     <Layout><TeacherForm
       teacher={teacher}
-      nurseryId={teacher.nursery_id ?? DEFAULT_NURSERY_ID}
+      nurseryId={teacher.nursery_id}
       onSubmit={(data) => {
         updateMutation.mutate(
           { id: teacherId, teacher: data },

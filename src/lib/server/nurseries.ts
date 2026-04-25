@@ -1,22 +1,21 @@
 import { createServerFn } from '@tanstack/react-start'
 import { z } from 'zod'
 import { updateNurserySettingsSchema } from '../schemas/nursery'
-import { createServiceClient, requireAuth, requireAdminRole, resolveNurseryId } from './auth'
+import { createServiceClient, requireAuth, requireAdminRole } from './auth'
 
 const err = {
   fetch_failed: 'שגיאה בטעינת גנים. אנא נסה שוב',
   update_failed: 'שגיאה בעדכון הגדרות הגן. אנא נסה שוב',
   not_found: 'גן לא נמצא',
 } as const
+const unauthorized = 'אין לך הרשאה לבצע פעולה זו'
 
 const tokenSchema = z.object({ accessToken: z.string().min(1) })
 
-export const getMyNursery = createServerFn({ method: 'GET' })
+export const getMyNursery = createServerFn({ method: 'POST' })
   .inputValidator(tokenSchema)
   .handler(async ({ data }) => {
-    const { user, role } = await requireAuth(data.accessToken)
-    const nurseryId = await resolveNurseryId(user, role)
-    if (!nurseryId) return null
+    const { nurseryId } = await requireAuth(data.accessToken)
     const supabase = createServiceClient()
     const { data: nursery, error } = await supabase
       .from('nurseries')
@@ -27,27 +26,30 @@ export const getMyNursery = createServerFn({ method: 'GET' })
     return nursery
   })
 
-export const getNurseries = createServerFn({ method: 'GET' })
+export const getNurseries = createServerFn({ method: 'POST' })
   .inputValidator(tokenSchema)
-  .handler(async () => {
+  .handler(async ({ data }) => {
+    const { nurseryId } = await requireAuth(data.accessToken)
     const supabase = createServiceClient()
     const { data: nurseries, error } = await supabase
       .from('nurseries')
       .select('id, name')
+      .eq('id', nurseryId)
       .order('name', { ascending: true })
     if (error) throw new Error(err.fetch_failed)
     return nurseries
   })
 
-export const getNurserySettings = createServerFn({ method: 'GET' })
+export const getNurserySettings = createServerFn({ method: 'POST' })
   .inputValidator(tokenSchema.extend({ nurseryId: z.string().uuid() }))
   .handler(async ({ data }) => {
-    await requireAdminRole(data.accessToken)
+    const { nurseryId } = await requireAdminRole(data.accessToken)
+    if (data.nurseryId !== nurseryId) throw new Error(unauthorized)
     const supabase = createServiceClient()
     const { data: nursery, error } = await supabase
       .from('nurseries')
       .select('id, name, dropoff_start, dropoff_end, first_message_time, second_ping_time, nine_am_check_time, timezone')
-      .eq('id', data.nurseryId)
+      .eq('id', nurseryId)
       .single()
     if (error) throw new Error(err.fetch_failed)
     if (!nursery) throw new Error(err.not_found)
@@ -60,12 +62,13 @@ export const updateNurserySettings = createServerFn({ method: 'POST' })
     settings: updateNurserySettingsSchema
   }))
   .handler(async ({ data }) => {
-    await requireAdminRole(data.accessToken)
+    const { nurseryId } = await requireAdminRole(data.accessToken)
+    if (data.nurseryId !== nurseryId) throw new Error(unauthorized)
     const supabase = createServiceClient()
     const { data: nursery, error } = await supabase
       .from('nurseries')
       .update(data.settings)
-      .eq('id', data.nurseryId)
+      .eq('id', nurseryId)
       .select()
       .single()
     if (error) throw new Error(err.update_failed)
