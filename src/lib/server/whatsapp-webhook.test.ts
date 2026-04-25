@@ -289,7 +289,11 @@ describe('WhatsApp Webhook', () => {
       expect(result.success).toBe(true);
       expect(consoleLogSpy).toHaveBeenCalledWith(
         '[WhatsApp Message Received]',
-        expect.objectContaining({ sender: '972509876543', messageText: 'Test message' })
+        expect.objectContaining({
+          senderMasked: '********6543',
+          hasMessageText: true,
+          messageLength: 12,
+        })
       );
     });
 

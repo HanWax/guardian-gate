@@ -252,6 +252,14 @@ export function parseIncomingMessage(
   }
 }
 
+function maskIdentifier(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+  const normalized = value.trim();
+  if (!normalized) return undefined;
+  if (normalized.length <= 4) return '****';
+  return `${'*'.repeat(normalized.length - 4)}${normalized.slice(-4)}`;
+}
+
 /**
  * Verifies webhook signature from Meta using HMAC SHA256.
  *
@@ -702,13 +710,13 @@ export async function handleIncomingMessage(
   }
 
   console.log('[WhatsApp Message Received]', {
-    sender: parsed.sender,
-    messageText: parsed.messageText,
+    senderMasked: maskIdentifier(parsed.sender),
+    messageLength: parsed.messageText?.length ?? 0,
+    hasMessageText: !!parsed.messageText,
     timestamp: parsed.timestamp,
     messageId: parsed.messageId,
     messageType: parsed.messageType,
     buttonReplyId: parsed.buttonReplyId,
-    buttonReplyTitle: parsed.buttonReplyTitle,
   });
 
   try {
