@@ -355,21 +355,32 @@ export type Database = {
           created_at: string | null
           id: string
           name: string
+          owner_nursery_id: string | null
           phone: string
         }
         Insert: {
           created_at?: string | null
           id?: string
           name: string
+          owner_nursery_id?: string | null
           phone: string
         }
         Update: {
           created_at?: string | null
           id?: string
           name?: string
+          owner_nursery_id?: string | null
           phone?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "parents_owner_nursery_id_fkey"
+            columns: ["owner_nursery_id"]
+            isOneToOne: false
+            referencedRelation: "nurseries"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       teachers: {
         Row: {
@@ -412,7 +423,12 @@ export type Database = {
     }
     Functions: {
       create_child_with_parents: {
-        Args: { p_name: string; p_nursery_id: string; p_parent_ids: string[] }
+        Args: {
+          p_name: string
+          p_nursery_id: string
+          p_parent_ids: string[]
+          p_teacher_id: string
+        }
         Returns: string
       }
       get_teacher_nursery_id: { Args: never; Returns: string }
@@ -552,4 +568,3 @@ export const Constants = {
     Enums: {},
   },
 } as const
-
