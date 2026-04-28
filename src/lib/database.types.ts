@@ -75,21 +75,18 @@ export type Database = {
           id: string
           name: string
           nursery_id: string
-          teacher_id: string
         }
         Insert: {
           created_at?: string | null
           id?: string
           name: string
           nursery_id: string
-          teacher_id: string
         }
         Update: {
           created_at?: string | null
           id?: string
           name?: string
           nursery_id?: string
-          teacher_id?: string
         }
         Relationships: [
           {
@@ -97,13 +94,6 @@ export type Database = {
             columns: ["nursery_id"]
             isOneToOne: false
             referencedRelation: "nurseries"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "children_teacher_id_fkey"
-            columns: ["teacher_id"]
-            isOneToOne: false
-            referencedRelation: "teachers"
             referencedColumns: ["id"]
           },
         ]
@@ -138,9 +128,38 @@ export type Database = {
           },
         ]
       }
+      children_teachers: {
+        Row: {
+          child_id: string
+          teacher_id: string
+        }
+        Insert: {
+          child_id: string
+          teacher_id: string
+        }
+        Update: {
+          child_id?: string
+          teacher_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "children_teachers_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "children"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "children_teachers_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversation_state: {
         Row: {
-          attendance_id: string | null
           current_child_index: number | null
           id: string
           parent_id: string
@@ -149,7 +168,6 @@ export type Database = {
           verification_attempts: number | null
         }
         Insert: {
-          attendance_id?: string | null
           current_child_index?: number | null
           id?: string
           parent_id: string
@@ -158,7 +176,6 @@ export type Database = {
           verification_attempts?: number | null
         }
         Update: {
-          attendance_id?: string | null
           current_child_index?: number | null
           id?: string
           parent_id?: string
@@ -168,16 +185,9 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "conversation_state_attendance_id_fkey"
-            columns: ["attendance_id"]
-            isOneToOne: false
-            referencedRelation: "daily_attendance"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "conversation_state_parent_id_fkey"
             columns: ["parent_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "parents"
             referencedColumns: ["id"]
           },
@@ -195,14 +205,15 @@ export type Database = {
           inconsistency_resolved_at: string | null
           inconsistency_resolved_by: string | null
           inconsistency_type: string | null
-          message_sent_at: string | null
           nine_am_alert_sent: boolean | null
           nine_am_explanation: string | null
           nine_am_parent_response: string | null
+          nine_am_parent_response_by: string | null
+          nine_am_parent_response_time: string | null
           parent_explanation: string | null
           parent_response: string | null
+          parent_response_by: string | null
           parent_response_time: string | null
-          second_ping_sent_at: string | null
           teacher_confirmed: boolean | null
           teacher_confirmed_by: string | null
           teacher_confirmed_time: string | null
@@ -218,14 +229,15 @@ export type Database = {
           inconsistency_resolved_at?: string | null
           inconsistency_resolved_by?: string | null
           inconsistency_type?: string | null
-          message_sent_at?: string | null
           nine_am_alert_sent?: boolean | null
           nine_am_explanation?: string | null
           nine_am_parent_response?: string | null
+          nine_am_parent_response_by?: string | null
+          nine_am_parent_response_time?: string | null
           parent_explanation?: string | null
           parent_response?: string | null
+          parent_response_by?: string | null
           parent_response_time?: string | null
-          second_ping_sent_at?: string | null
           teacher_confirmed?: boolean | null
           teacher_confirmed_by?: string | null
           teacher_confirmed_time?: string | null
@@ -241,14 +253,15 @@ export type Database = {
           inconsistency_resolved_at?: string | null
           inconsistency_resolved_by?: string | null
           inconsistency_type?: string | null
-          message_sent_at?: string | null
           nine_am_alert_sent?: boolean | null
           nine_am_explanation?: string | null
           nine_am_parent_response?: string | null
+          nine_am_parent_response_by?: string | null
+          nine_am_parent_response_time?: string | null
           parent_explanation?: string | null
           parent_response?: string | null
+          parent_response_by?: string | null
           parent_response_time?: string | null
-          second_ping_sent_at?: string | null
           teacher_confirmed?: boolean | null
           teacher_confirmed_by?: string | null
           teacher_confirmed_time?: string | null
@@ -262,54 +275,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "daily_attendance_nine_am_parent_response_by_fkey"
+            columns: ["nine_am_parent_response_by"]
+            isOneToOne: false
+            referencedRelation: "parents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_attendance_parent_response_by_fkey"
+            columns: ["parent_response_by"]
+            isOneToOne: false
+            referencedRelation: "parents"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "daily_attendance_teacher_confirmed_by_fkey"
             columns: ["teacher_confirmed_by"]
             isOneToOne: false
             referencedRelation: "teachers"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      morning_message_runs: {
-        Row: {
-          completed_at: string | null
-          error_details: string | null
-          id: string
-          messages_failed: number | null
-          messages_sent: number | null
-          nursery_id: string
-          run_date: string
-          started_at: string
-          status: string
-        }
-        Insert: {
-          completed_at?: string | null
-          error_details?: string | null
-          id?: string
-          messages_failed?: number | null
-          messages_sent?: number | null
-          nursery_id: string
-          run_date: string
-          started_at?: string
-          status?: string
-        }
-        Update: {
-          completed_at?: string | null
-          error_details?: string | null
-          id?: string
-          messages_failed?: number | null
-          messages_sent?: number | null
-          nursery_id?: string
-          run_date?: string
-          started_at?: string
-          status?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "morning_message_runs_nursery_id_fkey"
-            columns: ["nursery_id"]
-            isOneToOne: false
-            referencedRelation: "nurseries"
             referencedColumns: ["id"]
           },
         ]
@@ -322,7 +305,6 @@ export type Database = {
           first_message_time: string
           id: string
           name: string
-          nine_am_check_time: string
           second_ping_time: string
           timezone: string | null
         }
@@ -333,7 +315,6 @@ export type Database = {
           first_message_time: string
           id?: string
           name: string
-          nine_am_check_time?: string
           second_ping_time: string
           timezone?: string | null
         }
@@ -344,7 +325,6 @@ export type Database = {
           first_message_time?: string
           id?: string
           name?: string
-          nine_am_check_time?: string
           second_ping_time?: string
           timezone?: string | null
         }
@@ -422,17 +402,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      create_child_with_parents: {
-        Args: {
-          p_name: string
-          p_nursery_id: string
-          p_parent_ids: string[]
-          p_teacher_id: string
-        }
-        Returns: string
-      }
-      get_teacher_nursery_id: { Args: never; Returns: string }
-      get_user_role: { Args: never; Returns: string }
+      [_ in never]: never
     }
     Enums: {
       [_ in never]: never
@@ -568,3 +538,4 @@ export const Constants = {
     Enums: {},
   },
 } as const
+

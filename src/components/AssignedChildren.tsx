@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react'
-import { useChildren, useUpdateChild } from '~/lib/queries/children'
+import { useChildren } from '~/lib/queries/children'
 import { useChildrenForParent, useAssignParent, useUnassignParent } from '~/lib/queries/children-parents'
-import { useTeachers } from '~/lib/queries/teachers'
 
 interface AssignedChildrenProps {
   parentId: string
@@ -10,10 +9,8 @@ interface AssignedChildrenProps {
 export function AssignedChildren({ parentId }: AssignedChildrenProps) {
   const { data: assignedChildren, isLoading: isLoadingChildren } = useChildrenForParent(parentId)
   const { data: allChildren } = useChildren()
-  const { data: teachers } = useTeachers()
   const assignMutation = useAssignParent()
   const unassignMutation = useUnassignParent()
-  const updateChildMutation = useUpdateChild()
   const [childToRemove, setChildToRemove] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
 
@@ -42,29 +39,13 @@ export function AssignedChildren({ parentId }: AssignedChildrenProps) {
           {assignedChildren.map((child) => (
             <li key={child.id} className="flex items-center justify-between gap-3 bg-gray-50 p-3 rounded">
               <span className="font-medium">{child.name}</span>
-              <div className="flex items-center gap-3">
-                <select
-                  value={child.teacher_id}
-                  onChange={(e) => {
-                    updateChildMutation.mutate({
-                      id: child.id,
-                      child: { name: child.name, teacher_id: e.target.value },
-                    })
-                  }}
-                  className="text-sm px-2 py-1 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-                >
-                  {teachers?.map((t) => (
-                    <option key={t.id} value={t.id}>{t.name}</option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  onClick={() => setChildToRemove(child.id)}
-                  className="text-red-600 hover:text-red-800 text-sm"
-                >
-                  {"הסר"}
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => setChildToRemove(child.id)}
+                className="text-red-600 hover:text-red-800 text-sm"
+              >
+                {"הסר"}
+              </button>
             </li>
           ))}
         </ul>

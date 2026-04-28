@@ -382,6 +382,7 @@ export async function processCheckinResponse(
     .update({
       parent_response: parentResponse,
       parent_response_time: new Date().toISOString(),
+      parent_response_by: parent.id,
     })
     .eq('id', attendanceId);
 
@@ -445,7 +446,11 @@ async function handleNineAmResponse(
 
   await supabase
     .from('daily_attendance')
-    .update({ nine_am_parent_response: responseMap[action] })
+    .update({
+      nine_am_parent_response: responseMap[action],
+      nine_am_parent_response_time: new Date().toISOString(),
+      nine_am_parent_response_by: parent.id,
+    })
     .eq('id', attendanceId);
 
   if (action === 'inclass') {

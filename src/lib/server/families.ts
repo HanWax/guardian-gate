@@ -16,7 +16,7 @@ export const getFamilies = createServerFn({ method: 'POST' })
 
     let query = supabase
       .from('parents')
-      .select('id, name, phone, children_parents(children(id, name, teacher_id, teachers(id, name)))')
+      .select('id, name, phone, children_parents(children(id, name, nursery_id, children_teachers(teachers(id, name))))')
       .order('name', { ascending: true })
 
     if (nurseryId) {
@@ -34,8 +34,10 @@ export const getFamilies = createServerFn({ method: 'POST' })
         children: {
           id: string
           name: string
-          teacher_id: string
-          teachers: { id: string; name: string } | null
+          nursery_id: string
+          children_teachers: Array<{
+            teachers: { id: string; name: string } | null
+          }>
         } | null
       }>
     }
@@ -47,8 +49,9 @@ export const getFamilies = createServerFn({ method: 'POST' })
         .map((c) => ({
           id: c.id,
           name: c.name,
-          teacher_name: c.teachers?.name ?? null,
-          teacher_id: c.teacher_id,
+          teacher_names: c.children_teachers
+            .map((ct) => ct.teachers?.name)
+            .filter((name): name is string => name !== null && name !== undefined),
         }))
 
       return {
@@ -62,7 +65,9 @@ export const getFamilies = createServerFn({ method: 'POST' })
     // Filter by teacher if requested
     if (data.teacherId) {
       return families.filter((f) =>
-        f.children.some((c) => c.teacher_id === data.teacherId)
+        f.children.some((c) =>
+          c.teacher_names.some((tn) => tn === data.teacherId)
+        )
       )
     }
 

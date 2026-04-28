@@ -5,8 +5,7 @@ import { getAccessToken } from './utils'
 type FamilyChild = {
   id: string
   name: string
-  teacher_name: string | null
-  teacher_id: string | null
+  teacher_names: string[]
 }
 
 export type Family = {

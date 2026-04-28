@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AttendanceRouteImport } from './routes/attendance'
 import { Route as AdminRouteImport } from './routes/admin'
@@ -31,6 +32,11 @@ import { Route as FamiliesChildrenChildIdEditRouteImport } from './routes/famili
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -126,6 +132,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/attendance': typeof AttendanceRoute
   '/login': typeof LoginRoute
+  '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/teachers/new': typeof TeachersNewRoute
@@ -146,6 +153,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/attendance': typeof AttendanceRoute
   '/login': typeof LoginRoute
+  '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/teachers/new': typeof TeachersNewRoute
@@ -167,6 +175,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/attendance': typeof AttendanceRoute
   '/login': typeof LoginRoute
+  '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/teachers/new': typeof TeachersNewRoute
@@ -189,6 +198,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/attendance'
     | '/login'
+    | '/privacy'
     | '/settings'
     | '/auth/callback'
     | '/teachers/new'
@@ -209,6 +219,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/attendance'
     | '/login'
+    | '/privacy'
     | '/settings'
     | '/auth/callback'
     | '/teachers/new'
@@ -229,6 +240,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/attendance'
     | '/login'
+    | '/privacy'
     | '/settings'
     | '/auth/callback'
     | '/teachers/new'
@@ -250,6 +262,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   AttendanceRoute: typeof AttendanceRoute
   LoginRoute: typeof LoginRoute
+  PrivacyRoute: typeof PrivacyRoute
   SettingsRoute: typeof SettingsRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   TeachersNewRoute: typeof TeachersNewRoute
@@ -273,6 +286,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -402,6 +422,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   AttendanceRoute: AttendanceRoute,
   LoginRoute: LoginRoute,
+  PrivacyRoute: PrivacyRoute,
   SettingsRoute: SettingsRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   TeachersNewRoute: TeachersNewRoute,

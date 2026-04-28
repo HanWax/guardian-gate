@@ -14,19 +14,20 @@ const unauthorized = 'אין לך הרשאה לבצע פעולה זו'
 
 const tokenSchema = z.object({ accessToken: z.string().min(1) })
 
-async function ensureTeacherInNursery(
+async function ensureTeachersInNursery(
   supabase: ReturnType<typeof createServiceClient>,
-  teacherId: string,
+  teacherIds: string[],
   nurseryId: string,
 ) {
-  const { data: teacher, error } = await supabase
+  const { data: teachers, error } = await supabase
     .from('teachers')
     .select('id')
-    .eq('id', teacherId)
+    .in('id', teacherIds)
     .eq('nursery_id', nurseryId)
-    .maybeSingle()
 
-  if (error || !teacher) throw new Error(unauthorized)
+  if (error || !teachers || teachers.length !== teacherIds.length) {
+    throw new Error(unauthorized)
+  }
 }
 
 async function ensureParentsAssignableToNursery(
@@ -93,26 +94,38 @@ export const createChild = createServerFn({ method: 'POST' })
   .handler(async ({ data }) => {
     const { nurseryId } = await requireAdminRole(data.accessToken)
     const supabase = createServiceClient()
-    await ensureTeacherInNursery(supabase, data.child.teacher_id, nurseryId)
+    await ensureTeachersInNursery(supabase, data.child.teacher_ids, nurseryId)
     await ensureParentsAssignableToNursery(supabase, data.child.parent_ids, nurseryId)
 
-    const { data: childId, error: rpcError } = await supabase.rpc('create_child_with_parents', {
-      p_name: data.child.name,
-      p_nursery_id: nurseryId,
-      p_parent_ids: data.child.parent_ids,
-      p_teacher_id: data.child.teacher_id,
-    })
-
-    if (rpcError) throw new Error(err.create_failed)
-
-    const { data: child, error } = await supabase
+    const { data: child, error: insertError } = await supabase
       .from('children')
-      .select('*')
-      .eq('id', childId)
-      .eq('nursery_id', nurseryId)
+      .insert({
+        nursery_id: nurseryId,
+        name: data.child.name,
+      })
+      .select()
       .single()
 
-    if (error || !child) throw new Error(err.create_failed)
+    if (insertError || !child) throw new Error(err.create_failed)
+
+    const { error: parentsError } = await supabase
+      .from('children_parents')
+      .insert(data.child.parent_ids.map(parent_id => ({
+        child_id: child.id,
+        parent_id,
+      })))
+
+    if (parentsError) throw new Error(err.create_failed)
+
+    const { error: teachersError } = await supabase
+      .from('children_teachers')
+      .insert(data.child.teacher_ids.map(teacher_id => ({
+        child_id: child.id,
+        teacher_id,
+      })))
+
+    if (teachersError) throw new Error(err.create_failed)
+
     return child
   })
 
@@ -121,16 +134,34 @@ export const updateChild = createServerFn({ method: 'POST' })
   .handler(async ({ data }) => {
     const { nurseryId } = await requireAdminRole(data.accessToken)
     const supabase = createServiceClient()
-    await ensureTeacherInNursery(supabase, data.child.teacher_id, nurseryId)
-    const { data: child, error } = await supabase
+    await ensureTeachersInNursery(supabase, data.child.teacher_ids, nurseryId)
+
+    const { data: child, error: updateError } = await supabase
       .from('children')
-      .update({ name: data.child.name, teacher_id: data.child.teacher_id })
+      .update({ name: data.child.name })
       .eq('id', data.id)
       .eq('nursery_id', nurseryId)
       .select()
       .single()
-    if (error) throw new Error(err.update_failed)
-    if (!child) throw new Error(err.not_found)
+
+    if (updateError || !child) throw new Error(err.update_failed)
+
+    const { error: deleteError } = await supabase
+      .from('children_teachers')
+      .delete()
+      .eq('child_id', data.id)
+
+    if (deleteError) throw new Error(err.update_failed)
+
+    const { error: insertError } = await supabase
+      .from('children_teachers')
+      .insert(data.child.teacher_ids.map(teacher_id => ({
+        child_id: data.id,
+        teacher_id,
+      })))
+
+    if (insertError) throw new Error(err.update_failed)
+
     return child
   })
 

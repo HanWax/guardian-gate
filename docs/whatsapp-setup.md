@@ -98,7 +98,7 @@ Message templates must be approved by Meta before use:
 שלך, צוות הגן 🌟
 ```
 
-### 6. Set Up Webhook (for receiving messages)
+### 6. Set Up Webhook (for receiving messages)api
 
 1. In WhatsApp Product page, go to **Configuration**
 2. Under **Webhook**, click **Edit**

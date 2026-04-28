@@ -8,20 +8,21 @@ type Teacher = Database['public']['Tables']['teachers']['Row']
 
 interface ChildFormProps {
   initialData?: Child
-  onSubmit: (data: { name: string; parent_ids?: string[]; teacher_id: string }) => void
+  onSubmit: (data: { name: string; parent_ids?: string[]; teacher_ids: string[] }) => void
   isPending: boolean
   serverError?: string | null
   availableParents?: Parent[]
   isLoadingParents?: boolean
   availableTeachers?: Teacher[]
   isLoadingTeachers?: boolean
+  initialTeacherIds?: string[]
 }
 
-export function ChildForm({ initialData, onSubmit, isPending, serverError, availableParents, isLoadingParents, availableTeachers, isLoadingTeachers }: ChildFormProps) {
+export function ChildForm({ initialData, onSubmit, isPending, serverError, availableParents, isLoadingParents, availableTeachers, isLoadingTeachers, initialTeacherIds }: ChildFormProps) {
   const isCreateMode = !initialData
 
   const [name, setName] = useState(initialData?.name ?? '')
-  const [teacherId, setTeacherId] = useState<string>(initialData?.teacher_id ?? '')
+  const [selectedTeacherIds, setSelectedTeacherIds] = useState<string[]>(initialTeacherIds ?? [])
   const [selectedParentIds, setSelectedParentIds] = useState<string[]>([])
   const [parentSearch, setParentSearch] = useState('')
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -39,11 +40,16 @@ export function ChildForm({ initialData, onSubmit, isPending, serverError, avail
       .filter((p) => p.name.toLowerCase().includes(term) || p.phone.toLowerCase().includes(term))
   }, [availableParents, parentSearch, selectedParentIds])
 
+  const selectedTeachers = useMemo(() => {
+    if (!availableTeachers) return []
+    return availableTeachers.filter((t) => selectedTeacherIds.includes(t.id))
+  }, [availableTeachers, selectedTeacherIds])
+
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setErrors({})
 
-    const payload = { name, teacher_id: teacherId, ...(isCreateMode ? { parent_ids: selectedParentIds } : {}) }
+    const payload = { name, teacher_ids: selectedTeacherIds, ...(isCreateMode ? { parent_ids: selectedParentIds } : {}) }
 
     const schema = initialData ? childUpdateSchema : childCreateSchema
     const result = schema.safeParse(payload)
@@ -73,7 +79,7 @@ export function ChildForm({ initialData, onSubmit, isPending, serverError, avail
           שם הילד/ה
         </label>
         <input id="child-name" type="text" value={name}
-          onChange={(e) => { setName(e.target.value); setErrors((prev) => { const { name: _, ...rest } = prev; return rest }) }}
+          onChange={(e) => { setName(e.target.value); setErrors((prev) => { const { name, ...rest } = prev; return rest }) }}
           disabled={isPending} placeholder="הזינו שם"
           className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
             errors.name ? 'border-red-500' : 'border-gray-300'
@@ -82,26 +88,60 @@ export function ChildForm({ initialData, onSubmit, isPending, serverError, avail
       </div>
 
       <div>
-        <label htmlFor="teacher-id" className="block text-sm font-medium text-gray-700">
-          {"מורה אחראית"}
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          {"מורות"}
         </label>
-        <select
-          id="teacher-id"
-          value={teacherId}
-          onChange={(e) => { setTeacherId(e.target.value); setErrors((prev) => { const { teacher_id: _, ...rest } = prev; return rest }) }}
-          disabled={isPending || isLoadingTeachers}
-          className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
-            errors.teacher_id ? 'border-red-500' : 'border-gray-300'
-          }`}
-        >
-          <option value="">{"בחר מורה..."}</option>
-          {availableTeachers?.map((teacher) => (
-            <option key={teacher.id} value={teacher.id}>
-              {teacher.name}
-            </option>
-          ))}
-        </select>
-        {errors.teacher_id && <p className="mt-2 text-sm text-red-600" role="alert">{errors.teacher_id}</p>}
+
+        {/* Selected teachers as chips */}
+        {selectedTeachers.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-3">
+            {selectedTeachers.map((teacher) => (
+              <span key={teacher.id} className="inline-flex items-center gap-1 bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">
+                {teacher.name}
+                <button
+                  type="button"
+                  onClick={() => setSelectedTeacherIds((ids) => ids.filter((id) => id !== teacher.id))}
+                  className="text-green-600 hover:text-green-900 font-bold"
+                  aria-label={`הסר ${teacher.name}`}
+                >
+                  {"×"}
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Teachers as checkboxes */}
+        <div className={`border rounded-md p-3 space-y-2 ${
+          errors.teacher_ids ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-white'
+        }`}>
+          {isLoadingTeachers ? (
+            <p className="text-sm text-gray-500">{"טוען מורות..."}</p>
+          ) : availableTeachers && availableTeachers.length > 0 ? (
+            availableTeachers.map((teacher) => (
+              <label key={teacher.id} className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={selectedTeacherIds.includes(teacher.id)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSelectedTeacherIds((ids) => [...ids, teacher.id])
+                    } else {
+                      setSelectedTeacherIds((ids) => ids.filter((id) => id !== teacher.id))
+                    }
+                    setErrors((prev) => { const { teacher_ids, ...rest } = prev; return rest })
+                  }}
+                  disabled={isPending || isLoadingTeachers}
+                  className="rounded"
+                />
+                <span className="text-sm">{teacher.name}</span>
+              </label>
+            ))
+          ) : (
+            <p className="text-sm text-gray-500">{"אין מורות זמינות"}</p>
+          )}
+        </div>
+        {errors.teacher_ids && <p className="mt-2 text-sm text-red-600" role="alert">{errors.teacher_ids}</p>}
       </div>
 
       {isCreateMode && (
@@ -151,7 +191,7 @@ export function ChildForm({ initialData, onSubmit, isPending, serverError, avail
                     onClick={() => {
                       setSelectedParentIds((ids) => [...ids, parent.id])
                       setParentSearch('')
-                      setErrors((prev) => { const { parent_ids: _, ...rest } = prev; return rest })
+                      setErrors((prev) => { const { parent_ids, ...rest } = prev; return rest })
                     }}
                     className="w-full text-start px-4 py-2 hover:bg-gray-50 flex flex-col"
                   >

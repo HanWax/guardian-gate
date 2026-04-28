@@ -2,7 +2,7 @@ import { z } from 'zod'
 
 export const childSchema = z.object({
   name: z.string().min(2, 'שם חייב להכיל לפחות 2 תווים'),
-  teacher_id: z.string().uuid('יש לבחור מורה'),
+  teacher_ids: z.array(z.string().uuid()).min(1, 'יש לבחור לפחות מורה אחת'),
 })
 
 export const childCreateSchema = childSchema.extend({
