@@ -20,8 +20,6 @@ function deriveActionTaken(record: {
   inconsistency?: boolean | null
   inconsistency_type?: string | null
   nine_am_alert_sent?: boolean | null
-  second_ping_sent_at?: string | null
-  message_sent_at?: string | null
 }): string {
   if (record.inconsistency) {
     const typeLabels: Record<string, string> = {
@@ -31,9 +29,7 @@ function deriveActionTaken(record: {
     return typeLabels[record.inconsistency_type ?? ''] ?? 'חריגה זוהתה'
   }
   if (record.nine_am_alert_sent) return 'התראת 9:00 נשלחה'
-  if (record.second_ping_sent_at) return 'תזכורת נשלחה'
-  if (record.message_sent_at) return 'הודעה נשלחה'
-  return 'ממתין לשליחת הודעה'
+  return 'ממתין לתגובה'
 }
 
 export const getMissingChildren = createServerFn({ method: 'POST' })
@@ -49,7 +45,7 @@ export const getMissingChildren = createServerFn({ method: 'POST' })
       .select(`
         id, child_id, parent_response, teacher_confirmed,
         inconsistency, inconsistency_type, inconsistency_resolved,
-        nine_am_alert_sent, second_ping_sent_at, message_sent_at,
+        nine_am_alert_sent, created_at,
         children!inner(id, name, nursery_id, children_parents(parents(id, name, phone)))
       `)
       .eq('date', data.date)

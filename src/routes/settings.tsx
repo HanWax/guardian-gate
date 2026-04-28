@@ -21,7 +21,6 @@ const TIME_FIELDS = [
   { key: 'dropoff_end' as const, label: 'שעת סיום הגעה' },
   { key: 'first_message_time' as const, label: 'שעת הודעה ראשונה' },
   { key: 'second_ping_time' as const, label: 'שעת תזכורת שנייה' },
-  { key: 'nine_am_check_time' as const, label: 'שעת בדיקת נוכחות' },
 ];
 
 function SettingsPage() {
@@ -90,7 +89,6 @@ function SettingsPage() {
                 dropoff_end: settings.dropoff_end ?? '',
                 first_message_time: settings.first_message_time ?? '',
                 second_ping_time: settings.second_ping_time ?? '',
-                nine_am_check_time: settings.nine_am_check_time ?? '09:00',
                 timezone: settings.timezone ?? 'Asia/Jerusalem',
               } : undefined}
               onSubmit={(data) => {
@@ -126,7 +124,6 @@ function NurserySettingsForm({ initialData, onSubmit, isPending, serverError }: 
     dropoff_end: '',
     first_message_time: '',
     second_ping_time: '',
-    nine_am_check_time: '09:00',
     timezone: 'Asia/Jerusalem',
   });
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});

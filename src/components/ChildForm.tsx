@@ -79,7 +79,7 @@ export function ChildForm({ initialData, onSubmit, isPending, serverError, avail
           שם הילד/ה
         </label>
         <input id="child-name" type="text" value={name}
-          onChange={(e) => { setName(e.target.value); setErrors((prev) => { const { name, ...rest } = prev; return rest }) }}
+          onChange={(e) => { setName(e.target.value); setErrors((prev) => Object.fromEntries(Object.entries(prev).filter(([k]) => k !== 'name'))) }}
           disabled={isPending} placeholder="הזינו שם"
           className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
             errors.name ? 'border-red-500' : 'border-gray-300'
@@ -129,7 +129,7 @@ export function ChildForm({ initialData, onSubmit, isPending, serverError, avail
                     } else {
                       setSelectedTeacherIds((ids) => ids.filter((id) => id !== teacher.id))
                     }
-                    setErrors((prev) => { const { teacher_ids, ...rest } = prev; return rest })
+                    setErrors((prev) => Object.fromEntries(Object.entries(prev).filter(([k]) => k !== 'teacher_ids')))
                   }}
                   disabled={isPending || isLoadingTeachers}
                   className="rounded"
@@ -191,7 +191,7 @@ export function ChildForm({ initialData, onSubmit, isPending, serverError, avail
                     onClick={() => {
                       setSelectedParentIds((ids) => [...ids, parent.id])
                       setParentSearch('')
-                      setErrors((prev) => { const { parent_ids, ...rest } = prev; return rest })
+                      setErrors((prev) => Object.fromEntries(Object.entries(prev).filter(([k]) => k !== 'parent_ids')))
                     }}
                     className="w-full text-start px-4 py-2 hover:bg-gray-50 flex flex-col"
                   >

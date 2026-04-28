@@ -48,7 +48,7 @@ export const getNurserySettings = createServerFn({ method: 'POST' })
     const supabase = createServiceClient()
     const { data: nursery, error } = await supabase
       .from('nurseries')
-      .select('id, name, dropoff_start, dropoff_end, first_message_time, second_ping_time, nine_am_check_time, timezone')
+      .select('id, name, dropoff_start, dropoff_end, first_message_time, second_ping_time, timezone')
       .eq('id', nurseryId)
       .single()
     if (error) throw new Error(err.fetch_failed)

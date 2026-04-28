@@ -6,7 +6,6 @@ const validData = {
   dropoff_end: '09:00',
   first_message_time: '12:00',
   second_ping_time: '14:30',
-  nine_am_check_time: '09:00',
   timezone: 'Asia/Jerusalem',
 };
 
@@ -31,16 +30,13 @@ describe('updateNurserySettingsSchema', () => {
     expect(() => updateNurserySettingsSchema.parse({ ...validData, second_ping_time: '25:30' })).toThrow('פורמט שעה לא תקין');
   });
 
-  it('rejects invalid nine_am_check_time format', () => {
-    expect(() => updateNurserySettingsSchema.parse({ ...validData, nine_am_check_time: '9am' })).toThrow('פורמט שעה לא תקין');
-  });
-
   it('rejects empty timezone', () => {
     expect(() => updateNurserySettingsSchema.parse({ ...validData, timezone: '' })).toThrow('אזור זמן הוא שדה חובה');
   });
 
   it('rejects missing timezone', () => {
-    const { timezone: _, ...noTz } = validData;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { timezone, ...noTz } = validData;
     expect(() => updateNurserySettingsSchema.parse(noTz)).toThrow();
   });
 
@@ -52,7 +48,6 @@ describe('updateNurserySettingsSchema', () => {
         dropoff_end: time,
         first_message_time: time,
         second_ping_time: time,
-        nine_am_check_time: time,
         timezone: 'Asia/Jerusalem',
       };
       expect(() => updateNurserySettingsSchema.parse(data)).not.toThrow();

@@ -127,6 +127,7 @@ CREATE INDEX idx_daily_attendance_date ON daily_attendance(date);
 CREATE TABLE conversation_state (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   parent_id UUID NOT NULL REFERENCES parents(id) ON DELETE CASCADE,
+  attendance_id UUID REFERENCES daily_attendance(id) ON DELETE SET NULL,
   current_child_index INTEGER DEFAULT 0,
   state TEXT,
   verification_attempts INTEGER DEFAULT 0,
@@ -134,6 +135,22 @@ CREATE TABLE conversation_state (
 );
 
 CREATE INDEX idx_conversation_state_parent_id ON conversation_state(parent_id);
+
+-- Tracks morning message run state (prevents duplicate sends per nursery per day)
+CREATE TABLE morning_message_runs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  nursery_id UUID NOT NULL REFERENCES nurseries(id) ON DELETE CASCADE,
+  run_date DATE NOT NULL,
+  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'completed', 'failed')),
+  messages_sent INTEGER DEFAULT 0,
+  messages_failed INTEGER DEFAULT 0,
+  error_details TEXT,
+  completed_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (nursery_id, run_date)
+);
+
+CREATE INDEX idx_morning_message_runs_nursery_id ON morning_message_runs(nursery_id);
 
 -- ============================================================================
 -- Row Level Security

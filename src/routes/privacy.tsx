@@ -14,7 +14,7 @@ function PrivacyPolicy() {
         <section className="mb-8">
           <h2 className="text-2xl font-bold mb-4">1. סקירה כללית</h2>
           <p className="text-gray-700 leading-relaxed">
-            GuardianGate (להלן: "האפליקציה") היא מערכת בטיחות לילדים עבור גנים ילדים בישראל.
+            GuardianGate (להלן: {"\""} האפליקציה{"\""}) היא מערכת בטיחות לילדים עבור גנים ילדים בישראל.
             אנו מתחייבים להגן על הפרטיות של משתמשים שלנו ולעמוד בתקנות הגנת הנתונים החלות.
           </p>
         </section>
@@ -23,7 +23,7 @@ function PrivacyPolicy() {
           <h2 className="text-2xl font-bold mb-4">2. נתונים שאנו אוספים</h2>
           <p className="text-gray-700 mb-4">אנו אוספים את הנתונים הבאים:</p>
           <ul className="list-disc list-inside text-gray-700 space-y-2">
-            <li>מידע חשבון: שם, דוא"ל, מספר טלפון</li>
+            <li>מידע חשבון: שם, דוא{"\""} ל, מספר טלפון</li>
             <li>מידע ילד: שם, גיל, מזהה ייחודי</li>
             <li>מידע הגעה: זמנים, ימים, סטטוסים</li>
             <li>תקשורת: הודעות דרך WhatsApp (שנשמרות בדטאבייס)</li>
@@ -85,7 +85,7 @@ function PrivacyPolicy() {
           <p className="text-gray-700">
             לשאלות בנוגע למדיניות פרטיות זו, אנא צור קשר:
             <br />
-            דוא"ל: privacy@guardiangate.local
+            דוא{"\""} ל: privacy@guardiangate.local
           </p>
         </section>
 

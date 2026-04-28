@@ -12,9 +12,9 @@ export interface ConversationRecord {
   id: string
   parent_id: string
   state: ConversationState
-  attendance_id: string | null
   verification_attempts: number
   current_child_index: number
+  attendance_id?: string
 }
 
 export async function getConversationState(
@@ -23,7 +23,7 @@ export async function getConversationState(
   const supabase = createServiceClient()
   const { data, error } = await supabase
     .from('conversation_state')
-    .select('id, parent_id, state, attendance_id, verification_attempts, current_child_index')
+    .select('id, parent_id, state, verification_attempts, current_child_index, attendance_id')
     .eq('parent_id', parentId)
     .single()
 
@@ -33,16 +33,16 @@ export async function getConversationState(
     id: data.id,
     parent_id: data.parent_id,
     state: (data.state ?? 'idle') as ConversationState,
-    attendance_id: data.attendance_id ?? null,
     verification_attempts: data.verification_attempts ?? 0,
     current_child_index: data.current_child_index ?? 0,
+    attendance_id: data.attendance_id ?? undefined,
   }
 }
 
 export async function setConversationState(
   parentId: string,
   state: ConversationState,
-  attendanceId?: string | null
+  attendanceId?: string
 ): Promise<void> {
   const supabase = createServiceClient()
 
@@ -52,9 +52,9 @@ export async function setConversationState(
       {
         parent_id: parentId,
         state,
+        attendance_id: attendanceId,
         updated_at: new Date().toISOString(),
         verification_attempts: 0,
-        attendance_id: attendanceId ?? null,
       },
       { onConflict: 'parent_id' }
     )
@@ -90,7 +90,6 @@ export async function resetConversationState(
       {
         parent_id: parentId,
         state: 'idle',
-        attendance_id: null,
         verification_attempts: 0,
         updated_at: new Date().toISOString(),
       },

@@ -34,7 +34,7 @@ export async function runNineAmCheck(toleranceMinutes = 5): Promise<{
 
   const { data: nurseries } = await supabase
     .from('nurseries')
-    .select('id, name, timezone, nine_am_check_time')
+    .select('id, name, timezone, second_ping_time')
   if (!nurseries?.length) return { nurseriesProcessed, summariesSent, alertsSent }
 
   for (const nursery of nurseries) {
@@ -42,7 +42,7 @@ export async function runNineAmCheck(toleranceMinutes = 5): Promise<{
     const currentTime = getCurrentTimeInTimezone(tz)
     const today = getTodayInTimezone(tz)
 
-    if (!isWithinTolerance(currentTime, nursery.nine_am_check_time, toleranceMinutes)) {
+    if (!isWithinTolerance(currentTime, nursery.second_ping_time, toleranceMinutes)) {
       continue
     }
 

@@ -126,11 +126,7 @@ export async function sendMorningMessagesForNursery(
     const childName = childNameMap.get(record.child_id) ?? ''
 
     if (!parents?.length) {
-      // No parents linked — mark as sent to avoid retrying
-      await supabase
-        .from('daily_attendance')
-        .update({ message_sent_at: new Date().toISOString() })
-        .eq('id', record.id)
+      // No parents linked — skip this child
       continue
     }
 
@@ -156,10 +152,6 @@ export async function sendMorningMessagesForNursery(
     }
 
     if (anySendSucceeded) {
-      await supabase
-        .from('daily_attendance')
-        .update({ message_sent_at: new Date().toISOString() })
-        .eq('id', record.id)
       sent++
     } else {
       failed++

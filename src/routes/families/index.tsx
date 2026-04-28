@@ -159,8 +159,7 @@ function FamiliesList() {
                       {(() => {
                         const teacherNames = [...new Set(
                           family.children
-                            .map((c) => c.teacher_name)
-                            .filter((n): n is string => n !== null)
+                            .flatMap((c) => c.teacher_names ?? [])
                         )]
                         return teacherNames.length > 0
                           ? teacherNames.join(', ')
