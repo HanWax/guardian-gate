@@ -699,7 +699,10 @@ async function flagInconsistency(
 export async function handleIncomingMessage(
   payload: WhatsAppWebhookPayload
 ): Promise<{ success: boolean }> {
+  console.log('[Webhook] Received payload:', JSON.stringify(payload).slice(0, 500));
+
   const parsed = parseIncomingMessage(payload);
+  console.log('[Webhook] Parsed result:', parsed);
 
   if (!parsed.success) {
     return { success: false };
