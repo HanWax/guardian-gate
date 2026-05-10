@@ -1,7 +1,7 @@
 /**
  * Cron endpoint for sending morning check-in WhatsApp messages.
  *
- * POST /api/cron/morning-messages
+ * GET /api/cron/morning-messages
  * Auth: Bearer token matching CRON_SECRET env var.
  * Designed to be called every ~5 minutes during morning hours.
  */
@@ -11,7 +11,7 @@ import { runMorningMessages } from '~/lib/server/morning-messages'
 export const Route = createFileRoute('/api/cron/morning-messages')({
   server: {
     handlers: {
-      POST: async ({ request }) => {
+      GET: async ({ request }) => {
         const cronSecret = process.env.CRON_SECRET
         if (!cronSecret) {
           return new Response('CRON_SECRET not configured', {

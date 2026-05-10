@@ -1,7 +1,7 @@
 /**
  * Cron endpoint for sending second-ping reminder WhatsApp messages.
  *
- * POST /api/cron/second-ping
+ * GET /api/cron/second-ping
  * Auth: Bearer token matching CRON_SECRET env var.
  */
 import { createFileRoute } from '@tanstack/react-router'
@@ -10,7 +10,7 @@ import { runSecondPing } from '~/lib/server/second-ping'
 export const Route = createFileRoute('/api/cron/second-ping')({
   server: {
     handlers: {
-      POST: async ({ request }) => {
+      GET: async ({ request }) => {
         const cronSecret = process.env.CRON_SECRET
         if (!cronSecret) {
           return new Response('CRON_SECRET not configured', {

@@ -1,13 +1,13 @@
 /**
- * Cron endpoint for 9am teacher summary + unconfirmed arrival alerts.
+ * Cron endpoint for 9:30am teacher follow-up.
  *
- * GET /api/cron/nine-am-check
+ * GET /api/cron/teacher-followup
  * Auth: Bearer token matching CRON_SECRET env var.
  */
 import { createFileRoute } from '@tanstack/react-router'
-import { runNineAmCheck } from '~/lib/server/nine-am-check'
+import { runTeacherFollowup } from '~/lib/server/teacher-followup'
 
-export const Route = createFileRoute('/api/cron/nine-am-check')({
+export const Route = createFileRoute('/api/cron/teacher-followup')({
   server: {
     handlers: {
       GET: async ({ request }) => {
@@ -28,13 +28,13 @@ export const Route = createFileRoute('/api/cron/nine-am-check')({
         }
 
         try {
-          const result = await runNineAmCheck()
+          const result = await runTeacherFollowup()
           return new Response(JSON.stringify(result), {
             status: 200,
             headers: { 'Content-Type': 'application/json' },
           })
         } catch (err) {
-          console.error('[Cron 9am Check] Error:', err)
+          console.error('[Cron Teacher Follow-up] Error:', err)
           return new Response(
             JSON.stringify({
               error: err instanceof Error ? err.message : 'Unknown error',
