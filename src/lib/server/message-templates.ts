@@ -3,6 +3,9 @@
  *
  * All user-facing strings are Hebrew. Button titles must be ≤ 20 chars.
  * Button IDs encode the action + attendance record UUID for stateless routing.
+ *
+ * For WASenderAPI polls, IDs are embedded in the poll option text using "::" as a separator.
+ * Format: "id::visual_title"
  */
 
 // ---------------------------------------------------------------------------
@@ -28,6 +31,25 @@ export const EXPLAIN_SKIP_REGEX = /^explain_skip_([0-9a-f-]{36})$/
 /** ninealert_(inclass|withme|other)_{uuid} */
 export const NINE_AM_ALERT_REGEX =
   /^ninealert_(inclass|withme|other)_([0-9a-f-]{36})$/
+
+// ---------------------------------------------------------------------------
+// Helper: encode/decode IDs for WASenderAPI polls
+// ---------------------------------------------------------------------------
+
+/** Encode button ID into poll option text: "id::visual_title" */
+export function encodeButtonId(id: string, title: string): string {
+  return `${id}::${title}`;
+}
+
+/** Extract button ID from poll option text (returns undefined if no match) */
+export function decodeButtonId(optionText: string): string | undefined {
+  const match = optionText.match(/^([^:]+::[^:].+?)$/);
+  if (match && match[1].includes('::')) {
+    const [id] = match[1].split('::');
+    return id;
+  }
+  return undefined;
+}
 
 // ---------------------------------------------------------------------------
 // Message builders

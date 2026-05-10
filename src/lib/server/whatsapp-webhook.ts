@@ -1,10 +1,9 @@
 /**
- * WhatsApp webhook handlers for verification and message receiving.
+ * WhatsApp webhook handlers for message receiving.
  *
- * @see https://developers.facebook.com/docs/graph-api/webhooks/getting-started
+ * @see https://wasenderapi.com/api-docs/getting-started/how-to-receive-messages-and-media-from-wasenderapi
  */
 
-import crypto from 'crypto';
 import { createServiceClient } from './auth';
 import {
   getConversationState,
@@ -36,123 +35,29 @@ import {
 } from './whatsapp';
 
 /**
- * Result of webhook verification.
- */
-export interface WebhookVerificationResult {
-  success: boolean;
-  challenge?: string;
-  error?: string;
-}
-
-/**
- * WhatsApp webhook payload structure from Meta.
+ * WhatsApp webhook payload structure from WASenderAPI.
  */
 export interface WhatsAppWebhookPayload {
-  object?: string;
-  entry?: Array<{
-    id?: string;
-    changes?: Array<{
-      value?: {
-        messaging_product?: string;
-        metadata?: {
-          display_phone_number?: string;
-          phone_number_id?: string;
-        };
-        messages?: Array<{
-          from?: string;
-          id?: string;
-          timestamp?: string;
-          type?: string;
-          text?: {
-            body?: string;
-          };
-          image?: Record<string, unknown>;
-          [key: string]: unknown;
-        }>;
-      };
-      field?: string;
-    }>;
-  }>;
-}
-
-/**
- * Verifies WhatsApp webhook GET request from Meta.
- *
- * Meta sends a GET request with query parameters to verify webhook ownership.
- * This function validates the verify token and returns the challenge if valid.
- *
- * @param params - Query parameters from the GET request
- * @param params['hub.mode'] - Should be 'subscribe'
- * @param params['hub.verify_token'] - Verify token to match against env var
- * @param params['hub.challenge'] - Challenge string to return if verification succeeds
- * @returns Verification result with challenge or error message
- *
- * @example
- * ```ts
- * const result = verifyWebhook({
- *   'hub.mode': 'subscribe',
- *   'hub.verify_token': 'my-verify-token',
- *   'hub.challenge': 'challenge-123'
- * });
- *
- * if (result.success) {
- *   return new Response(result.challenge, { status: 200 });
- * } else {
- *   return new Response(result.error, { status: 403 });
- * }
- * ```
- */
-export function verifyWebhook(params: {
-  'hub.mode'?: string;
-  'hub.verify_token'?: string;
-  'hub.challenge'?: string;
-}): WebhookVerificationResult {
-  const verifyToken = process.env.WHATSAPP_VERIFY_TOKEN;
-
-  if (!verifyToken) {
-    return {
-      success: false,
-      error: 'WHATSAPP_VERIFY_TOKEN environment variable is not set',
+  event?: string;
+  timestamp?: number;
+  data?: {
+    key?: {
+      remoteJid?: string;
+      fromMe?: boolean;
+      id?: string;
     };
-  }
-
-  const mode = params['hub.mode'];
-  const token = params['hub.verify_token'];
-  const challenge = params['hub.challenge'];
-
-  if (!token) {
-    return {
-      success: false,
-      error: 'Missing hub.verify_token',
+    messageBody?: string;
+    cleanedSenderPn?: string;
+    cleanedParticipantPn?: string;
+    message?: Record<string, unknown>;
+    pollResult?: {
+      name?: string;
+      voters?: Record<string, unknown>;
     };
-  }
-
-  if (!challenge) {
-    return {
-      success: false,
-      error: 'Missing hub.challenge',
-    };
-  }
-
-  if (mode !== 'subscribe') {
-    return {
-      success: false,
-      error: 'Invalid hub.mode',
-    };
-  }
-
-  if (token !== verifyToken) {
-    return {
-      success: false,
-      error: 'Invalid verify token',
-    };
-  }
-
-  return {
-    success: true,
-    challenge,
+    [key: string]: unknown;
   };
 }
+
 
 /**
  * Result of parsing an incoming WhatsApp message.
@@ -171,12 +76,12 @@ export interface MessageParseResult {
 }
 
 /**
- * Parses incoming WhatsApp message payload from Meta webhook POST.
+ * Parses incoming WhatsApp message payload from WASenderAPI webhook POST.
  *
  * Extracts sender phone number, message text, timestamp, and message ID
- * from the nested webhook payload structure.
+ * from the WASenderAPI webhook payload structure.
  *
- * @param payload - Webhook POST payload from Meta
+ * @param payload - Webhook POST payload from WASenderAPI
  * @returns Parsed message data or success: true with no data if no messages
  *
  * @example
@@ -191,48 +96,42 @@ export function parseIncomingMessage(
   payload: WhatsAppWebhookPayload
 ): MessageParseResult {
   try {
-    const entry = payload?.entry?.[0];
-    const changes = entry?.changes?.[0];
-    const value = changes?.value;
-    const messages = value?.messages;
-
-    if (!messages || messages.length === 0) {
+    // WASenderAPI only sends messages.upsert events we care about
+    if (payload?.event !== 'messages.upsert') {
       return { success: true };
     }
 
-    const message = messages[0];
-    const sender = message.from;
-    const messageId = message.id;
-    const timestamp = message.timestamp;
-    const messageType = message.type;
+    const data = payload?.data;
+    if (!data) {
+      return { success: true };
+    }
 
-    let messageText: string | undefined;
+    // Get sender phone - WASenderAPI provides cleanedSenderPn for private chats
+    const sender = data.cleanedSenderPn || data.cleanedParticipantPn;
+    if (!sender) {
+      return { success: true };
+    }
+
+    const messageId = data.key?.id;
+    const timestamp = payload.timestamp?.toString();
+    const messageText = data.messageBody;
+
     let buttonReplyId: string | undefined;
     let buttonReplyTitle: string | undefined;
 
-    if (messageType === 'text' && message.text?.body) {
-      messageText = message.text.body;
-    }
-
-    // Interactive button reply (from sendInteractiveButtonMessage)
-    if (messageType === 'interactive') {
-      const interactive = message.interactive as
-        | { type?: string; button_reply?: { id?: string; title?: string } }
-        | undefined;
-      if (interactive?.type === 'button_reply' && interactive.button_reply) {
-        buttonReplyId = interactive.button_reply.id;
-        buttonReplyTitle = interactive.button_reply.title;
-      }
-    }
-
-    // Template quick reply button (from sendTemplateMessage with buttons)
-    if (messageType === 'button') {
-      const button = message.button as
-        | { text?: string; payload?: string }
-        | undefined;
-      if (button) {
-        buttonReplyId = button.payload;
-        buttonReplyTitle = button.text;
+    // Poll responses (button-like interactions)
+    if (data.pollResult) {
+      // WASenderAPI polls: the selected option is in pollResult.name
+      // Format is "id::visual_title", extract the ID part
+      const optionText = data.pollResult.name;
+      if (optionText && optionText.includes('::')) {
+        const [id, ...titleParts] = optionText.split('::');
+        buttonReplyId = id;
+        buttonReplyTitle = titleParts.join('::');
+      } else if (optionText) {
+        // Fallback if format doesn't match
+        buttonReplyId = optionText;
+        buttonReplyTitle = optionText;
       }
     }
 
@@ -242,7 +141,7 @@ export function parseIncomingMessage(
       messageText,
       timestamp,
       messageId,
-      messageType,
+      messageType: data.pollResult ? 'poll_response' : 'text',
       buttonReplyId,
       buttonReplyTitle,
     };
@@ -260,60 +159,6 @@ function maskIdentifier(value: string | undefined): string | undefined {
   return `${'*'.repeat(normalized.length - 4)}${normalized.slice(-4)}`;
 }
 
-/**
- * Verifies webhook signature from Meta using HMAC SHA256.
- *
- * Meta signs webhook payloads with x-hub-signature-256 header.
- * This function validates that signature using WHATSAPP_API_TOKEN as secret.
- *
- * @param payload - Raw request body string
- * @param signature - Value of x-hub-signature-256 header
- * @returns true if signature is valid, false otherwise
- *
- * @example
- * ```ts
- * const isValid = verifyWebhookSignature(
- *   JSON.stringify(requestBody),
- *   request.headers.get('x-hub-signature-256')
- * );
- *
- * if (!isValid) {
- *   return new Response('Invalid signature', { status: 403 });
- * }
- * ```
- */
-export function verifyWebhookSignature(
-  payload: string,
-  signature: string
-): boolean {
-  // Meta signs webhook payloads with the App Secret, not the API token
-  const appSecret = process.env.WHATSAPP_APP_SECRET;
-
-  if (!appSecret) {
-    console.error('WHATSAPP_APP_SECRET not set, cannot verify signature');
-    return false;
-  }
-
-  if (!signature || !signature.startsWith('sha256=')) {
-    return false;
-  }
-
-  const signatureHash = signature.replace('sha256=', '');
-
-  const hmac = crypto.createHmac('sha256', appSecret);
-  hmac.update(payload);
-  const expectedHash = hmac.digest('hex');
-
-  // timingSafeEqual requires buffers of same length
-  const signatureBuffer = Buffer.from(signatureHash);
-  const expectedBuffer = Buffer.from(expectedHash);
-
-  if (signatureBuffer.length !== expectedBuffer.length) {
-    return false;
-  }
-
-  return crypto.timingSafeEqual(signatureBuffer, expectedBuffer);
-}
 
 // ---------------------------------------------------------------------------
 // Lookup helper

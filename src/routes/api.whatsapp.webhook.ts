@@ -1,64 +1,39 @@
 /**
  * WhatsApp webhook API route.
  *
- * Handles both GET (verification) and POST (message receiving) requests from Meta.
+ * Handles POST requests from WASenderAPI with incoming messages.
+ * Verifies webhook signature using X-Webhook-Signature header.
  * Endpoint: /api/whatsapp/webhook
  */
 import { createFileRoute } from '@tanstack/react-router'
-import {
-  verifyWebhook,
-  handleIncomingMessage,
-  verifyWebhookSignature,
-} from '~/lib/server/whatsapp-webhook'
+import { handleIncomingMessage } from '~/lib/server/whatsapp-webhook'
 
 export const Route = createFileRoute('/api/whatsapp/webhook')({
   server: {
     handlers: {
-      GET: async ({ request }) => {
-        const url = new URL(request.url)
-        const result = verifyWebhook({
-          'hub.mode': url.searchParams.get('hub.mode') ?? undefined,
-          'hub.verify_token':
-            url.searchParams.get('hub.verify_token') ?? undefined,
-          'hub.challenge': url.searchParams.get('hub.challenge') ?? undefined,
-        })
-
-        if (result.success && result.challenge) {
-          return new Response(result.challenge, {
-            status: 200,
-            headers: { 'Content-Type': 'text/plain' },
-          })
-        }
-
-        return new Response(
-          result.error ?? 'Webhook verification failed',
-          {
-            status: 403,
-            headers: { 'Content-Type': 'text/plain' },
-          },
-        )
-      },
       POST: async ({ request }) => {
-        const signature = request.headers.get('x-hub-signature-256')
+        // Verify WASenderAPI webhook signature
+        const signature = request.headers.get('x-webhook-signature');
+        const webhookSecret = process.env.WASENDER_WEBHOOK_SECRET;
 
-        if (!signature) {
-          return new Response('Missing signature', {
-            status: 403,
+        if (!webhookSecret) {
+          console.error('WASENDER_WEBHOOK_SECRET not configured');
+          return new Response('Webhook not configured', {
+            status: 500,
             headers: { 'Content-Type': 'text/plain' },
-          })
+          });
         }
 
-        const rawBody = await request.text()
-
-        const isValid = verifyWebhookSignature(rawBody, signature)
-        if (!isValid) {
+        if (!signature || signature !== webhookSecret) {
+          console.warn('Webhook request rejected: invalid or missing signature');
           return new Response('Invalid signature', {
             status: 403,
             headers: { 'Content-Type': 'text/plain' },
-          })
+          });
         }
 
-        const payload = JSON.parse(rawBody)
+        const payload = await request.json()
+
         const result = await handleIncomingMessage(payload)
 
         if (!result.success) {

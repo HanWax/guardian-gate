@@ -1,128 +1,37 @@
 /**
- * WhatsApp Cloud API client for sending messages via Meta Graph API.
+ * WhatsApp API client for sending messages via WASenderAPI.
  *
- * @see https://developers.facebook.com/docs/whatsapp/cloud-api/guides/send-messages
+ * @see https://wasenderapi.com/api-docs
  */
 
-const GRAPH_API_VERSION = 'v21.0';
-const GRAPH_API_BASE_URL = `https://graph.facebook.com/${GRAPH_API_VERSION}`;
+const API_BASE_URL = process.env.WASENDER_API_BASE_URL || 'https://api.wasenderapi.com';
 
 /**
- * Button definition for interactive button messages.
+ * Button definition for interactive button messages (polls).
+ * ID is encoded in poll option text using "::" separator for WASenderAPI.
  */
 export interface InteractiveButton {
-  /** Unique button identifier, max 256 chars (e.g., "btn_dropping_off") */
+  /** Unique button identifier (encoded in poll option for WASenderAPI) */
   id: string;
-  /** Button display text, max 20 chars (e.g., "✓ בדרך") */
+  /** Button display text */
   title: string;
 }
 
 /**
- * Component for template message parameters (e.g., dynamic text replacements).
- */
-export interface TemplateComponent {
-  type: string;
-  parameters?: Array<{ type: string; text: string }>;
-}
-
-/**
- * Response from WhatsApp Cloud API when sending a message.
+ * Response from WASenderAPI when sending a message.
  */
 export interface WhatsAppMessageResponse {
-  messaging_product: string;
-  contacts?: Array<{ input: string; wa_id: string }>;
-  messages?: Array<{ id: string }>;
+  success: boolean;
+  data?: {
+    msgId: number;
+    jid: string;
+    status: string;
+  };
+  error?: string;
 }
 
 /**
- * Sends a WhatsApp template message to a phone number.
- *
- * Template messages must be pre-approved in Meta Business Manager before use.
- *
- * @param to - Recipient phone number in international format (e.g., "972501234567")
- * @param templateName - Name of the approved message template
- * @param languageCode - Language code for the template (e.g., "he" for Hebrew)
- * @param components - Optional template components for dynamic parameters
- * @returns Promise resolving to the API response
- * @throws Error if environment variables are not set or API request fails
- *
- * @example
- * ```ts
- * await sendTemplateMessage('972501234567', 'hello_world', 'he');
- * ```
- *
- * @example With components
- * ```ts
- * await sendTemplateMessage('972501234567', 'greeting', 'he', [
- *   {
- *     type: 'body',
- *     parameters: [{ type: 'text', text: 'שרה' }]
- *   }
- * ]);
- * ```
- */
-export async function sendTemplateMessage(
-  to: string,
-  templateName: string,
-  languageCode: string,
-  components?: TemplateComponent[]
-): Promise<WhatsAppMessageResponse> {
-  const apiToken = process.env.WHATSAPP_API_TOKEN;
-  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
-
-  if (!apiToken) {
-    throw new Error('WHATSAPP_API_TOKEN environment variable is not set');
-  }
-
-  if (!phoneNumberId) {
-    throw new Error('WHATSAPP_PHONE_NUMBER_ID environment variable is not set');
-  }
-
-  const url = `${GRAPH_API_BASE_URL}/${phoneNumberId}/messages`;
-
-  const templatePayload: {
-    name: string;
-    language: { code: string };
-    components?: TemplateComponent[];
-  } = {
-    name: templateName,
-    language: {
-      code: languageCode,
-    },
-  };
-
-  if (components) {
-    templatePayload.components = components;
-  }
-
-  const body = {
-    messaging_product: 'whatsapp',
-    to,
-    type: 'template',
-    template: templatePayload,
-  };
-
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiToken}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(body),
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(
-      `WhatsApp API error: ${response.status} ${response.statusText} - ${JSON.stringify(errorData)}`
-    );
-  }
-
-  return response.json();
-}
-
-/**
- * Sends a plain text WhatsApp message to a phone number.
+ * Sends a plain text WhatsApp message via WASenderAPI.
  *
  * @param to - Recipient phone number in international format (e.g., "972501234567")
  * @param text - Message text content (supports Hebrew and emojis)
@@ -138,56 +47,49 @@ export async function sendTextMessage(
   to: string,
   text: string
 ): Promise<WhatsAppMessageResponse> {
-  const apiToken = process.env.WHATSAPP_API_TOKEN;
-  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+  const apiKey = process.env.WASENDER_API_KEY;
 
-  if (!apiToken) {
-    throw new Error('WHATSAPP_API_TOKEN environment variable is not set');
+  if (!apiKey) {
+    throw new Error('WASENDER_API_KEY environment variable is not set');
   }
 
-  if (!phoneNumberId) {
-    throw new Error('WHATSAPP_PHONE_NUMBER_ID environment variable is not set');
-  }
-
-  const url = `${GRAPH_API_BASE_URL}/${phoneNumberId}/messages`;
+  const url = `${API_BASE_URL}/api/send-message`;
 
   const body = {
-    messaging_product: 'whatsapp',
-    to,
-    type: 'text',
-    text: {
-      body: text,
-    },
+    to: `+${to}`,
+    text,
   };
 
   const response = await fetch(url, {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${apiToken}`,
+      'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(body),
   });
 
+  const data = await response.json();
+
   if (!response.ok) {
-    const errorData = await response.json();
     throw new Error(
-      `WhatsApp API error: ${response.status} ${response.statusText} - ${JSON.stringify(errorData)}`
+      `WhatsApp API error: ${response.status} ${response.statusText} - ${JSON.stringify(data)}`
     );
   }
 
-  return response.json();
+  return data;
 }
 
 /**
- * Sends an interactive button message via WhatsApp Cloud API.
+ * Sends an interactive poll message (buttons) via WASenderAPI.
  *
- * Interactive button messages display up to 3 reply buttons the user can tap.
+ * WASenderAPI uses polls to display interactive options the user can tap.
+ * Button IDs are encoded in the poll option text using "::" as separator: "id::visual_title"
+ * Maps to 1-12 options (replaces Meta's 3-button limit).
  *
  * @param to - Recipient phone number in international format (e.g., "972501234567")
- * @param bodyText - Message body text (max 1024 chars)
- * @param buttons - Array of 1-3 reply buttons
- * @param options - Optional header and footer text
+ * @param bodyText - Message body text (poll question)
+ * @param buttons - Array of 1-12 button options (with id and title)
  * @returns Promise resolving to the API response
  * @throws Error if validation fails, env vars are missing, or API request fails
  *
@@ -197,8 +99,8 @@ export async function sendTextMessage(
  *   '972501234567',
  *   'האם הילד/ה בדרך היום?',
  *   [
- *     { id: 'btn_on_way', title: '✓ בדרך' },
- *     { id: 'btn_not_today', title: '✗ לא היום' },
+ *     { id: 'checkin_yes_uuid', title: '✓ בדרך' },
+ *     { id: 'checkin_no_uuid', title: '✗ לא היום' },
  *   ]
  * );
  * ```
@@ -206,77 +108,52 @@ export async function sendTextMessage(
 export async function sendInteractiveButtonMessage(
   to: string,
   bodyText: string,
-  buttons: InteractiveButton[],
-  options?: { headerText?: string; footerText?: string }
+  buttons: InteractiveButton[]
 ): Promise<WhatsAppMessageResponse> {
-  if (buttons.length === 0 || buttons.length > 3) {
-    throw new Error('Interactive messages require 1-3 buttons');
+  // Import here to avoid circular dependency
+  const { encodeButtonId } = await import('./message-templates');
+
+  if (buttons.length === 0 || buttons.length > 12) {
+    throw new Error('Interactive messages require 1-12 options');
   }
 
   if (bodyText.length > 1024) {
     throw new Error('Body text must not exceed 1024 characters');
   }
 
-  for (const button of buttons) {
-    if (button.title.length > 20) {
-      throw new Error(`Button title "${button.title}" exceeds 20 character limit`);
-    }
+  const apiKey = process.env.WASENDER_API_KEY;
+
+  if (!apiKey) {
+    throw new Error('WASENDER_API_KEY environment variable is not set');
   }
 
-  const apiToken = process.env.WHATSAPP_API_TOKEN;
-  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
-
-  if (!apiToken) {
-    throw new Error('WHATSAPP_API_TOKEN environment variable is not set');
-  }
-
-  if (!phoneNumberId) {
-    throw new Error('WHATSAPP_PHONE_NUMBER_ID environment variable is not set');
-  }
-
-  const url = `${GRAPH_API_BASE_URL}/${phoneNumberId}/messages`;
-
-  const interactive: Record<string, unknown> = {
-    type: 'button',
-    body: { text: bodyText },
-    action: {
-      buttons: buttons.map((btn) => ({
-        type: 'reply',
-        reply: { id: btn.id, title: btn.title },
-      })),
-    },
-  };
-
-  if (options?.headerText) {
-    interactive.header = { type: 'text', text: options.headerText };
-  }
-
-  if (options?.footerText) {
-    interactive.footer = { text: options.footerText };
-  }
+  const url = `${API_BASE_URL}/api/send-message`;
 
   const body = {
-    messaging_product: 'whatsapp',
-    to,
-    type: 'interactive',
-    interactive,
+    to: `+${to}`,
+    poll: {
+      question: bodyText,
+      options: buttons.map((btn) => encodeButtonId(btn.id, btn.title)),
+      multiSelect: false,
+    },
   };
 
   const response = await fetch(url, {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${apiToken}`,
+      'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(body),
   });
 
+  const data = await response.json();
+
   if (!response.ok) {
-    const errorData = await response.json();
     throw new Error(
-      `WhatsApp API error: ${response.status} ${response.statusText} - ${JSON.stringify(errorData)}`
+      `WhatsApp API error: ${response.status} ${response.statusText} - ${JSON.stringify(data)}`
     );
   }
 
-  return response.json();
+  return data;
 }
