@@ -19,6 +19,8 @@ import {
   explanationPromptMessage,
   explanationReceivedMessage,
   confirmNotTodayMessage,
+  lateArrivalPromptMessage,
+  lateArrivalConfirmedMessage,
   alreadyRespondedMessage,
   verifyInClassMessage,
   verifySuccessMessage,
@@ -182,7 +184,7 @@ async function lookupParent(senderPhone: string) {
 export async function processCheckinResponse(
   senderPhone: string,
   attendanceId: string,
-  response: 'yes' | 'no'
+  response: 'yes' | 'late' | 'no'
 ): Promise<void> {
   const supabase = createServiceClient();
   const parent = await lookupParent(senderPhone);
@@ -221,7 +223,10 @@ export async function processCheckinResponse(
     return;
   }
 
-  const parentResponse = response === 'yes' ? 'dropping_off' : 'not_today';
+  const parentResponse =
+    response === 'yes' ? 'dropping_off' :
+    response === 'late' ? 'dropping_off_late' :
+    'not_today';
   await supabase
     .from('daily_attendance')
     .update({
@@ -234,6 +239,9 @@ export async function processCheckinResponse(
   if (response === 'yes') {
     await sendTextMessage(senderPhone, confirmDroppingOffMessage().text);
     await resetConversationState(parent.id);
+  } else if (response === 'late') {
+    await sendTextMessage(senderPhone, lateArrivalPromptMessage().text);
+    await setConversationState(parent.id, 'awaiting_late_arrival_time', attendanceId);
   } else {
     // "Not today" → ask for explanation
     const { data: child } = await supabase
@@ -421,6 +429,19 @@ async function handleFreeText(
 
     await sendTextMessage(senderPhone, explanationReceivedMessage().text);
     await resetConversationState(parent.id);
+  } else if (convo.state === 'awaiting_late_arrival_time') {
+    // Parent provided expected arrival time after selecting "yes but late"
+    if (convo.attendance_id) {
+      await supabase
+        .from('daily_attendance')
+        .update({ parent_explanation: text })
+        .eq('id', convo.attendance_id);
+
+      await forwardLateArrivalToTeacher(convo.attendance_id, parent, text);
+    }
+
+    await sendTextMessage(senderPhone, lateArrivalConfirmedMessage().text);
+    await resetConversationState(parent.id);
   }
 }
 
@@ -468,6 +489,48 @@ async function forwardExplanationToTeacher(
       await sendTextMessage(toWhatsAppPhone(teacher.phone), msg.text);
     } catch (err) {
       console.error(`[Forward] Failed to send to teacher ${teacher.phone}:`, err);
+    }
+  }
+}
+
+async function forwardLateArrivalToTeacher(
+  attendanceId: string,
+  parent: { id: string; name: string; phone: string },
+  arrivalTime: string
+): Promise<void> {
+  const supabase = createServiceClient();
+
+  const { data: record } = await supabase
+    .from('daily_attendance')
+    .select('child_id')
+    .eq('id', attendanceId)
+    .single();
+  if (!record) return;
+
+  const { data: child } = await supabase
+    .from('children')
+    .select('name, nursery_id')
+    .eq('id', record.child_id)
+    .single();
+  if (!child) return;
+
+  const { data: teachers } = await supabase
+    .from('teachers')
+    .select('phone')
+    .eq('nursery_id', child.nursery_id);
+  if (!teachers?.length) return;
+
+  const text = [
+    `הורה ${parent.name} דיווח שהילד/ה ${child.name} יגיע/ה מאוחר.`,
+    `שעת הגעה משוערת: ${arrivalTime}`,
+    `📞 ${parent.phone}`,
+  ].join('\n');
+
+  for (const teacher of teachers) {
+    try {
+      await sendTextMessage(toWhatsAppPhone(teacher.phone), text);
+    } catch (err) {
+      console.error(`[LateArrival] Failed to send to teacher ${teacher.phone}:`, err);
     }
   }
 }
@@ -580,7 +643,7 @@ export async function handleIncomingMessage(
         await processCheckinResponse(
           parsed.sender,
           checkinMatch[2],
-          checkinMatch[1] as 'yes' | 'no'
+          checkinMatch[1] as 'yes' | 'late' | 'no'
         );
         return { success: true };
       }

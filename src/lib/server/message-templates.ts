@@ -17,20 +17,21 @@ export type ConversationState =
   | 'awaiting_explanation'
   | 'awaiting_name_verify'
   | 'awaiting_other_explain'
+  | 'awaiting_late_arrival_time'
 
 // ---------------------------------------------------------------------------
 // Button ID patterns (regex)
 // ---------------------------------------------------------------------------
 
-/** checkin_yes_{uuid} or checkin_no_{uuid} */
-export const CHECKIN_BUTTON_REGEX = /^checkin_(yes|no)_([0-9a-f-]{36})$/
+/** checkin_yes_{uuid}, checkin_late_{uuid}, or checkin_no_{uuid} */
+export const CHECKIN_BUTTON_REGEX = /^checkin_(yes|late|no)_([0-9a-f-]{36})$/
 
 /** explain_skip_{uuid} */
 export const EXPLAIN_SKIP_REGEX = /^explain_skip_([0-9a-f-]{36})$/
 
-/** ninealert_(inclass|withme|other)_{uuid} */
+/** ninealert_(inclass|withme)_{uuid} */
 export const NINE_AM_ALERT_REGEX =
-  /^ninealert_(inclass|withme|other)_([0-9a-f-]{36})$/
+  /^ninealert_(inclass|withme)_([0-9a-f-]{36})$/
 
 // ---------------------------------------------------------------------------
 // Helper: encode/decode IDs for WASenderAPI polls
@@ -74,8 +75,9 @@ export function morningCheckinMessage(
   return {
     text: `בוקר טוב ${parentName}! האם ${childName} מגיע/ה היום לגן?`,
     buttons: [
-      { id: `checkin_yes_${attendanceId}`, title: '\u2713 בדרך לגן' },
-      { id: `checkin_no_${attendanceId}`, title: '\u2717 לא היום' },
+      { id: `checkin_yes_${attendanceId}`, title: '✓ כן, בדרך' },
+      { id: `checkin_late_${attendanceId}`, title: 'כן, אבל מאוחר' },
+      { id: `checkin_no_${attendanceId}`, title: '✗ לא היום' },
     ],
   }
 }
@@ -88,8 +90,9 @@ export function secondPingMessage(
   return {
     text: `תזכורת: אנא אשרו האם ${childName} מגיע/ה היום`,
     buttons: [
-      { id: `checkin_yes_${attendanceId}`, title: '\u2713 בדרך לגן' },
-      { id: `checkin_no_${attendanceId}`, title: '\u2717 לא היום' },
+      { id: `checkin_yes_${attendanceId}`, title: '✓ כן, בדרך' },
+      { id: `checkin_late_${attendanceId}`, title: 'כן, אבל מאוחר' },
+      { id: `checkin_no_${attendanceId}`, title: '✗ לא היום' },
     ],
   }
 }
@@ -105,6 +108,16 @@ export function explanationPromptMessage(
   }
 }
 
+/** Flow 2b — Late arrival time prompt */
+export function lateArrivalPromptMessage(): MessagePayload {
+  return { text: 'מה שעת ההגעה המשוערת?' }
+}
+
+/** Flow 2b — Late arrival time confirmed */
+export function lateArrivalConfirmedMessage(): MessagePayload {
+  return { text: 'תודה! נעדכן את הצוות. נתראה בקרוב ✓' }
+}
+
 /** Flow 4 — 9am unconfirmed arrival alert */
 export function nineAmAlertMessage(
   childName: string,
@@ -114,9 +127,8 @@ export function nineAmAlertMessage(
   return {
     text: `לא אישרנו עדיין את הגעת ${childName} ל${nurseryName}. איפה הילד/ה?`,
     buttons: [
-      { id: `ninealert_inclass_${attendanceId}`, title: 'בכיתה' },
+      { id: `ninealert_inclass_${attendanceId}`, title: 'הורדתי' },
       { id: `ninealert_withme_${attendanceId}`, title: 'איתי' },
-      { id: `ninealert_other_${attendanceId}`, title: 'אחר' },
     ],
   }
 }
@@ -143,17 +155,17 @@ export function otherExplanationPromptMessage(): MessagePayload {
 
 /** Flow 8 — Confirmation after "dropping off" */
 export function confirmDroppingOffMessage(): MessagePayload {
-  return { text: 'תודה, נתראה בקרוב! \u2713' }
+  return { text: 'תודה, נתראה בקרוב! ✓' }
 }
 
 /** Flow 8 — Confirmation after "not today" (skip explanation) */
 export function confirmNotTodayMessage(): MessagePayload {
-  return { text: 'תודה! יום טוב \u2713' }
+  return { text: 'תודה! יום טוב ✓' }
 }
 
 /** Confirmation that explanation was received */
 export function explanationReceivedMessage(): MessagePayload {
-  return { text: 'תודה על השיתוף! יום טוב \u2713' }
+  return { text: 'תודה על השיתוף! יום טוב ✓' }
 }
 
 /** Already responded acknowledgement */
@@ -184,13 +196,13 @@ export function teacherSummaryMessage(
   const text = [
     `סיכום נוכחות - ${nurseryName} - ${date}`,
     '',
-    `\u2713 צפויים להגיע: ${expected.length}`,
+    `✓ צפויים להגיע: ${expected.length}`,
     expectedList,
     '',
-    `\u2717 לא מגיעים היום: ${notComing.length}`,
+    `✗ לא מגיעים היום: ${notComing.length}`,
     notComingList,
     '',
-    `\u26A0\uFE0F לא ענו: ${noResponse.length}`,
+    `⚠️ לא ענו: ${noResponse.length}`,
     noResponseList,
   ].join('\n')
 
@@ -207,12 +219,12 @@ export function adminEscalationMessage(
   teacherPhone: string
 ): MessagePayload {
   const text = [
-    `\uD83D\uDEA8 חוסר התאמה ב${nurseryName}`,
+    `🚨 חוסר התאמה ב${nurseryName}`,
     `ילד/ה: ${childName}`,
     `ההורה טוען: ${parentClaim}`,
     `סטטוס מורה: ${teacherStatus}`,
-    `\uD83D\uDCDE הורה: ${parentPhone}`,
-    `\uD83D\uDCDE צוות: ${teacherPhone}`,
+    `📞 הורה: ${parentPhone}`,
+    `📞 צוות: ${teacherPhone}`,
   ].join('\n')
 
   return { text }
@@ -234,7 +246,7 @@ export function parentExplanationForwardMessage(
     'הסבר ההורה:',
     `"${explanation}"`,
     '',
-    `לפרטים נוספים ניתן ליצור קשר בטלפון: ${parentPhone} \uD83D\uDCF1`,
+    `לפרטים נוספים ניתן ליצור קשר בטלפון: ${parentPhone} 📱`,
   ].join('\n')
 
   return { text }

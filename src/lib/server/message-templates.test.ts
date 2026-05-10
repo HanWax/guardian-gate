@@ -6,6 +6,8 @@ import {
   morningCheckinMessage,
   secondPingMessage,
   explanationPromptMessage,
+  lateArrivalPromptMessage,
+  lateArrivalConfirmedMessage,
   nineAmAlertMessage,
   verifyInClassMessage,
   verifyRetryMessage,
@@ -28,6 +30,13 @@ describe('message-templates', () => {
       expect(match![2]).toBe(TEST_UUID)
     })
 
+    it('CHECKIN_BUTTON_REGEX matches checkin_late_{uuid}', () => {
+      const match = `checkin_late_${TEST_UUID}`.match(CHECKIN_BUTTON_REGEX)
+      expect(match).not.toBeNull()
+      expect(match![1]).toBe('late')
+      expect(match![2]).toBe(TEST_UUID)
+    })
+
     it('CHECKIN_BUTTON_REGEX matches checkin_no_{uuid}', () => {
       const match = `checkin_no_${TEST_UUID}`.match(CHECKIN_BUTTON_REGEX)
       expect(match).not.toBeNull()
@@ -45,8 +54,8 @@ describe('message-templates', () => {
       expect(match![1]).toBe(TEST_UUID)
     })
 
-    it('NINE_AM_ALERT_REGEX matches all actions', () => {
-      for (const action of ['inclass', 'withme', 'other']) {
+    it('NINE_AM_ALERT_REGEX matches inclass and withme', () => {
+      for (const action of ['inclass', 'withme']) {
         const match = `ninealert_${action}_${TEST_UUID}`.match(NINE_AM_ALERT_REGEX)
         expect(match).not.toBeNull()
         expect(match![1]).toBe(action)
@@ -54,26 +63,43 @@ describe('message-templates', () => {
       }
     })
 
-    it('NINE_AM_ALERT_REGEX rejects invalid action', () => {
+    it('NINE_AM_ALERT_REGEX rejects other and invalid actions', () => {
+      expect(`ninealert_other_${TEST_UUID}`.match(NINE_AM_ALERT_REGEX)).toBeNull()
       expect(`ninealert_invalid_${TEST_UUID}`.match(NINE_AM_ALERT_REGEX)).toBeNull()
     })
   })
 
   describe('message builders', () => {
-    it('morningCheckinMessage has 2 buttons with valid titles', () => {
+    it('morningCheckinMessage has 3 buttons with valid titles', () => {
       const msg = morningCheckinMessage('רונית', 'דניאל', TEST_UUID)
       expect(msg.text).toContain('רונית')
       expect(msg.text).toContain('דניאל')
-      expect(msg.buttons).toHaveLength(2)
+      expect(msg.buttons).toHaveLength(3)
+      const ids = msg.buttons!.map((b) => b.id)
+      expect(ids).toContain(`checkin_yes_${TEST_UUID}`)
+      expect(ids).toContain(`checkin_late_${TEST_UUID}`)
+      expect(ids).toContain(`checkin_no_${TEST_UUID}`)
       for (const btn of msg.buttons!) {
         expect(btn.title.length).toBeLessThanOrEqual(20)
       }
     })
 
-    it('secondPingMessage has 2 buttons', () => {
+    it('secondPingMessage has 3 buttons', () => {
       const msg = secondPingMessage('דניאל', TEST_UUID)
       expect(msg.text).toContain('תזכורת')
-      expect(msg.buttons).toHaveLength(2)
+      expect(msg.buttons).toHaveLength(3)
+    })
+
+    it('lateArrivalPromptMessage is text-only', () => {
+      const msg = lateArrivalPromptMessage()
+      expect(msg.buttons).toBeUndefined()
+      expect(msg.text).toContain('שעת ההגעה')
+    })
+
+    it('lateArrivalConfirmedMessage is text-only', () => {
+      const msg = lateArrivalConfirmedMessage()
+      expect(msg.buttons).toBeUndefined()
+      expect(msg.text).toContain('נעדכן את הצוות')
     })
 
     it('explanationPromptMessage has 1 skip button', () => {
@@ -82,9 +108,12 @@ describe('message-templates', () => {
       expect(msg.buttons![0].id).toContain('explain_skip')
     })
 
-    it('nineAmAlertMessage has 3 buttons', () => {
+    it('nineAmAlertMessage has 2 buttons', () => {
       const msg = nineAmAlertMessage('דניאל', 'גן שקד', TEST_UUID)
-      expect(msg.buttons).toHaveLength(3)
+      expect(msg.buttons).toHaveLength(2)
+      const ids = msg.buttons!.map((b) => b.id)
+      expect(ids).toContain(`ninealert_inclass_${TEST_UUID}`)
+      expect(ids).toContain(`ninealert_withme_${TEST_UUID}`)
       for (const btn of msg.buttons!) {
         expect(btn.title.length).toBeLessThanOrEqual(20)
       }
