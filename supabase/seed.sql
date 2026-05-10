@@ -50,6 +50,17 @@ INSERT INTO auth.users (
     '{"provider": "email", "providers": ["email"]}',
     '{"email": "teacher@test.com", "email_verified": true, "phone_verified": false, "sub": "d0000003-0000-0000-0000-000000000003", "role": "teacher"}',
     '', '', '', '', '', '', '', '', false, false
+  ),
+  (
+    '00000000-0000-0000-0000-000000000000',
+    'd0000002-0000-0000-0000-000000000002',
+    'authenticated', 'authenticated',
+    'admin2@test.com',
+    crypt('password123', gen_salt('bf')),
+    now(), now(), now(),
+    '{"provider": "email", "providers": ["email"]}',
+    '{"email": "admin2@test.com", "email_verified": true, "phone_verified": false, "sub": "d0000002-0000-0000-0000-000000000002", "role": "admin"}',
+    '', '', '', '', '', '', '', '', false, false
   );
 
 INSERT INTO auth.identities (id, user_id, identity_data, provider, provider_id, last_sign_in_at, created_at, updated_at) VALUES
@@ -68,6 +79,14 @@ INSERT INTO auth.identities (id, user_id, identity_data, provider, provider_id, 
     'email',
     'd0000003-0000-0000-0000-000000000003',
     now(), now(), now()
+  ),
+  (
+    'd0000002-0000-0000-0000-000000000002',
+    'd0000002-0000-0000-0000-000000000002',
+    '{"sub": "d0000002-0000-0000-0000-000000000002", "email": "admin2@test.com", "email_verified": true}',
+    'email',
+    'd0000002-0000-0000-0000-000000000002',
+    now(), now(), now()
   );
 
 -- ============================================================
@@ -75,7 +94,8 @@ INSERT INTO auth.identities (id, user_id, identity_data, provider, provider_id, 
 -- ============================================================
 
 INSERT INTO admins (id, nursery_id, phone, name, user_id) VALUES
-  ('dd000001-0000-0000-0000-000000000001', 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', '+972501234567', 'מנהל מערכת', 'd0000001-0000-0000-0000-000000000001');
+  ('dd000001-0000-0000-0000-000000000001', 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', '+972501234567', 'מנהל מערכת', 'd0000001-0000-0000-0000-000000000001'),
+  ('dd000002-0000-0000-0000-000000000002', 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', '+972500000002', 'מנהל מערכת 2', 'd0000002-0000-0000-0000-000000000002');
 
 INSERT INTO teachers (id, nursery_id, phone, name, user_id) VALUES
   ('cc000001-0000-0000-0000-000000000001', 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', '+972524445566', 'ענת ברק', 'd0000003-0000-0000-0000-000000000003'),

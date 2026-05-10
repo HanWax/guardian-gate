@@ -13,6 +13,7 @@ import type { Database } from '../database.types'
 
 type Parent = Database['public']['Tables']['parents']['Row']
 type Child = Database['public']['Tables']['children']['Row']
+type ChildWithParentCount = Child & { parentCount: number }
 
 export const childrenParentsKeys = {
   all: ['childrenParents'] as const,
@@ -34,11 +35,11 @@ export function useParentsForChild(childId: string) {
 }
 
 export function useChildrenForParent(parentId: string) {
-  return useQuery<Child[]>({
+  return useQuery<ChildWithParentCount[]>({
     queryKey: childrenParentsKeys.childrenForParent(parentId),
     queryFn: async () => {
       const accessToken = await getAccessToken()
-      return getChildrenForParent({ data: { accessToken, parentId } }) as Promise<Child[]>
+      return getChildrenForParent({ data: { accessToken, parentId } }) as Promise<ChildWithParentCount[]>
     },
     enabled: !!parentId,
   })

@@ -8,7 +8,6 @@ const err = {
   assign_failed: 'שגיאה בשיוך הורה לילד/ה. אנא נסה שוב',
   unassign_failed: 'שגיאה בביטול שיוך הורה מילד/ה. אנא נסה שוב',
   already_assigned: 'ההורה כבר משויך/ת לילד/ה זה/ו',
-  last_parent: 'לא ניתן להסיר את ההורה האחרון של ילד/ה',
 } as const
 const unauthorized = 'אין לך הרשאה לבצע פעולה זו'
 
@@ -83,7 +82,27 @@ export const getChildrenForParent = createServerFn({ method: 'POST' })
       .eq('parent_id', data.parentId)
       .eq('children.nursery_id', nurseryId)
     if (error) throw new Error(err.fetch_failed)
-    return assignments.map((a) => a.children).filter(Boolean)
+
+    const childIds = assignments.map((a) => a.child_id).filter(Boolean)
+    if (childIds.length === 0) return []
+    const { data: allLinks, error: linksError } = await supabase
+      .from('children_parents')
+      .select('child_id')
+      .in('child_id', childIds)
+    if (linksError) throw new Error(err.fetch_failed)
+
+    const parentCountMap = (allLinks ?? []).reduce<Record<string, number>>((acc, link) => {
+      acc[link.child_id] = (acc[link.child_id] ?? 0) + 1
+      return acc
+    }, {})
+
+    return assignments
+      .map((a) => {
+        const child = a.children
+        if (!child) return null
+        return { ...child, parentCount: parentCountMap[a.child_id] ?? 1 }
+      })
+      .filter(Boolean)
   })
 
 export const assignParentToChild = createServerFn({ method: 'POST' })
@@ -100,7 +119,7 @@ export const assignParentToChild = createServerFn({ method: 'POST' })
       .select('*')
       .eq('child_id', data.assignment.child_id)
       .eq('parent_id', data.assignment.parent_id)
-      .single()
+      .maybeSingle()
 
     if (existing) throw new Error(err.already_assigned)
 
@@ -126,19 +145,26 @@ export const unassignParentFromChild = createServerFn({ method: 'POST' })
     await assertChildInNursery(supabase, data.assignment.child_id, nurseryId)
     await assertParentInNursery(supabase, data.assignment.parent_id, nurseryId)
 
-    // Prevent removing the last parent
     const { count } = await supabase
       .from('children_parents')
       .select('*', { count: 'exact', head: true })
       .eq('child_id', data.assignment.child_id)
-    if (count !== null && count <= 1) throw new Error(err.last_parent)
 
-    const { error } = await supabase
-      .from('children_parents')
-      .delete()
-      .eq('child_id', data.assignment.child_id)
-      .eq('parent_id', data.assignment.parent_id)
+    if (count !== null && count <= 1) {
+      // Last parent — delete the child entirely (cascades to all linked tables)
+      const { error } = await supabase
+        .from('children')
+        .delete()
+        .eq('id', data.assignment.child_id)
+      if (error) throw new Error(err.unassign_failed)
+    } else {
+      const { error } = await supabase
+        .from('children_parents')
+        .delete()
+        .eq('child_id', data.assignment.child_id)
+        .eq('parent_id', data.assignment.parent_id)
+      if (error) throw new Error(err.unassign_failed)
+    }
 
-    if (error) throw new Error(err.unassign_failed)
     return { success: true }
   })

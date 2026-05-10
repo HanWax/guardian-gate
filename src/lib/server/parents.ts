@@ -7,6 +7,7 @@ import { createServiceClient, requireAuth, requireAdminRole } from './auth'
 const err = {
   not_found: 'הורה לא נמצא',
   create_failed: 'שגיאה ביצירת רשומת הורה. אנא נסה שוב',
+  duplicate_phone: 'מספר הטלפון כבר קיים במערכת',
   update_failed: 'שגיאה בעדכון פרטי הורה. אנא נסה שוב',
   delete_failed: 'שגיאה במחיקת הורה. אנא נסה שוב',
   fetch_failed: 'שגיאה בטעינת נתונים. אנא נסה שוב',
@@ -128,7 +129,10 @@ export const createParent = createServerFn({ method: 'POST' })
         owner_nursery_id: nurseryId,
       })
       .select().single()
-    if (error) throw new Error(err.create_failed)
+    if (error) {
+      if (error.code === '23505') throw new Error(err.duplicate_phone)
+      throw new Error(err.create_failed)
+    }
     return parent
   })
 
