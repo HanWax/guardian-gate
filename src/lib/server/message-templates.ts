@@ -20,20 +20,6 @@ export type ConversationState =
   | 'awaiting_late_arrival_time'
 
 // ---------------------------------------------------------------------------
-// Button ID patterns (regex)
-// ---------------------------------------------------------------------------
-
-/** checkin_yes_{uuid}, checkin_late_{uuid}, or checkin_no_{uuid} */
-export const CHECKIN_BUTTON_REGEX = /^checkin_(yes|late|no)_([0-9a-f-]{36})$/
-
-/** explain_skip_{uuid} */
-export const EXPLAIN_SKIP_REGEX = /^explain_skip_([0-9a-f-]{36})$/
-
-/** ninealert_(inclass|withme)_{uuid} */
-export const NINE_AM_ALERT_REGEX =
-  /^ninealert_(inclass|withme)_([0-9a-f-]{36})$/
-
-// ---------------------------------------------------------------------------
 // Poll title → action routing (for webhook)
 // ---------------------------------------------------------------------------
 
@@ -93,22 +79,6 @@ export interface MessagePayload {
   buttons?: ButtonDef[]
 }
 
-/** Flow 1 — Morning check-in */
-export function morningCheckinMessage(
-  parentName: string,
-  childName: string,
-  attendanceId: string
-): MessagePayload {
-  return {
-    text: `בוקר טוב ${parentName}! האם ${childName} מגיע/ה היום לגן?`,
-    buttons: [
-      { id: `checkin_yes_${attendanceId}`, title: '✓ כן, בדרך' },
-      { id: `checkin_late_${attendanceId}`, title: 'כן, אבל מאוחר' },
-      { id: `checkin_no_${attendanceId}`, title: '✗ לא היום' },
-    ],
-  }
-}
-
 /** Flow 2 — Second ping (reminder) */
 export function secondPingMessage(
   childName: string,
@@ -143,21 +113,6 @@ export function lateArrivalPromptMessage(): MessagePayload {
 /** Flow 2b — Late arrival time confirmed */
 export function lateArrivalConfirmedMessage(): MessagePayload {
   return { text: 'תודה! נעדכן את הצוות. נתראה בקרוב ✓' }
-}
-
-/** Flow 4 — 9am unconfirmed arrival alert */
-export function nineAmAlertMessage(
-  childName: string,
-  nurseryName: string,
-  attendanceId: string
-): MessagePayload {
-  return {
-    text: `לא אישרנו עדיין את הגעת ${childName} ל${nurseryName}. איפה הילד/ה?`,
-    buttons: [
-      { id: `ninealert_inclass_${attendanceId}`, title: 'הורדתי' },
-      { id: `ninealert_withme_${attendanceId}`, title: 'איתי' },
-    ],
-  }
 }
 
 /** Flow 4a — Verify child is in class (name entry prompt) */
@@ -200,40 +155,65 @@ export function alreadyRespondedMessage(): MessagePayload {
   return { text: 'כבר קיבלנו את תשובתך, תודה!' }
 }
 
-/** Flow 5 — Teacher consolidated summary */
-export function teacherSummaryMessage(
+/** Flow 5 — Teacher attendance poll (9am): expected children only, multiSelect */
+export function teacherPollMessage(
   nurseryName: string,
   date: string,
-  expected: string[],
-  notComing: Array<{ name: string; explanation?: string }>,
+  expectedChildren: string[],
+  part?: string
+): MessagePayload {
+  const partSuffix = part ? ` (${part})` : ''
+  return {
+    text: `בדיקת נוכחות ${nurseryName} — ${date}${partSuffix}\nסמן/י כל ילד/ה שהגיע/ה:`,
+    buttons: expectedChildren.map((name) => ({ id: name, title: name })),
+  }
+}
+
+/** Flow 5b — Teacher FYI after 9:30 follow-ups sent */
+export function teacherFollowupFYIMessage(
+  unconfirmedExpected: string[],
   noResponse: Array<{ name: string; parentPhone: string }>
 ): MessagePayload {
-  const expectedList = expected.length > 0
-    ? expected.map((n) => `  • ${n}`).join('\n')
-    : '  (אין)'
-  const notComingList = notComing.length > 0
-    ? notComing
-        .map((c) => `  • ${c.name}${c.explanation ? ` — ${c.explanation}` : ''}`)
-        .join('\n')
-    : '  (אין)'
-  const noResponseList = noResponse.length > 0
-    ? noResponse.map((c) => `  • ${c.name} (${c.parentPhone})`).join('\n')
-    : '  (אין)'
+  const lines: string[] = ['⚠️ ילדים שלא אושרו:']
 
-  const text = [
-    `סיכום נוכחות - ${nurseryName} - ${date}`,
-    '',
-    `✓ צפויים להגיע: ${expected.length}`,
-    expectedList,
-    '',
-    `✗ לא מגיעים היום: ${notComing.length}`,
-    notComingList,
-    '',
-    `⚠️ לא ענו: ${noResponse.length}`,
-    noResponseList,
-  ].join('\n')
+  if (unconfirmedExpected.length > 0) {
+    lines.push('', 'צפויים אך לא אושרו הגעה:')
+    for (const name of unconfirmedExpected) lines.push(`  • ${name}`)
+  }
 
-  return { text }
+  if (noResponse.length > 0) {
+    lines.push('', 'הורים לא ענו:')
+    for (const { name, parentPhone } of noResponse) lines.push(`  • ${name} (${parentPhone})`)
+  }
+
+  lines.push('', 'נשלחה הודעת מעקב להורים.')
+
+  return { text: lines.join('\n') }
+}
+
+/** Flow 5c — Parent follow-up for expected child not confirmed by teacher */
+export function parentUnconfirmedFollowupMessage(
+  childName: string,
+  nurseryName: string,
+  attendanceId: string
+): MessagePayload {
+  return {
+    text: `שלום, ${childName} צפוי/ה להגיע ל${nurseryName} אך טרם אושרה הגעתו/ה. איפה הילד/ה?`,
+    buttons: [
+      { id: `ninealert_inclass_${attendanceId}`, title: 'הורדתי' },
+      { id: `ninealert_withme_${attendanceId}`, title: 'איתי' },
+    ],
+  }
+}
+
+/** Flow 5d — Parent follow-up for child with no morning response */
+export function parentNoResponseFollowupMessage(
+  childName: string,
+  nurseryName: string
+): MessagePayload {
+  return {
+    text: `שלום, טרם קיבלנו עדכון לגבי ${childName} ל${nurseryName} היום. האם הכל בסדר?`,
+  }
 }
 
 /** Flow 6 — Admin escalation (inconsistency alert) */

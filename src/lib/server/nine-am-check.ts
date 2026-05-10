@@ -1,9 +1,8 @@
 /**
- * 9am check: teacher summary + unconfirmed arrival alerts.
+ * 9am check: send teacher an attendance poll listing expected children.
  *
- * Part A: Send consolidated attendance summary to each teacher.
- * Part B: Send alerts to parents whose child was marked "dropping_off"
- *         but hasn't been confirmed by a teacher yet.
+ * Teachers tap each child who has physically arrived. Follow-up messages
+ * to parents are handled separately by the teacher-followup cron at 9:30am.
  */
 
 import { createServiceClient } from './auth'
@@ -12,41 +11,32 @@ import {
   getTodayInTimezone,
   isWithinTolerance,
 } from './morning-messages'
-import {
-  teacherSummaryMessage,
-  nineAmAlertMessage,
-} from './message-templates'
+import { teacherPollMessage } from './message-templates'
 import { toWhatsAppPhone } from './phone-utils'
-import {
-  sendTextMessage,
-  sendInteractiveButtonMessage,
-} from './whatsapp'
+import { sendInteractiveButtonMessage } from './whatsapp'
 
 export async function runNineAmCheck(toleranceMinutes = 5): Promise<{
   nurseriesProcessed: number
-  summariesSent: number
-  alertsSent: number
+  pollsSent: number
 }> {
   const supabase = createServiceClient()
   let nurseriesProcessed = 0
-  let summariesSent = 0
-  let alertsSent = 0
+  let pollsSent = 0
 
   const { data: nurseries } = await supabase
     .from('nurseries')
-    .select('id, name, timezone, second_ping_time')
-  if (!nurseries?.length) return { nurseriesProcessed, summariesSent, alertsSent }
+    .select('id, name, timezone, teacher_poll_time')
+  if (!nurseries?.length) return { nurseriesProcessed, pollsSent }
 
   for (const nursery of nurseries) {
     const tz = nursery.timezone ?? 'Asia/Jerusalem'
     const currentTime = getCurrentTimeInTimezone(tz)
     const today = getTodayInTimezone(tz)
 
-    if (!isWithinTolerance(currentTime, nursery.second_ping_time, toleranceMinutes)) {
+    if (!isWithinTolerance(currentTime, nursery.teacher_poll_time, toleranceMinutes)) {
       continue
     }
 
-    // Get all children in nursery
     const { data: children } = await supabase
       .from('children')
       .select('id, name')
@@ -54,132 +44,60 @@ export async function runNineAmCheck(toleranceMinutes = 5): Promise<{
     if (!children?.length) continue
 
     const childIds = children.map((c) => c.id)
-    const childNameMap = new Map(children.map((c) => [c.id, c.name]))
 
-    // Get today's attendance
     const { data: attendance } = await supabase
       .from('daily_attendance')
-      .select('id, child_id, parent_response, parent_explanation, teacher_confirmed, nine_am_alert_sent')
+      .select('child_id, parent_response')
       .eq('date', today)
       .in('child_id', childIds)
     if (!attendance) continue
 
-    // Build attendance map by child_id
     const attendanceMap = new Map(attendance.map((a) => [a.child_id, a]))
 
-    // -----------------------------------------------------------------------
-    // Part A: Teacher summary
-    // -----------------------------------------------------------------------
+    // Only on-time expected children appear in the teacher poll
+    const expectedNames = children
+      .filter((c) => attendanceMap.get(c.id)?.parent_response === 'dropping_off')
+      .map((c) => c.name)
 
-    const expected: string[] = []
-    const notComing: Array<{ name: string; explanation?: string }> = []
-    const noResponse: Array<{ name: string; parentPhone: string }> = []
-
-    // We need parent phones for no-response list
-    const { data: parentLinks } = await supabase
-      .from('children_parents')
-      .select('child_id, parents(phone)')
-      .in('child_id', childIds)
-
-    type ParentPhoneRow = { phone: string }
-    const childFirstParentPhone = new Map<string, string>()
-    for (const link of parentLinks ?? []) {
-      if (!childFirstParentPhone.has(link.child_id)) {
-        const p = link.parents as unknown as ParentPhoneRow | null
-        if (p?.phone) childFirstParentPhone.set(link.child_id, p.phone)
-      }
+    if (expectedNames.length === 0) {
+      nurseriesProcessed++
+      continue
     }
 
-    for (const child of children) {
-      const record = attendanceMap.get(child.id)
-      if (!record || !record.parent_response) {
-        noResponse.push({
-          name: child.name,
-          parentPhone: childFirstParentPhone.get(child.id) ?? '',
-        })
-      } else if (record.parent_response === 'dropping_off') {
-        expected.push(child.name)
-      } else {
-        notComing.push({
-          name: child.name,
-          explanation: record.parent_explanation ?? undefined,
-        })
-      }
-    }
-
-    // Format date as DD/MM/YYYY
     const [y, m, d] = today.split('-')
     const formattedDate = `${d}/${m}/${y}`
 
-    const summary = teacherSummaryMessage(
-      nursery.name,
-      formattedDate,
-      expected,
-      notComing,
-      noResponse
-    )
+    // WASenderAPI polls support up to 12 options — chunk into multiple polls if needed
+    const chunks: string[][] = []
+    for (let i = 0; i < expectedNames.length; i += 12) {
+      chunks.push(expectedNames.slice(i, i + 12))
+    }
 
-    // Send to all teachers in this nursery
     const { data: teachers } = await supabase
       .from('teachers')
       .select('phone')
       .eq('nursery_id', nursery.id)
 
     for (const teacher of teachers ?? []) {
-      try {
-        await sendTextMessage(toWhatsAppPhone(teacher.phone), summary.text)
-        summariesSent++
-      } catch (err) {
-        console.error(`[9am] Failed to send summary to ${teacher.phone}:`, err)
-      }
-    }
-
-    // -----------------------------------------------------------------------
-    // Part B: Unconfirmed arrival alerts
-    // -----------------------------------------------------------------------
-
-    const unconfirmed = attendance.filter(
-      (a) =>
-        a.parent_response === 'dropping_off' &&
-        !a.teacher_confirmed &&
-        !a.nine_am_alert_sent
-    )
-
-    for (const record of unconfirmed) {
-      const childName = childNameMap.get(record.child_id) ?? ''
-
-      // Get parents for this child
-      const { data: childParentLinks } = await supabase
-        .from('children_parents')
-        .select('parents(phone)')
-        .eq('child_id', record.child_id)
-
-      for (const link of childParentLinks ?? []) {
-        const parent = link.parents as unknown as { phone: string } | null
-        if (!parent?.phone) continue
-
+      for (let i = 0; i < chunks.length; i++) {
+        const part = chunks.length > 1 ? `${i + 1}/${chunks.length}` : undefined
+        const msg = teacherPollMessage(nursery.name, formattedDate, chunks[i], part)
         try {
-          const msg = nineAmAlertMessage(childName, nursery.name, record.id)
           await sendInteractiveButtonMessage(
-            toWhatsAppPhone(parent.phone),
+            toWhatsAppPhone(teacher.phone),
             msg.text,
-            msg.buttons!
+            msg.buttons!,
+            true
           )
-          alertsSent++
+          pollsSent++
         } catch (err) {
-          console.error(`[9am] Failed to send alert to ${parent.phone}:`, err)
+          console.error(`[9am] Failed to send poll to ${teacher.phone}:`, err)
         }
       }
-
-      // Mark alert as sent
-      await supabase
-        .from('daily_attendance')
-        .update({ nine_am_alert_sent: true })
-        .eq('id', record.id)
     }
 
     nurseriesProcessed++
   }
 
-  return { nurseriesProcessed, summariesSent, alertsSent }
+  return { nurseriesProcessed, pollsSent }
 }
