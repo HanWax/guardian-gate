@@ -12,9 +12,8 @@ import {
   resetConversationState,
 } from './conversation-manager';
 import {
-  CHECKIN_BUTTON_REGEX,
-  EXPLAIN_SKIP_REGEX,
-  NINE_AM_ALERT_REGEX,
+  POLL_TITLE_TO_ACTION,
+  parseMultiChildOption,
   confirmDroppingOffMessage,
   explanationPromptMessage,
   explanationReceivedMessage,
@@ -75,6 +74,8 @@ export interface MessageParseResult {
   buttonReplyId?: string;
   /** Button title/text from the reply */
   buttonReplyTitle?: string;
+  /** For multi-child combined polls: child name parsed from the option title */
+  childName?: string;
 }
 
 /**
@@ -120,20 +121,23 @@ export function parseIncomingMessage(
 
     let buttonReplyId: string | undefined;
     let buttonReplyTitle: string | undefined;
+    let childName: string | undefined;
 
-    // Poll responses (button-like interactions)
+    // Poll responses: map option title to action key; detect multi-child format
     if (data.pollResult) {
-      // WASenderAPI polls: the selected option is in pollResult.name
-      // Format is "id::visual_title", extract the ID part
       const optionText = data.pollResult.name;
-      if (optionText && optionText.includes('::')) {
-        const [id, ...titleParts] = optionText.split('::');
-        buttonReplyId = id;
-        buttonReplyTitle = titleParts.join('::');
-      } else if (optionText) {
-        // Fallback if format doesn't match
-        buttonReplyId = optionText;
+      if (optionText) {
         buttonReplyTitle = optionText;
+        const staticAction = POLL_TITLE_TO_ACTION[optionText.trim()];
+        if (staticAction) {
+          buttonReplyId = staticAction;
+        } else {
+          const multi = parseMultiChildOption(optionText);
+          if (multi) {
+            buttonReplyId = multi.action;
+            childName = multi.childName;
+          }
+        }
       }
     }
 
@@ -146,6 +150,7 @@ export function parseIncomingMessage(
       messageType: data.pollResult ? 'poll_response' : 'text',
       buttonReplyId,
       buttonReplyTitle,
+      childName,
     };
   } catch (error) {
     console.error('Error parsing incoming message:', error);
@@ -175,6 +180,91 @@ async function lookupParent(senderPhone: string) {
     .eq('phone', dbPhone)
     .single();
   return data;
+}
+
+// ---------------------------------------------------------------------------
+// Attendance lookup helpers (phone-based, used by webhook routing)
+// ---------------------------------------------------------------------------
+
+function getTodayIL(): string {
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jerusalem' });
+}
+
+async function lookupPendingCheckinAttendance(senderPhone: string): Promise<string | null> {
+  const supabase = createServiceClient();
+  const parent = await lookupParent(senderPhone);
+  if (!parent) return null;
+
+  const { data: links } = await supabase
+    .from('children_parents')
+    .select('child_id')
+    .eq('parent_id', parent.id);
+  if (!links?.length) return null;
+
+  const childIds = links.map((l) => l.child_id);
+  const { data: records } = await supabase
+    .from('daily_attendance')
+    .select('id')
+    .in('child_id', childIds)
+    .eq('date', getTodayIL())
+    .is('parent_response', null)
+    .limit(1);
+
+  return records?.[0]?.id ?? null;
+}
+
+async function lookupPendingNineAmAttendance(senderPhone: string): Promise<string | null> {
+  const supabase = createServiceClient();
+  const parent = await lookupParent(senderPhone);
+  if (!parent) return null;
+
+  const { data: links } = await supabase
+    .from('children_parents')
+    .select('child_id')
+    .eq('parent_id', parent.id);
+  if (!links?.length) return null;
+
+  const childIds = links.map((l) => l.child_id);
+  const { data: records } = await supabase
+    .from('daily_attendance')
+    .select('id')
+    .in('child_id', childIds)
+    .eq('date', getTodayIL())
+    .is('nine_am_parent_response', null)
+    .limit(1);
+
+  return records?.[0]?.id ?? null;
+}
+
+async function lookupAttendanceByChildName(
+  senderPhone: string,
+  childName: string
+): Promise<string | null> {
+  const supabase = createServiceClient();
+  const parent = await lookupParent(senderPhone);
+  if (!parent) return null;
+
+  const { data: links } = await supabase
+    .from('children_parents')
+    .select('child_id')
+    .eq('parent_id', parent.id);
+  if (!links?.length) return null;
+
+  const childIds = links.map((l) => l.child_id);
+  const today = getTodayIL();
+
+  const { data: records } = await supabase
+    .from('daily_attendance')
+    .select('id, children!inner(name)')
+    .in('child_id', childIds)
+    .eq('date', today);
+
+  const match = (records ?? []).find((r) => {
+    const child = Array.isArray(r.children) ? r.children[0] : r.children;
+    return (child as { name: string } | null)?.name === childName;
+  });
+
+  return match?.id ?? null;
 }
 
 // ---------------------------------------------------------------------------
@@ -276,6 +366,67 @@ async function handleExplanationSkip(
     .from('daily_attendance')
     .update({ parent_explanation: null })
     .eq('id', attendanceId);
+}
+
+// ---------------------------------------------------------------------------
+// Multi-child combined poll handler
+// ---------------------------------------------------------------------------
+
+async function sendConflictClarification(
+  senderPhone: string,
+  childName: string,
+  attendanceId: string
+): Promise<void> {
+  const supabase = createServiceClient();
+  // Clear the conflicting response so the follow-up can set a clean one
+  await supabase
+    .from('daily_attendance')
+    .update({ parent_response: null, parent_response_time: null, parent_response_by: null })
+    .eq('id', attendanceId);
+
+  await sendInteractiveButtonMessage(
+    senderPhone,
+    `יש סתירה לגבי ${childName} — האם הוא/היא מגיע/ה היום לגן?`,
+    [
+      { id: 'clarify_yes', title: '✓ בדרך לגן' },
+      { id: 'clarify_no', title: '✗ לא היום' },
+    ],
+    false
+  );
+}
+
+async function handleMultiChildCheckin(
+  senderPhone: string,
+  childName: string,
+  action: 'yes' | 'no'
+): Promise<void> {
+  const attendanceId = await lookupAttendanceByChildName(senderPhone, childName);
+  if (!attendanceId) {
+    console.error(`[Checkin] No attendance found for child "${childName}"`);
+    return;
+  }
+
+  const supabase = createServiceClient();
+  const { data: record } = await supabase
+    .from('daily_attendance')
+    .select('parent_response')
+    .eq('id', attendanceId)
+    .single();
+
+  if (record?.parent_response) {
+    const wasDropping =
+      record.parent_response === 'dropping_off' ||
+      record.parent_response === 'dropping_off_late';
+    const nowDropping = action === 'yes';
+
+    if (wasDropping !== nowDropping) {
+      await sendConflictClarification(senderPhone, childName, attendanceId);
+    }
+    // Same answer → idempotent, ignore
+    return;
+  }
+
+  await processCheckinResponse(senderPhone, attendanceId, action);
 }
 
 // ---------------------------------------------------------------------------
@@ -636,31 +787,52 @@ export async function handleIncomingMessage(
   });
 
   try {
-    // 1. Button reply → match against patterns
+    // 1. Button reply → route by action key derived from poll option title
     if (parsed.buttonReplyId) {
-      const checkinMatch = parsed.buttonReplyId.match(CHECKIN_BUTTON_REGEX);
-      if (checkinMatch) {
-        await processCheckinResponse(
-          parsed.sender,
-          checkinMatch[2],
-          checkinMatch[1] as 'yes' | 'late' | 'no'
-        );
+      const action = parsed.buttonReplyId;
+
+      if (action === 'checkin_yes' || action === 'checkin_late' || action === 'checkin_no') {
+        if (parsed.childName) {
+          // Multi-child combined poll: route by child name
+          await handleMultiChildCheckin(
+            parsed.sender,
+            parsed.childName,
+            action.slice('checkin_'.length) as 'yes' | 'no'
+          );
+        } else {
+          // Single-child poll: look up by phone + today
+          const attendanceId = await lookupPendingCheckinAttendance(parsed.sender);
+          if (attendanceId) {
+            await processCheckinResponse(
+              parsed.sender,
+              attendanceId,
+              action.slice('checkin_'.length) as 'yes' | 'late' | 'no'
+            );
+          }
+        }
         return { success: true };
       }
 
-      const skipMatch = parsed.buttonReplyId.match(EXPLAIN_SKIP_REGEX);
-      if (skipMatch) {
-        await handleExplanationSkip(parsed.sender, skipMatch[1]);
+      if (action === 'explain_skip') {
+        const parent = await lookupParent(parsed.sender);
+        if (parent) {
+          const convo = await getConversationState(parent.id);
+          if (convo?.attendance_id) {
+            await handleExplanationSkip(parsed.sender, convo.attendance_id);
+          }
+        }
         return { success: true };
       }
 
-      const nineAmMatch = parsed.buttonReplyId.match(NINE_AM_ALERT_REGEX);
-      if (nineAmMatch) {
-        await handleNineAmResponse(
-          parsed.sender,
-          nineAmMatch[2],
-          nineAmMatch[1] as 'inclass' | 'withme' | 'other'
-        );
+      if (action === 'ninealert_inclass' || action === 'ninealert_withme') {
+        const attendanceId = await lookupPendingNineAmAttendance(parsed.sender);
+        if (attendanceId) {
+          await handleNineAmResponse(
+            parsed.sender,
+            attendanceId,
+            action.slice('ninealert_'.length) as 'inclass' | 'withme'
+          );
+        }
         return { success: true };
       }
     }

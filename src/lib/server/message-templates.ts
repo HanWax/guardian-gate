@@ -34,22 +34,49 @@ export const NINE_AM_ALERT_REGEX =
   /^ninealert_(inclass|withme)_([0-9a-f-]{36})$/
 
 // ---------------------------------------------------------------------------
-// Helper: encode/decode IDs for WASenderAPI polls
+// Poll title → action routing (for webhook)
 // ---------------------------------------------------------------------------
 
-/** Encode button ID into poll option text: "id::visual_title" */
-export function encodeButtonId(id: string, title: string): string {
-  return `${id}::${title}`;
+/**
+ * Maps poll option display text to a routing action key.
+ * Used by the webhook to identify which action was selected without
+ * embedding IDs in the visible option text.
+ */
+export const POLL_TITLE_TO_ACTION: Record<string, string> = {
+  '✓ בדרך לגן': 'checkin_yes',
+  '✗ לא היום': 'checkin_no',
+  '✓ כן, בדרך': 'checkin_yes',
+  'כן, אבל מאוחר': 'checkin_late',
+  'דלג/י': 'explain_skip',
+  'הורדתי': 'ninealert_inclass',
+  'איתי': 'ninealert_withme',
 }
 
-/** Extract button ID from poll option text (returns undefined if no match) */
-export function decodeButtonId(optionText: string): string | undefined {
-  const match = optionText.match(/^([^:]+::[^:].+?)$/);
-  if (match && match[1].includes('::')) {
-    const [id] = match[1].split('::');
-    return id;
+// ---------------------------------------------------------------------------
+// Multi-child poll option format
+// ---------------------------------------------------------------------------
+
+/** Suffix appended to child name for a "coming" option in a combined poll */
+export const MULTI_YES_SUFFIX = ' - כן ✓'
+/** Suffix appended to child name for a "not coming" option in a combined poll */
+export const MULTI_NO_SUFFIX = ' - לא ✗'
+
+/**
+ * Parses a combined poll option title into child name + action.
+ * Returns null if the title does not match the multi-child format.
+ * Format: "${childName} - כן ✓" or "${childName} - לא ✗"
+ */
+export function parseMultiChildOption(
+  title: string
+): { childName: string; action: 'checkin_yes' | 'checkin_no' } | null {
+  const t = title.trim()
+  if (t.endsWith(MULTI_YES_SUFFIX)) {
+    return { childName: t.slice(0, -MULTI_YES_SUFFIX.length), action: 'checkin_yes' }
   }
-  return undefined;
+  if (t.endsWith(MULTI_NO_SUFFIX)) {
+    return { childName: t.slice(0, -MULTI_NO_SUFFIX.length), action: 'checkin_no' }
+  }
+  return null
 }
 
 // ---------------------------------------------------------------------------

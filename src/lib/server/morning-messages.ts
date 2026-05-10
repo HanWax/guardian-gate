@@ -1,4 +1,5 @@
 import { createServiceClient } from './auth'
+import { MULTI_YES_SUFFIX, MULTI_NO_SUFFIX } from './message-templates'
 import { toWhatsAppPhone } from './phone-utils'
 import { sendInteractiveButtonMessage } from './whatsapp'
 
@@ -120,43 +121,75 @@ export async function sendMorningMessagesForNursery(
     childParentsMap.set(link.child_id, list)
   }
 
-  // 5. Send messages for each unsent record
+  // 5. Group unsent records by parent — each parent gets one combined message
+  type RecordInfo = { id: string; childName: string }
+  const parentToRecords = new Map<string, { phone: string; name: string; records: RecordInfo[] }>()
+
   for (const record of unsent) {
     const parents = childParentsMap.get(record.child_id)
     const childName = childNameMap.get(record.child_id) ?? ''
+    if (!parents?.length) continue
 
-    if (!parents?.length) {
-      // No parents linked — skip this child
-      continue
-    }
-
-    let anySendSucceeded = false
     for (const parent of parents) {
-      try {
-        const bodyText = `בוקר טוב ${parent.name}! האם ${childName} מגיע/ה היום לגן?`
-        await sendInteractiveButtonMessage(
-          toWhatsAppPhone(parent.phone),
-          bodyText,
-          [
-            { id: `checkin_yes_${record.id}`, title: '\u2713 בדרך לגן' },
-            { id: `checkin_no_${record.id}`, title: '\u2717 לא היום' },
-          ]
-        )
-        anySendSucceeded = true
-      } catch (err) {
-        console.error(
-          `[Morning Messages] Failed to send to ${parent.phone} for child ${record.child_id}:`,
-          err
-        )
+      if (!parentToRecords.has(parent.id)) {
+        parentToRecords.set(parent.id, { phone: parent.phone, name: parent.name, records: [] })
       }
-    }
-
-    if (anySendSucceeded) {
-      sent++
-    } else {
-      failed++
+      parentToRecords.get(parent.id)!.records.push({ id: record.id, childName })
     }
   }
+
+  // 6. Send one message per parent
+  const sentRecordIds = new Set<string>()
+  const failedRecordIds = new Set<string>()
+
+  for (const [, { phone, name, records }] of parentToRecords) {
+    try {
+      if (records.length === 1) {
+        const { childName } = records[0]
+        await sendInteractiveButtonMessage(
+          toWhatsAppPhone(phone),
+          `בוקר טוב ${name}! האם ${childName} מגיע/ה היום לגן?`,
+          [
+            { id: 'checkin_yes', title: '✓ בדרך לגן' },
+            { id: 'checkin_no', title: '✗ לא היום' },
+          ],
+          false
+        )
+      } else {
+        const buttons = records.flatMap(({ childName }) => [
+          { id: 'checkin_yes', title: `${childName}${MULTI_YES_SUFFIX}` },
+          { id: 'checkin_no', title: `${childName}${MULTI_NO_SUFFIX}` },
+        ])
+        await sendInteractiveButtonMessage(
+          toWhatsAppPhone(phone),
+          `בוקר טוב ${name}! מי מגיע/ה היום לגן?`,
+          buttons,
+          true
+        )
+      }
+
+      for (const { id } of records) {
+        sentRecordIds.add(id)
+        failedRecordIds.delete(id)
+      }
+    } catch (err) {
+      console.error(`[Morning Messages] Failed to send to ${phone}:`, err)
+      for (const { id } of records) {
+        if (!sentRecordIds.has(id)) failedRecordIds.add(id)
+      }
+    }
+  }
+
+  // 7. Mark sent records in one batch
+  if (sentRecordIds.size > 0) {
+    await supabase
+      .from('daily_attendance')
+      .update({ message_sent_at: new Date().toISOString() })
+      .in('id', [...sentRecordIds])
+  }
+
+  sent = sentRecordIds.size
+  failed = failedRecordIds.size
 
   return { sent, failed }
 }

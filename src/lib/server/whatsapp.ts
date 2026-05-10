@@ -108,11 +108,9 @@ export async function sendTextMessage(
 export async function sendInteractiveButtonMessage(
   to: string,
   bodyText: string,
-  buttons: InteractiveButton[]
+  buttons: InteractiveButton[],
+  multiSelect = false
 ): Promise<WhatsAppMessageResponse> {
-  // Import here to avoid circular dependency
-  const { encodeButtonId } = await import('./message-templates');
-
   if (buttons.length === 0 || buttons.length > 12) {
     throw new Error('Interactive messages require 1-12 options');
   }
@@ -133,8 +131,8 @@ export async function sendInteractiveButtonMessage(
     to: `+${to}`,
     poll: {
       question: bodyText,
-      options: buttons.map((btn) => encodeButtonId(btn.id, btn.title)),
-      multiSelect: false,
+      options: buttons.map((btn) => btn.title),
+      multiSelect,
     },
   };
 

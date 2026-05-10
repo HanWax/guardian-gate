@@ -215,6 +215,7 @@ export type Database = {
           inconsistency_resolved_at: string | null
           inconsistency_resolved_by: string | null
           inconsistency_type: string | null
+          message_sent_at: string | null
           nine_am_alert_sent: boolean | null
           nine_am_explanation: string | null
           nine_am_parent_response: string | null
@@ -239,6 +240,7 @@ export type Database = {
           inconsistency_resolved_at?: string | null
           inconsistency_resolved_by?: string | null
           inconsistency_type?: string | null
+          message_sent_at?: string | null
           nine_am_alert_sent?: boolean | null
           nine_am_explanation?: string | null
           nine_am_parent_response?: string | null
@@ -263,6 +265,7 @@ export type Database = {
           inconsistency_resolved_at?: string | null
           inconsistency_resolved_by?: string | null
           inconsistency_type?: string | null
+          message_sent_at?: string | null
           nine_am_alert_sent?: boolean | null
           nine_am_explanation?: string | null
           nine_am_parent_response?: string | null
