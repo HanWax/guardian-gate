@@ -168,8 +168,19 @@ function maskIdentifier(value: string | undefined): string | undefined {
 
 
 // ---------------------------------------------------------------------------
-// Lookup helper
+// Lookup helpers
 // ---------------------------------------------------------------------------
+
+async function lookupTeacher(senderPhone: string) {
+  const supabase = createServiceClient();
+  const dbPhone = toDbPhone(senderPhone);
+  const { data } = await supabase
+    .from('teachers')
+    .select('id, phone, nursery_id')
+    .eq('phone', dbPhone)
+    .single();
+  return data;
+}
 
 async function lookupParent(senderPhone: string) {
   const supabase = createServiceClient();
@@ -268,6 +279,48 @@ async function lookupAttendanceByChildName(
 }
 
 // ---------------------------------------------------------------------------
+// Teacher poll response handler
+// ---------------------------------------------------------------------------
+
+async function handleTeacherPollResponse(
+  teacher: { id: string; nursery_id: string },
+  childName: string
+): Promise<void> {
+  const supabase = createServiceClient();
+  const today = getTodayIL();
+
+  const { data: child } = await supabase
+    .from('children')
+    .select('id')
+    .eq('nursery_id', teacher.nursery_id)
+    .eq('name', childName)
+    .single();
+
+  if (!child) {
+    console.error(`[TeacherPoll] Child "${childName}" not found in nursery ${teacher.nursery_id}`);
+    return;
+  }
+
+  const { data: record } = await supabase
+    .from('daily_attendance')
+    .select('id, teacher_confirmed')
+    .eq('child_id', child.id)
+    .eq('date', today)
+    .single();
+
+  if (!record || record.teacher_confirmed) return;
+
+  await supabase
+    .from('daily_attendance')
+    .update({
+      teacher_confirmed: true,
+      teacher_confirmed_time: new Date().toISOString(),
+      teacher_confirmed_by: teacher.id,
+    })
+    .eq('id', record.id);
+}
+
+// ---------------------------------------------------------------------------
 // Check-in response handler (morning + second ping)
 // ---------------------------------------------------------------------------
 
@@ -341,8 +394,8 @@ export async function processCheckinResponse(
       .single();
 
     const msg = explanationPromptMessage(child?.name ?? '', attendanceId);
-    await sendInteractiveButtonMessage(senderPhone, msg.text, msg.buttons!);
     await setConversationState(parent.id, 'awaiting_explanation', attendanceId);
+    await sendInteractiveButtonMessage(senderPhone, msg.text, msg.buttons!);
   }
 }
 
@@ -511,12 +564,14 @@ async function handleFreeText(
         .from('daily_attendance')
         .update({ parent_explanation: text })
         .eq('id', convo.attendance_id);
-
-      await forwardExplanationToTeacher(convo.attendance_id, parent, text);
     }
 
-    await sendTextMessage(senderPhone, explanationReceivedMessage().text);
     await resetConversationState(parent.id);
+
+    if (convo.attendance_id) {
+      await forwardExplanationToTeacher(convo.attendance_id, parent, text);
+    }
+    await sendTextMessage(senderPhone, explanationReceivedMessage().text);
   } else if (convo.state === 'awaiting_name_verify') {
     // Parent typing child's name to verify "in class" claim
     if (!convo.attendance_id) return;
@@ -787,7 +842,16 @@ export async function handleIncomingMessage(
   });
 
   try {
-    // 1. Button reply → route by action key derived from poll option title
+    // 1. Teacher poll response: unmatched poll option → plain child name
+    if (parsed.messageType === 'poll_response' && !parsed.buttonReplyId && parsed.buttonReplyTitle) {
+      const teacher = await lookupTeacher(parsed.sender);
+      if (teacher) {
+        await handleTeacherPollResponse(teacher, parsed.buttonReplyTitle);
+        return { success: true };
+      }
+    }
+
+    // 2. Button reply → route by action key derived from poll option title
     if (parsed.buttonReplyId) {
       const action = parsed.buttonReplyId;
 
@@ -837,7 +901,7 @@ export async function handleIncomingMessage(
       }
     }
 
-    // 2. Free text → route via conversation state
+    // 3. Free text → route via conversation state
     if (parsed.messageText) {
       await handleFreeText(parsed.sender, parsed.messageText);
     }

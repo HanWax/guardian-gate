@@ -1,7 +1,7 @@
 /**
  * Second ping: reminder message for parents who didn't respond to the morning check-in.
  *
- * Uses `second_ping_time` from nursery config. Targets attendance records where
+ * Fires 30 minutes after `first_message_time`. Targets attendance records where
  * message was sent but parent hasn't responded yet.
  */
 
@@ -10,6 +10,7 @@ import {
   getCurrentTimeInTimezone,
   getTodayInTimezone,
   isWithinTolerance,
+  addMinutesToTime,
 } from './morning-messages'
 import { secondPingMessage } from './message-templates'
 import { toWhatsAppPhone } from './phone-utils'
@@ -107,15 +108,16 @@ export async function runSecondPing(toleranceMinutes = 5): Promise<{
 
   const { data: nurseries } = await supabase
     .from('nurseries')
-    .select('id, second_ping_time, timezone')
+    .select('id, first_message_time, timezone')
   if (!nurseries?.length) return { nurseriesProcessed, totalSent, totalFailed }
 
   for (const nursery of nurseries) {
     const tz = nursery.timezone ?? 'Asia/Jerusalem'
     const currentTime = getCurrentTimeInTimezone(tz)
     const today = getTodayInTimezone(tz)
+    const secondPingTime = addMinutesToTime(nursery.first_message_time, 30)
 
-    if (!isWithinTolerance(currentTime, nursery.second_ping_time, toleranceMinutes)) {
+    if (!isWithinTolerance(currentTime, secondPingTime, toleranceMinutes)) {
       continue
     }
 

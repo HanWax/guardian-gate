@@ -5,7 +5,7 @@ const validData = {
   dropoff_start: '07:30',
   dropoff_end: '09:00',
   first_message_time: '12:00',
-  second_ping_time: '14:30',
+  teacher_poll_time: '14:30',
   timezone: 'Asia/Jerusalem',
 };
 
@@ -26,8 +26,8 @@ describe('updateNurserySettingsSchema', () => {
     expect(() => updateNurserySettingsSchema.parse({ ...validData, first_message_time: '12:0' })).toThrow('פורמט שעה לא תקין');
   });
 
-  it('rejects invalid second_ping_time format', () => {
-    expect(() => updateNurserySettingsSchema.parse({ ...validData, second_ping_time: '25:30' })).toThrow('פורמט שעה לא תקין');
+  it('rejects invalid teacher_poll_time format', () => {
+    expect(() => updateNurserySettingsSchema.parse({ ...validData, teacher_poll_time: '25:30' })).toThrow('פורמט שעה לא תקין');
   });
 
   it('rejects empty timezone', () => {
@@ -47,7 +47,7 @@ describe('updateNurserySettingsSchema', () => {
         dropoff_start: time,
         dropoff_end: time,
         first_message_time: time,
-        second_ping_time: time,
+        teacher_poll_time: time,
         timezone: 'Asia/Jerusalem',
       };
       expect(() => updateNurserySettingsSchema.parse(data)).not.toThrow();

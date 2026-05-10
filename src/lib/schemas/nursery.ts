@@ -13,7 +13,7 @@ export const updateNurserySettingsSchema = z.object({
   first_message_time: z
     .string()
     .regex(timeRegex, 'פורמט שעה לא תקין'),
-  second_ping_time: z
+  teacher_poll_time: z
     .string()
     .regex(timeRegex, 'פורמט שעה לא תקין'),
   timezone: z

@@ -216,12 +216,12 @@ export type Database = {
           inconsistency_resolved_by: string | null
           inconsistency_type: string | null
           message_sent_at: string | null
-          nine_am_alert_sent: boolean | null
           nine_am_explanation: string | null
           nine_am_parent_response: string | null
           nine_am_parent_response_by: string | null
           nine_am_parent_response_time: string | null
           parent_explanation: string | null
+          parent_followup_sent: boolean | null
           parent_response: string | null
           parent_response_by: string | null
           parent_response_time: string | null
@@ -241,12 +241,12 @@ export type Database = {
           inconsistency_resolved_by?: string | null
           inconsistency_type?: string | null
           message_sent_at?: string | null
-          nine_am_alert_sent?: boolean | null
           nine_am_explanation?: string | null
           nine_am_parent_response?: string | null
           nine_am_parent_response_by?: string | null
           nine_am_parent_response_time?: string | null
           parent_explanation?: string | null
+          parent_followup_sent?: boolean | null
           parent_response?: string | null
           parent_response_by?: string | null
           parent_response_time?: string | null
@@ -266,12 +266,12 @@ export type Database = {
           inconsistency_resolved_by?: string | null
           inconsistency_type?: string | null
           message_sent_at?: string | null
-          nine_am_alert_sent?: boolean | null
           nine_am_explanation?: string | null
           nine_am_parent_response?: string | null
           nine_am_parent_response_by?: string | null
           nine_am_parent_response_time?: string | null
           parent_explanation?: string | null
+          parent_followup_sent?: boolean | null
           parent_response?: string | null
           parent_response_by?: string | null
           parent_response_time?: string | null
@@ -362,7 +362,7 @@ export type Database = {
           first_message_time: string
           id: string
           name: string
-          second_ping_time: string
+          teacher_poll_time: string
           timezone: string | null
         }
         Insert: {
@@ -372,7 +372,7 @@ export type Database = {
           first_message_time: string
           id?: string
           name: string
-          second_ping_time: string
+          teacher_poll_time: string
           timezone?: string | null
         }
         Update: {
@@ -382,7 +382,7 @@ export type Database = {
           first_message_time?: string
           id?: string
           name?: string
-          second_ping_time?: string
+          teacher_poll_time?: string
           timezone?: string | null
         }
         Relationships: []

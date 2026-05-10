@@ -19,7 +19,7 @@ export type MissingChild = {
 function deriveActionTaken(record: {
   inconsistency?: boolean | null
   inconsistency_type?: string | null
-  nine_am_alert_sent?: boolean | null
+  parent_followup_sent?: boolean | null
 }): string {
   if (record.inconsistency) {
     const typeLabels: Record<string, string> = {
@@ -28,7 +28,7 @@ function deriveActionTaken(record: {
     }
     return typeLabels[record.inconsistency_type ?? ''] ?? 'חריגה זוהתה'
   }
-  if (record.nine_am_alert_sent) return 'התראת 9:00 נשלחה'
+  if (record.parent_followup_sent) return 'מעקב נשלח'
   return 'ממתין לתגובה'
 }
 
@@ -45,7 +45,7 @@ export const getMissingChildren = createServerFn({ method: 'POST' })
       .select(`
         id, child_id, parent_response, teacher_confirmed,
         inconsistency, inconsistency_type, inconsistency_resolved,
-        nine_am_alert_sent, created_at,
+        parent_followup_sent, created_at,
         children!inner(id, name, nursery_id, children_parents(parents(id, name, phone)))
       `)
       .eq('date', data.date)
