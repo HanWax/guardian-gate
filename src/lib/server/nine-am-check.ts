@@ -37,6 +37,15 @@ export async function runNineAmCheck(toleranceMinutes = 5): Promise<{
       continue
     }
 
+    // Prevent duplicate polls if cron fires multiple times in the tolerance window
+    const { error: runInsertErr } = await supabase
+      .from('teacher_poll_runs')
+      .insert({ nursery_id: nursery.id, run_date: today })
+    if (runInsertErr) {
+      console.log(`[9am] Poll already sent for nursery ${nursery.id} on ${today}`)
+      continue
+    }
+
     const { data: children } = await supabase
       .from('children')
       .select('id, name')
@@ -78,6 +87,7 @@ export async function runNineAmCheck(toleranceMinutes = 5): Promise<{
       .select('phone')
       .eq('nursery_id', nursery.id)
 
+    let nurserySent = 0
     for (const teacher of teachers ?? []) {
       for (let i = 0; i < chunks.length; i++) {
         const part = chunks.length > 1 ? `${i + 1}/${chunks.length}` : undefined
@@ -89,12 +99,19 @@ export async function runNineAmCheck(toleranceMinutes = 5): Promise<{
             msg.buttons!,
             true
           )
+          nurserySent++
           pollsSent++
         } catch (err) {
           console.error(`[9am] Failed to send poll to ${teacher.phone}:`, err)
         }
       }
     }
+
+    await supabase
+      .from('teacher_poll_runs')
+      .update({ polls_sent: nurserySent, completed_at: new Date().toISOString() })
+      .eq('nursery_id', nursery.id)
+      .eq('run_date', today)
 
     nurseriesProcessed++
   }

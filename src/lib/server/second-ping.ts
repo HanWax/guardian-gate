@@ -87,6 +87,10 @@ async function sendSecondPingForNursery(
     }
 
     if (anySendSucceeded) {
+      await supabase
+        .from('daily_attendance')
+        .update({ second_ping_sent_at: new Date().toISOString() })
+        .eq('id', record.id)
       sent++
     } else {
       failed++

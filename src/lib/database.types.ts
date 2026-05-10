@@ -197,7 +197,7 @@ export type Database = {
           {
             foreignKeyName: "conversation_state_parent_id_fkey"
             columns: ["parent_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "parents"
             referencedColumns: ["id"]
           },
@@ -225,6 +225,7 @@ export type Database = {
           parent_response: string | null
           parent_response_by: string | null
           parent_response_time: string | null
+          second_ping_sent_at: string | null
           teacher_confirmed: boolean | null
           teacher_confirmed_by: string | null
           teacher_confirmed_time: string | null
@@ -250,6 +251,7 @@ export type Database = {
           parent_response?: string | null
           parent_response_by?: string | null
           parent_response_time?: string | null
+          second_ping_sent_at?: string | null
           teacher_confirmed?: boolean | null
           teacher_confirmed_by?: string | null
           teacher_confirmed_time?: string | null
@@ -275,6 +277,7 @@ export type Database = {
           parent_response?: string | null
           parent_response_by?: string | null
           parent_response_time?: string | null
+          second_ping_sent_at?: string | null
           teacher_confirmed?: boolean | null
           teacher_confirmed_by?: string | null
           teacher_confirmed_time?: string | null
@@ -413,6 +416,38 @@ export type Database = {
           {
             foreignKeyName: "parents_owner_nursery_id_fkey"
             columns: ["owner_nursery_id"]
+            isOneToOne: false
+            referencedRelation: "nurseries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      teacher_poll_runs: {
+        Row: {
+          completed_at: string | null
+          id: string
+          nursery_id: string
+          polls_sent: number
+          run_date: string
+        }
+        Insert: {
+          completed_at?: string | null
+          id?: string
+          nursery_id: string
+          polls_sent?: number
+          run_date: string
+        }
+        Update: {
+          completed_at?: string | null
+          id?: string
+          nursery_id?: string
+          polls_sent?: number
+          run_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teacher_poll_runs_nursery_id_fkey"
+            columns: ["nursery_id"]
             isOneToOne: false
             referencedRelation: "nurseries"
             referencedColumns: ["id"]
