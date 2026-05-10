@@ -2,19 +2,19 @@
   "crons": [
     {
       "path": "/api/cron/morning-messages",
-      "schedule": "*/5 * * * *"
+      "schedule": "*/5 4-8 * * 0-4"
     },
     {
       "path": "/api/cron/second-ping",
-      "schedule": "*/5 * * * *"
+      "schedule": "*/5 4-8 * * 0-4"
     },
     {
       "path": "/api/cron/nine-am-check",
-      "schedule": "*/5 * * * *"
+      "schedule": "*/5 4-8 * * 0-4"
     },
     {
       "path": "/api/cron/teacher-followup",
-      "schedule": "*/5 * * * *"
+      "schedule": "*/5 4-8 * * 0-4"
     }
   ]
 }
