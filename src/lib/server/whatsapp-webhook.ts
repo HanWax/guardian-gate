@@ -911,29 +911,30 @@ export async function handleIncomingMessage(
     if (parsed.buttonReplyId) {
       const action = parsed.buttonReplyId;
 
-      if (action === 'checkin_yes' || action === 'checkin_late' || action === 'checkin_no') {
-        if (parsed.childName) {
-          // Multi-child combined poll: process every selected option
-          for (const opt of (parsed.allPollOptions ?? [])) {
-            const multi = parseMultiChildOption(opt);
-            if (multi) {
-              await handleMultiChildCheckin(
-                parsed.sender,
-                multi.childName,
-                multi.action.slice('checkin_'.length) as 'yes' | 'no'
-              );
-            }
-          }
-        } else {
-          // Single-child poll: look up by phone + today
-          const attendanceId = await lookupPendingCheckinAttendance(parsed.sender);
-          if (attendanceId) {
-            await processCheckinResponse(
+      // Multi-child combined poll: only yes/no per child, no late option
+      if ((action === 'checkin_yes' || action === 'checkin_no') && parsed.childName) {
+        for (const opt of (parsed.allPollOptions ?? [])) {
+          const multi = parseMultiChildOption(opt);
+          if (multi) {
+            await handleMultiChildCheckin(
               parsed.sender,
-              attendanceId,
-              action.slice('checkin_'.length) as 'yes' | 'late' | 'no'
+              multi.childName,
+              multi.action.slice('checkin_'.length) as 'yes' | 'no'
             );
           }
+        }
+        return { success: true };
+      }
+
+      // Single-child poll: yes / late / no
+      if (action === 'checkin_yes' || action === 'checkin_late' || action === 'checkin_no') {
+        const attendanceId = await lookupPendingCheckinAttendance(parsed.sender);
+        if (attendanceId) {
+          await processCheckinResponse(
+            parsed.sender,
+            attendanceId,
+            action.slice('checkin_'.length) as 'yes' | 'late' | 'no'
+          );
         }
         return { success: true };
       }
