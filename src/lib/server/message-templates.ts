@@ -170,10 +170,16 @@ export function teacherPollMessage(
 }
 
 /** Flow 5a — Teacher FYI at poll time when no parents have responded yet */
-export function teacherNoResponseSummaryMessage(childNames: string[]): MessagePayload {
+export function teacherNoResponseSummaryMessage(
+  children: Array<{ name: string; parentPhones: string[] }>
+): MessagePayload {
   const lines = [
     'לתשומת לבך: לא התקבלה תגובה מהורים של:',
-    ...childNames.map((n) => `  • ${n}`),
+    ...children.map(({ name, parentPhones }) =>
+      parentPhones.length > 0
+        ? `  • ${name} (${parentPhones.join(', ')})`
+        : `  • ${name}`
+    ),
   ]
   return { text: lines.join('\n') }
 }

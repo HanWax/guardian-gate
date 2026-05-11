@@ -75,16 +75,35 @@ export async function runNineAmCheck(toleranceMinutes = 5): Promise<{
 
     if (expectedNames.length === 0) {
       // No confirmed arrivals — send teachers an FYI for any parents who haven't responded
-      const noResponseNames = children
-        .filter((c) => {
-          const rec = attendanceMap.get(c.id)
-          return rec?.message_sent_at != null && rec?.parent_response == null
-        })
-        .map((c) => c.name)
+      const noResponseChildren = children.filter((c) => {
+        const rec = attendanceMap.get(c.id)
+        return rec?.message_sent_at != null && rec?.parent_response == null
+      })
 
       let nurserySent = 0
-      if (noResponseNames.length > 0) {
-        const msg = teacherNoResponseSummaryMessage(noResponseNames)
+      if (noResponseChildren.length > 0) {
+        const noResponseChildIds = noResponseChildren.map((c) => c.id)
+        const { data: parentLinks } = await supabase
+          .from('children_parents')
+          .select('child_id, parents(phone)')
+          .in('child_id', noResponseChildIds)
+
+        type ParentRow = { phone: string }
+        const childPhoneMap = new Map<string, string[]>()
+        for (const link of parentLinks ?? []) {
+          const parent = link.parents as unknown as ParentRow | null
+          if (!parent?.phone) continue
+          const list = childPhoneMap.get(link.child_id) ?? []
+          list.push(parent.phone)
+          childPhoneMap.set(link.child_id, list)
+        }
+
+        const noResponseWithPhones = noResponseChildren.map((c) => ({
+          name: c.name,
+          parentPhones: childPhoneMap.get(c.id) ?? [],
+        }))
+
+        const msg = teacherNoResponseSummaryMessage(noResponseWithPhones)
         for (const teacher of teachers ?? []) {
           try {
             await sendTextMessage(toWhatsAppPhone(teacher.phone), msg.text)
