@@ -43,6 +43,12 @@ describe('parseIncomingMessage', () => {
       expect(result.allPollOptions).toEqual(['✓ כן, בדרך'])
     })
 
+    it('preserves timestamp and messageId from poll.results', () => {
+      const result = parseIncomingMessage(pollResultsPayload(['✓ כן, בדרך']) as never)
+      expect(result.timestamp).toBe('1234567890')
+      expect(result.messageId).toBe('msg1')
+    })
+
     it('extracts sender and action for a parent no vote', () => {
       const result = parseIncomingMessage(pollResultsPayload(['✗ לא היום']) as never)
       expect(result.buttonReplyId).toBe('checkin_no')
@@ -72,7 +78,94 @@ describe('parseIncomingMessage', () => {
       expect(result.sender).toBe(SENDER_PHONE)
       expect(result.messageType).toBe('poll_response')
       expect(result.buttonReplyId).toBeUndefined()
+      expect(result.buttonReplyTitle).toBe('אסיף')
       expect(result.allPollOptions).toEqual(['אסיף', 'דן'])
+    })
+
+    it('extracts buttonReplyId and childName from multi-child combined poll', () => {
+      const payload = {
+        event: 'poll.results',
+        timestamp: 1234567890,
+        data: {
+          key: { remoteJid: `${SENDER_PHONE}@s.whatsapp.net`, id: 'msg4' },
+          pollResult: [
+            { name: 'אסיף - כן ✓', voters: [`${SENDER_PHONE}@c.us`] },
+            { name: 'דן - לא ✗', voters: [`${SENDER_PHONE}@c.us`] },
+            { name: 'מיכל - כן ✓', voters: [] },
+          ],
+        },
+      }
+      const result = parseIncomingMessage(payload as never)
+      expect(result.success).toBe(true)
+      expect(result.sender).toBe(SENDER_PHONE)
+      expect(result.messageType).toBe('poll_response')
+      expect(result.buttonReplyId).toBe('checkin_yes')
+      expect(result.childName).toBe('אסיף')
+      expect(result.buttonReplyTitle).toBe('אסיף - כן ✓')
+      expect(result.allPollOptions).toEqual(['אסיף - כן ✓', 'דן - לא ✗'])
+    })
+
+    it('extracts checkin_no from first selected multi-child "no" option', () => {
+      const payload = {
+        event: 'poll.results',
+        timestamp: 1234567890,
+        data: {
+          key: { remoteJid: `${SENDER_PHONE}@s.whatsapp.net`, id: 'msg5' },
+          pollResult: [
+            { name: 'אסיף - לא ✗', voters: [`${SENDER_PHONE}@c.us`] },
+            { name: 'דן - כן ✓', voters: [] },
+          ],
+        },
+      }
+      const result = parseIncomingMessage(payload as never)
+      expect(result.buttonReplyId).toBe('checkin_no')
+      expect(result.childName).toBe('אסיף')
+      expect(result.allPollOptions).toEqual(['אסיף - לא ✗'])
+    })
+
+    it('falls back to remoteJid sender when voter JIDs are non-phone-shaped', () => {
+      const payload = {
+        event: 'poll.results',
+        timestamp: 1234567890,
+        data: {
+          key: { remoteJid: `${SENDER_PHONE}@s.whatsapp.net`, id: 'msg6' },
+          pollResult: [
+            { name: '✓ כן, בדרך', voters: ['grp-id@g.us'] },
+          ],
+        },
+      }
+      const result = parseIncomingMessage(payload as never)
+      expect(result.success).toBe(true)
+      expect(result.sender).toBe(SENDER_PHONE)
+      expect(result.buttonReplyId).toBe('checkin_yes')
+    })
+
+    it('returns early when both voter JIDs and remoteJid are non-phone-shaped', () => {
+      const payload = {
+        event: 'poll.results',
+        data: {
+          key: { remoteJid: 'group-123@g.us' },
+          pollResult: [{ name: '✓ כן, בדרך', voters: ['also-group@g.us'] }],
+        },
+      }
+      const result = parseIncomingMessage(payload as never)
+      expect(result.success).toBe(true)
+      expect(result.sender).toBeUndefined()
+    })
+
+    it('routes explain_skip from poll option title', () => {
+      const payload = {
+        event: 'poll.results',
+        timestamp: 1234567890,
+        data: {
+          key: { remoteJid: `${SENDER_PHONE}@s.whatsapp.net`, id: 'msg7' },
+          pollResult: [{ name: 'דלג/י', voters: [`${SENDER_PHONE}@c.us`] }],
+        },
+      }
+      const result = parseIncomingMessage(payload as never)
+      expect(result.buttonReplyId).toBe('explain_skip')
+      expect(result.buttonReplyTitle).toBe('דלג/י')
+      expect(result.childName).toBeUndefined()
     })
 
     it('returns early when no options are voted', () => {
@@ -102,6 +195,18 @@ describe('parseIncomingMessage', () => {
       expect(result.sender).toBe(SENDER_PHONE)
       expect(result.messageText).toBe('שלום')
       expect(result.messageType).toBe('text')
+    })
+
+    it('preserves timestamp and messageId from messages.upsert', () => {
+      const result = parseIncomingMessage(textMessagePayload('שלום') as never)
+      expect(result.timestamp).toBe('1234567890')
+      expect(result.messageId).toBe('msg2')
+    })
+
+    it('returns early when data.messages is missing', () => {
+      const result = parseIncomingMessage({ event: 'messages.upsert', data: {} } as never)
+      expect(result.success).toBe(true)
+      expect(result.sender).toBeUndefined()
     })
 
     it('skips messages sent by us (fromMe: true)', () => {
