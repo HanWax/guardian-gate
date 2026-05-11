@@ -37,24 +37,40 @@ import {
 
 /**
  * WhatsApp webhook payload structure from WASenderAPI.
+ *
+ * Two distinct event shapes arrive:
+ * - "messages.upsert": regular messages; message data is nested under data.messages
+ * - "poll.results": poll vote; data is flat at data.key / data.pollResult
  */
 export interface WhatsAppWebhookPayload {
   event?: string;
   timestamp?: number;
+  sessionId?: string;
   data?: {
+    // "messages.upsert" — all fields nested under messages
+    messages?: {
+      key?: {
+        id?: string;
+        fromMe?: boolean;
+        remoteJid?: string;
+        cleanedSenderPn?: string;
+        senderPn?: string;
+      };
+      messageBody?: string;
+      messageTimestamp?: number;
+      pushName?: string;
+      message?: Record<string, unknown>;
+    };
+    // "poll.results" — flat under data
     key?: {
       remoteJid?: string;
       fromMe?: boolean;
       id?: string;
     };
-    messageBody?: string;
-    cleanedSenderPn?: string;
-    cleanedParticipantPn?: string;
-    message?: Record<string, unknown>;
-    pollResult?: {
+    pollResult?: Array<{
       name?: string;
-      voters?: Record<string, unknown>;
-    };
+      voters?: string[];
+    }>;
     [key: string]: unknown;
   };
 }
@@ -70,12 +86,14 @@ export interface MessageParseResult {
   timestamp?: string;
   messageId?: string;
   messageType?: string;
-  /** Button ID from interactive button reply or payload from template quick reply */
+  /** Routing action derived from poll option title (e.g. "checkin_yes") */
   buttonReplyId?: string;
-  /** Button title/text from the reply */
+  /** The raw option title that triggered the action */
   buttonReplyTitle?: string;
   /** For multi-child combined polls: child name parsed from the option title */
   childName?: string;
+  /** All voted option names from a poll.results event (supports multi-select) */
+  allPollOptions?: string[];
 }
 
 /**
@@ -95,62 +113,97 @@ export interface MessageParseResult {
  * }
  * ```
  */
+/** Strips the @domain suffix from a WhatsApp JID and returns the numeric phone, or undefined if not phone-shaped. */
+function jidToPhone(jid: string): string | undefined {
+  const num = jid.replace(/@[^@]+$/, '');
+  return /^\d{10,15}$/.test(num) ? num : undefined;
+}
+
 export function parseIncomingMessage(
   payload: WhatsAppWebhookPayload
 ): MessageParseResult {
   try {
-    // WASenderAPI only sends messages.upsert events we care about
-    if (payload?.event !== 'messages.upsert') {
-      return { success: true };
-    }
+    const event = payload?.event;
 
-    const data = payload?.data;
-    if (!data) {
-      return { success: true };
-    }
+    // Poll votes arrive as a separate "poll.results" event with a flat data shape
+    if (event === 'poll.results') {
+      const data = payload?.data;
+      if (!data) return { success: true };
 
-    // Get sender phone - WASenderAPI provides cleanedSenderPn for private chats
-    const sender = data.cleanedSenderPn || data.cleanedParticipantPn;
-    if (!sender) {
-      return { success: true };
-    }
+      // Sender = voter. Try voter JIDs first (phone-shaped), fall back to remoteJid.
+      const voterPhones = (data.pollResult ?? [])
+        .flatMap(opt => (opt.voters ?? []).map(jidToPhone).filter((p): p is string => !!p));
+      const sender = voterPhones[0] ?? jidToPhone(data.key?.remoteJid ?? '');
+      if (!sender) {
+        console.log('[Webhook] poll.results: could not extract phone from voter/remoteJid');
+        return { success: true };
+      }
 
-    const messageId = data.key?.id;
-    const timestamp = payload.timestamp?.toString();
-    const messageText = data.messageBody;
+      // Collect all option names the sender voted for
+      const allPollOptions = (data.pollResult ?? [])
+        .filter(opt => Array.isArray(opt.voters) && opt.voters.length > 0 && opt.name)
+        .map(opt => opt.name as string);
 
-    let buttonReplyId: string | undefined;
-    let buttonReplyTitle: string | undefined;
-    let childName: string | undefined;
+      if (!allPollOptions.length) return { success: true };
 
-    // Poll responses: map option title to action key; detect multi-child format
-    if (data.pollResult) {
-      const optionText = data.pollResult.name;
-      if (optionText) {
-        buttonReplyTitle = optionText;
+      // Match the first option to a routing action (parent polls use known titles)
+      let buttonReplyId: string | undefined;
+      let buttonReplyTitle: string | undefined;
+      let childName: string | undefined;
+
+      for (const optionText of allPollOptions) {
         const staticAction = POLL_TITLE_TO_ACTION[optionText.trim()];
         if (staticAction) {
           buttonReplyId = staticAction;
-        } else {
-          const multi = parseMultiChildOption(optionText);
-          if (multi) {
-            buttonReplyId = multi.action;
-            childName = multi.childName;
-          }
+          buttonReplyTitle = optionText;
+          break;
+        }
+        const multi = parseMultiChildOption(optionText);
+        if (multi) {
+          buttonReplyId = multi.action;
+          buttonReplyTitle = optionText;
+          childName = multi.childName;
+          break;
         }
       }
+
+      // No action match → all options are plain child names (teacher poll)
+      if (!buttonReplyId) buttonReplyTitle = allPollOptions[0];
+
+      return {
+        success: true,
+        sender,
+        timestamp: payload.timestamp?.toString(),
+        messageId: data.key?.id,
+        messageType: 'poll_response',
+        buttonReplyId,
+        buttonReplyTitle,
+        childName,
+        allPollOptions,
+      };
     }
+
+    // Regular inbound messages arrive as "messages.upsert" with data nested under data.messages
+    if (event !== 'messages.upsert') {
+      return { success: true };
+    }
+
+    const messages = payload?.data?.messages;
+    if (!messages) return { success: true };
+
+    // Skip echoes of our own sent messages
+    if (messages.key?.fromMe) return { success: true };
+
+    const sender = messages.key?.cleanedSenderPn;
+    if (!sender) return { success: true };
 
     return {
       success: true,
       sender,
-      messageText,
-      timestamp,
-      messageId,
-      messageType: data.pollResult ? 'poll_response' : 'text',
-      buttonReplyId,
-      buttonReplyTitle,
-      childName,
+      messageText: messages.messageBody,
+      timestamp: payload.timestamp?.toString(),
+      messageId: messages.key?.id,
+      messageType: 'text',
     };
   } catch (error) {
     console.error('Error parsing incoming message:', error);
@@ -842,11 +895,14 @@ export async function handleIncomingMessage(
   });
 
   try {
-    // 1. Teacher poll response: unmatched poll option → plain child name
-    if (parsed.messageType === 'poll_response' && !parsed.buttonReplyId && parsed.buttonReplyTitle) {
+    // 1. Teacher poll response: no action match → option titles are plain child names
+    if (parsed.messageType === 'poll_response' && !parsed.buttonReplyId) {
       const teacher = await lookupTeacher(parsed.sender);
       if (teacher) {
-        await handleTeacherPollResponse(teacher, parsed.buttonReplyTitle);
+        // allPollOptions holds all selected children (multi-select support)
+        for (const name of (parsed.allPollOptions ?? [])) {
+          await handleTeacherPollResponse(teacher, name);
+        }
         return { success: true };
       }
     }
@@ -857,12 +913,17 @@ export async function handleIncomingMessage(
 
       if (action === 'checkin_yes' || action === 'checkin_late' || action === 'checkin_no') {
         if (parsed.childName) {
-          // Multi-child combined poll: route by child name
-          await handleMultiChildCheckin(
-            parsed.sender,
-            parsed.childName,
-            action.slice('checkin_'.length) as 'yes' | 'no'
-          );
+          // Multi-child combined poll: process every selected option
+          for (const opt of (parsed.allPollOptions ?? [])) {
+            const multi = parseMultiChildOption(opt);
+            if (multi) {
+              await handleMultiChildCheckin(
+                parsed.sender,
+                multi.childName,
+                multi.action.slice('checkin_'.length) as 'yes' | 'no'
+              );
+            }
+          }
         } else {
           // Single-child poll: look up by phone + today
           const attendanceId = await lookupPendingCheckinAttendance(parsed.sender);

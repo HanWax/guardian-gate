@@ -1,6 +1,5 @@
 import { useState, type FormEvent } from 'react'
 import { parentCreateSchema } from '~/lib/schemas/parent'
-import { formatPhoneDisplay } from '~/lib/parents'
 import type { Database } from '~/lib/database.types'
 
 type Parent = Database['public']['Tables']['parents']['Row']
@@ -14,7 +13,7 @@ interface ParentFormProps {
 
 export function ParentForm({ initialData, onSubmit, isPending, serverError }: ParentFormProps) {
   const [name, setName] = useState(initialData?.name ?? '')
-  const [phone, setPhone] = useState(initialData ? formatPhoneDisplay(initialData.phone) : '')
+  const [phone, setPhone] = useState(initialData?.phone ?? '')
   const [errors, setErrors] = useState<{ name?: string; phone?: string }>({})
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -56,7 +55,7 @@ export function ParentForm({ initialData, onSubmit, isPending, serverError }: Pa
         <label htmlFor="parent-phone" className="block text-sm font-medium text-gray-700">מספר טלפון</label>
         <input id="parent-phone" type="tel" value={phone}
           onChange={(e) => { setPhone(e.target.value); setErrors((p) => ({ ...p, phone: undefined })) }}
-          disabled={isPending} placeholder="05X-XXXXXXX"
+          disabled={isPending} placeholder="+972-5X-XXX-XXXX או 05X-XXXXXXX"
           className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
             errors.phone ? 'border-red-500' : 'border-gray-300'
           }`} />
