@@ -11,6 +11,8 @@ export const Route = createFileRoute('/settings')({
   component: SettingsPage,
 });
 
+const stripSeconds = (t: string) => /^\d{2}:\d{2}:\d{2}$/.test(t) ? t.slice(0, 5) : t
+
 const TIMEZONE_OPTIONS = [
   { value: 'Asia/Jerusalem', label: 'ישראל (Asia/Jerusalem)' },
   { value: 'UTC', label: 'UTC' },
@@ -85,10 +87,10 @@ function SettingsPage() {
             <NurserySettingsForm
               key={selectedNurseryId}
               initialData={settings ? {
-                dropoff_start: settings.dropoff_start ?? '',
-                dropoff_end: settings.dropoff_end ?? '',
-                first_message_time: settings.first_message_time ?? '',
-                teacher_poll_time: settings.teacher_poll_time ?? '',
+                dropoff_start: stripSeconds(settings.dropoff_start ?? ''),
+                dropoff_end: stripSeconds(settings.dropoff_end ?? ''),
+                first_message_time: stripSeconds(settings.first_message_time ?? ''),
+                teacher_poll_time: stripSeconds(settings.teacher_poll_time ?? ''),
                 timezone: settings.timezone ?? 'Asia/Jerusalem',
               } : undefined}
               onSubmit={(data) => {

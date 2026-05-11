@@ -11,9 +11,9 @@ import {
   getTodayInTimezone,
   isWithinTolerance,
 } from './morning-messages'
-import { teacherPollMessage } from './message-templates'
+import { teacherPollMessage, teacherNoResponseSummaryMessage } from './message-templates'
 import { toWhatsAppPhone } from './phone-utils'
-import { sendInteractiveButtonMessage } from './whatsapp'
+import { sendInteractiveButtonMessage, sendTextMessage } from './whatsapp'
 
 export async function runNineAmCheck(toleranceMinutes = 5): Promise<{
   nurseriesProcessed: number
@@ -56,7 +56,7 @@ export async function runNineAmCheck(toleranceMinutes = 5): Promise<{
 
     const { data: attendance } = await supabase
       .from('daily_attendance')
-      .select('child_id, parent_response')
+      .select('child_id, parent_response, message_sent_at')
       .eq('date', today)
       .in('child_id', childIds)
     if (!attendance) continue
@@ -68,8 +68,41 @@ export async function runNineAmCheck(toleranceMinutes = 5): Promise<{
       .filter((c) => attendanceMap.get(c.id)?.parent_response === 'dropping_off')
       .map((c) => c.name)
 
+    const { data: teachers } = await supabase
+      .from('teachers')
+      .select('phone')
+      .eq('nursery_id', nursery.id)
+
     if (expectedNames.length === 0) {
+      // No confirmed arrivals — send teachers an FYI for any parents who haven't responded
+      const noResponseNames = children
+        .filter((c) => {
+          const rec = attendanceMap.get(c.id)
+          return rec?.message_sent_at != null && rec?.parent_response == null
+        })
+        .map((c) => c.name)
+
+      let nurserySent = 0
+      if (noResponseNames.length > 0) {
+        const msg = teacherNoResponseSummaryMessage(noResponseNames)
+        for (const teacher of teachers ?? []) {
+          try {
+            await sendTextMessage(toWhatsAppPhone(teacher.phone), msg.text)
+            nurserySent++
+          } catch (err) {
+            console.error(`[9am] Failed to send no-response FYI to ${teacher.phone}:`, err)
+          }
+        }
+      }
+
+      await supabase
+        .from('teacher_poll_runs')
+        .update({ polls_sent: nurserySent, completed_at: new Date().toISOString() })
+        .eq('nursery_id', nursery.id)
+        .eq('run_date', today)
+
       nurseriesProcessed++
+      pollsSent += nurserySent
       continue
     }
 
@@ -81,11 +114,6 @@ export async function runNineAmCheck(toleranceMinutes = 5): Promise<{
     for (let i = 0; i < expectedNames.length; i += 12) {
       chunks.push(expectedNames.slice(i, i + 12))
     }
-
-    const { data: teachers } = await supabase
-      .from('teachers')
-      .select('phone')
-      .eq('nursery_id', nursery.id)
 
     let nurserySent = 0
     for (const teacher of teachers ?? []) {
@@ -100,7 +128,6 @@ export async function runNineAmCheck(toleranceMinutes = 5): Promise<{
             true
           )
           nurserySent++
-          pollsSent++
         } catch (err) {
           console.error(`[9am] Failed to send poll to ${teacher.phone}:`, err)
         }
@@ -114,6 +141,7 @@ export async function runNineAmCheck(toleranceMinutes = 5): Promise<{
       .eq('run_date', today)
 
     nurseriesProcessed++
+    pollsSent += nurserySent
   }
 
   return { nurseriesProcessed, pollsSent }

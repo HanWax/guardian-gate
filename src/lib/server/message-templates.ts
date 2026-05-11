@@ -169,6 +169,15 @@ export function teacherPollMessage(
   }
 }
 
+/** Flow 5a — Teacher FYI at poll time when no parents have responded yet */
+export function teacherNoResponseSummaryMessage(childNames: string[]): MessagePayload {
+  const lines = [
+    'לתשומת לבך: לא התקבלה תגובה מהורים של:',
+    ...childNames.map((n) => `  • ${n}`),
+  ]
+  return { text: lines.join('\n') }
+}
+
 /** Flow 5b — Teacher FYI after 9:30 follow-ups sent */
 export function teacherFollowupFYIMessage(
   unconfirmedExpected: string[],
