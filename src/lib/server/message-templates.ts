@@ -169,6 +169,12 @@ export function teacherPollMessage(
   }
 }
 
+/**
+ * Sentinel option appended to single-child teacher polls so WASender accepts them
+ * (the API requires ≥2 options). Tapping it is a no-op in handleTeacherPollResponse.
+ */
+export const TEACHER_POLL_NONE_OPTION = '⏳ אחכה לעדכון'
+
 /** Flow 5a — Teacher FYI at poll time when no parents have responded yet */
 export function teacherNoResponseSummaryMessage(
   children: Array<{ name: string; parentPhones: string[] }>

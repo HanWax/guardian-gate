@@ -13,6 +13,7 @@ import {
 } from './conversation-manager';
 import {
   POLL_TITLE_TO_ACTION,
+  TEACHER_POLL_NONE_OPTION,
   parseMultiChildOption,
   confirmDroppingOffMessage,
   explanationPromptMessage,
@@ -339,6 +340,8 @@ async function handleTeacherPollResponse(
   teacher: { id: string; nursery_id: string },
   childName: string
 ): Promise<void> {
+  if (childName === TEACHER_POLL_NONE_OPTION) return;
+
   const supabase = createServiceClient();
   const today = getTodayIL();
 

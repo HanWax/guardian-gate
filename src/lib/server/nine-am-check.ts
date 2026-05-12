@@ -11,7 +11,11 @@ import {
   getTodayInTimezone,
   isWithinTolerance,
 } from './morning-messages'
-import { teacherPollMessage, teacherNoResponseSummaryMessage } from './message-templates'
+import {
+  TEACHER_POLL_NONE_OPTION,
+  teacherPollMessage,
+  teacherNoResponseSummaryMessage,
+} from './message-templates'
 import { toWhatsAppPhone } from './phone-utils'
 import { sendInteractiveButtonMessage, sendTextMessage } from './whatsapp'
 
@@ -137,8 +141,12 @@ export async function runNineAmCheck(toleranceMinutes = 5): Promise<{
     let nurserySent = 0
     for (const teacher of teachers ?? []) {
       for (let i = 0; i < chunks.length; i++) {
+        // WASender polls require ≥2 options — pad single-child chunks with a no-op sentinel
+        const chunk = chunks[i].length === 1
+          ? [chunks[i][0], TEACHER_POLL_NONE_OPTION]
+          : chunks[i]
         const part = chunks.length > 1 ? `${i + 1}/${chunks.length}` : undefined
-        const msg = teacherPollMessage(nursery.name, formattedDate, chunks[i], part)
+        const msg = teacherPollMessage(nursery.name, formattedDate, chunk, part)
         try {
           await sendInteractiveButtonMessage(
             toWhatsAppPhone(teacher.phone),
