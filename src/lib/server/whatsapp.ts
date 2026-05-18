@@ -7,6 +7,23 @@
 const API_BASE_URL = process.env.WASENDER_API_BASE_URL || 'https://api.wasenderapi.com';
 
 /**
+ * Minimum interval between WASender sends within a single function instance.
+ * Defends against WASender's "Account Protection" rate limit (1 msg / 5 s)
+ * when it is enabled, and acts as a general burst buffer when it is not.
+ * Configurable via WASENDER_MIN_INTERVAL_MS.
+ */
+const MIN_SEND_INTERVAL_MS = Number(process.env.WASENDER_MIN_INTERVAL_MS ?? 1100);
+let lastSendAt = 0;
+
+async function throttleSend(): Promise<void> {
+  const wait = MIN_SEND_INTERVAL_MS - (Date.now() - lastSendAt);
+  if (wait > 0) {
+    await new Promise((resolve) => setTimeout(resolve, wait));
+  }
+  lastSendAt = Date.now();
+}
+
+/**
  * Button definition for interactive button messages (polls).
  * ID is encoded in poll option text using "::" separator for WASenderAPI.
  */
@@ -52,6 +69,8 @@ export async function sendTextMessage(
   if (!apiKey) {
     throw new Error('WASENDER_API_KEY environment variable is not set');
   }
+
+  await throttleSend();
 
   const url = `${API_BASE_URL}/api/send-message`;
 
@@ -124,6 +143,8 @@ export async function sendInteractiveButtonMessage(
   if (!apiKey) {
     throw new Error('WASENDER_API_KEY environment variable is not set');
   }
+
+  await throttleSend();
 
   const url = `${API_BASE_URL}/api/send-message`;
 

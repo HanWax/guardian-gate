@@ -149,9 +149,10 @@ export async function sendMorningMessagesForNursery(
     }
   }
 
-  // 6. Send one message per parent
-  const sentRecordIds = new Set<string>()
-  const failedRecordIds = new Set<string>()
+  // 6. Send one message per parent. Track success/failure per parent send
+  // (not per record) so a failure for one parent isn't masked when the same
+  // child's other parent succeeds.
+  const recordsCoveredBySend = new Set<string>()
 
   for (const [, { phone, name, records }] of parentToRecords) {
     try {
@@ -180,28 +181,22 @@ export async function sendMorningMessagesForNursery(
         )
       }
 
-      for (const { id } of records) {
-        sentRecordIds.add(id)
-        failedRecordIds.delete(id)
-      }
+      sent++
+      for (const { id } of records) recordsCoveredBySend.add(id)
     } catch (err) {
       console.error(`[Morning Messages] Failed to send to ${phone}:`, err)
-      for (const { id } of records) {
-        if (!sentRecordIds.has(id)) failedRecordIds.add(id)
-      }
+      failed++
     }
   }
 
-  // 7. Mark sent records in one batch
-  if (sentRecordIds.size > 0) {
+  // 7. Mark records as sent when at least one parent received the message.
+  // The cron does not retry within the day, so this matches existing behavior.
+  if (recordsCoveredBySend.size > 0) {
     await supabase
       .from('daily_attendance')
       .update({ message_sent_at: new Date().toISOString() })
-      .in('id', [...sentRecordIds])
+      .in('id', [...recordsCoveredBySend])
   }
-
-  sent = sentRecordIds.size
-  failed = failedRecordIds.size
 
   return { sent, failed }
 }
