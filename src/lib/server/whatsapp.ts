@@ -12,15 +12,32 @@ const API_BASE_URL = process.env.WASENDER_API_BASE_URL || 'https://api.wasendera
  * when it is enabled, and acts as a general burst buffer when it is not.
  * Configurable via WASENDER_MIN_INTERVAL_MS.
  */
-const MIN_SEND_INTERVAL_MS = Number(process.env.WASENDER_MIN_INTERVAL_MS ?? 1100);
+const DEFAULT_MIN_SEND_INTERVAL_MS = Number(process.env.WASENDER_MIN_INTERVAL_MS ?? 1100);
+let minSendIntervalMs = DEFAULT_MIN_SEND_INTERVAL_MS;
 let lastSendAt = 0;
+// Promise-chain mutex: concurrent callers append to the chain so each waits
+// for the previous to finish its delay before reading lastSendAt. A plain
+// timestamp check is racy — two parallel awaits would both see the same
+// lastSendAt and burst past the limit.
+let throttleChain: Promise<void> = Promise.resolve();
 
-async function throttleSend(): Promise<void> {
-  const wait = MIN_SEND_INTERVAL_MS - (Date.now() - lastSendAt);
-  if (wait > 0) {
-    await new Promise((resolve) => setTimeout(resolve, wait));
-  }
-  lastSendAt = Date.now();
+export async function throttleSend(): Promise<void> {
+  const next = throttleChain.then(async () => {
+    const wait = minSendIntervalMs - (Date.now() - lastSendAt);
+    if (wait > 0) {
+      await new Promise((resolve) => setTimeout(resolve, wait));
+    }
+    lastSendAt = Date.now();
+  });
+  throttleChain = next.catch(() => {});
+  return next;
+}
+
+/** Test-only: clears throttle state and optionally overrides the interval. */
+export function _resetThrottleForTesting(intervalMs?: number): void {
+  lastSendAt = 0;
+  throttleChain = Promise.resolve();
+  minSendIntervalMs = intervalMs ?? DEFAULT_MIN_SEND_INTERVAL_MS;
 }
 
 /**

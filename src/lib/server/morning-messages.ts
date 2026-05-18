@@ -190,7 +190,10 @@ export async function sendMorningMessagesForNursery(
   }
 
   // 7. Mark records as sent when at least one parent received the message.
-  // The cron does not retry within the day, so this matches existing behavior.
+  // Record-marking behavior is unchanged: a record gets message_sent_at as
+  // long as any of its parents was reached. The failure *counting* above is
+  // what changed — a failed sibling send now bumps `failed` even though the
+  // record itself is still marked sent.
   if (recordsCoveredBySend.size > 0) {
     await supabase
       .from('daily_attendance')
