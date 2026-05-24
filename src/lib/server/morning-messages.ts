@@ -64,17 +64,18 @@ export function isWithinTolerance(
 export async function sendMorningMessagesForNursery(
   nurseryId: string,
   date: string
-): Promise<{ sent: number; failed: number }> {
+): Promise<{ sent: number; failed: number; errors: string[] }> {
   const supabase = createServiceClient()
   let sent = 0
   let failed = 0
+  const errors: string[] = []
 
   // 1. Get all children in this nursery
   const { data: children, error: childErr } = await supabase
     .from('children')
     .select('id')
     .eq('nursery_id', nurseryId)
-  if (childErr || !children?.length) return { sent, failed }
+  if (childErr || !children?.length) return { sent, failed, errors }
 
   const childIds = children.map((c) => c.id)
 
@@ -100,7 +101,7 @@ export async function sendMorningMessagesForNursery(
     .eq('date', date)
     .in('child_id', childIds)
     .is('message_sent_at', null)
-  if (unsentErr || !unsent?.length) return { sent, failed }
+  if (unsentErr || !unsent?.length) return { sent, failed, errors }
 
   // 4. Batch-fetch child→parent links with parent info and child names
   const unsentChildIds = unsent.map((r) => r.child_id)
@@ -184,7 +185,9 @@ export async function sendMorningMessagesForNursery(
       sent++
       for (const { id } of records) recordsCoveredBySend.add(id)
     } catch (err) {
+      const reason = err instanceof Error ? err.message : String(err)
       console.error(`[Morning Messages] Failed to send to ${phone}:`, err)
+      errors.push(`${name} <${phone}>: ${reason}`)
       failed++
     }
   }
@@ -201,7 +204,7 @@ export async function sendMorningMessagesForNursery(
       .in('id', [...recordsCoveredBySend])
   }
 
-  return { sent, failed }
+  return { sent, failed, errors }
 }
 
 /**
@@ -268,6 +271,11 @@ export async function runMorningMessages(toleranceMinutes = 5): Promise<{
           completed_at: new Date().toISOString(),
           messages_sent: result.sent,
           messages_failed: result.failed,
+          // Persist per-parent failure reasons so the run record explains *why*,
+          // not just a count. console.error alone is lost to log retention.
+          error_details: result.errors.length
+            ? result.errors.join('; ').slice(0, 4000)
+            : null,
         })
         .eq('id', run.id)
 

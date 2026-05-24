@@ -16,7 +16,7 @@ import { secondPingMessage } from './message-templates'
 import { toWhatsAppPhone } from './phone-utils'
 import { sendInteractiveButtonMessage } from './whatsapp'
 
-async function sendSecondPingForNursery(
+export async function sendSecondPingForNursery(
   nurseryId: string,
   date: string
 ): Promise<{ sent: number; failed: number }> {
@@ -34,13 +34,15 @@ async function sendSecondPingForNursery(
   const childIds = children.map((c) => c.id)
   const childNameMap = new Map(children.map((c) => [c.id, c.name]))
 
-  // Find attendance records: message sent, no response, second ping not yet sent
+  // Find attendance records with no response and no second ping yet. Records
+  // whose morning message never sent (message_sent_at null) are intentionally
+  // included: those families were missed entirely by the first send, so this
+  // reminder is their first — and only — contact for the day.
   const { data: unresponded } = await supabase
     .from('daily_attendance')
-    .select('id, child_id')
+    .select('id, child_id, message_sent_at')
     .eq('date', date)
     .in('child_id', childIds)
-    .not('message_sent_at', 'is', null)
     .is('parent_response', null)
     .is('second_ping_sent_at', null)
   if (!unresponded?.length) return { sent, failed }
@@ -87,10 +89,15 @@ async function sendSecondPingForNursery(
     }
 
     if (anySendSucceeded) {
-      await supabase
-        .from('daily_attendance')
-        .update({ second_ping_sent_at: new Date().toISOString() })
-        .eq('id', record.id)
+      const now = new Date().toISOString()
+      const update: { second_ping_sent_at: string; message_sent_at?: string } = {
+        second_ping_sent_at: now,
+      }
+      // Backfill message_sent_at when the morning message never went out, so the
+      // 9am no-response check (which requires message_sent_at) can still escalate
+      // this family to the teacher if they don't answer the reminder either.
+      if (record.message_sent_at == null) update.message_sent_at = now
+      await supabase.from('daily_attendance').update(update).eq('id', record.id)
       sent++
     } else {
       failed++

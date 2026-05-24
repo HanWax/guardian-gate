@@ -130,7 +130,11 @@ describe('sendMorningMessagesForNursery — per-parent counting', () => {
 
     const result = await sendMorningMessagesForNursery('n1', '2026-05-18')
 
-    expect(result).toEqual({ sent: 1, failed: 1 })
+    expect(result).toEqual({
+      sent: 1,
+      failed: 1,
+      errors: ['B <+972500000002>: rate-limited'],
+    })
     expect(mocks.sendInteractiveButtonMessage).toHaveBeenCalledTimes(2)
   })
 
@@ -155,7 +159,7 @@ describe('sendMorningMessagesForNursery — per-parent counting', () => {
 
     const result = await sendMorningMessagesForNursery('n1', '2026-05-18')
 
-    expect(result).toEqual({ sent: 1, failed: 0 })
+    expect(result).toEqual({ sent: 1, failed: 0, errors: [] })
   })
 
   it('returns sent=0/failed=1 when the only parent send fails', async () => {
@@ -178,6 +182,10 @@ describe('sendMorningMessagesForNursery — per-parent counting', () => {
 
     const result = await sendMorningMessagesForNursery('n1', '2026-05-18')
 
-    expect(result).toEqual({ sent: 0, failed: 1 })
+    expect(result).toEqual({
+      sent: 0,
+      failed: 1,
+      errors: ['A <+972500000001>: rate-limited'],
+    })
   })
 })
