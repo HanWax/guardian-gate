@@ -64,17 +64,18 @@ export function isWithinTolerance(
 export async function sendMorningMessagesForNursery(
   nurseryId: string,
   date: string
-): Promise<{ sent: number; failed: number }> {
+): Promise<{ sent: number; failed: number; errors: string[] }> {
   const supabase = createServiceClient()
   let sent = 0
   let failed = 0
+  const errors: string[] = []
 
   // 1. Get all children in this nursery
   const { data: children, error: childErr } = await supabase
     .from('children')
     .select('id')
     .eq('nursery_id', nurseryId)
-  if (childErr || !children?.length) return { sent, failed }
+  if (childErr || !children?.length) return { sent, failed, errors }
 
   const childIds = children.map((c) => c.id)
 
@@ -100,7 +101,7 @@ export async function sendMorningMessagesForNursery(
     .eq('date', date)
     .in('child_id', childIds)
     .is('message_sent_at', null)
-  if (unsentErr || !unsent?.length) return { sent, failed }
+  if (unsentErr || !unsent?.length) return { sent, failed, errors }
 
   // 4. Batch-fetch child→parent links with parent info and child names
   const unsentChildIds = unsent.map((r) => r.child_id)
@@ -154,7 +155,7 @@ export async function sendMorningMessagesForNursery(
   // child's other parent succeeds.
   const recordsCoveredBySend = new Set<string>()
 
-  for (const [, { phone, name, records }] of parentToRecords) {
+  for (const [parentId, { phone, name, records }] of parentToRecords) {
     try {
       if (records.length === 1) {
         const { childName } = records[0]
@@ -184,7 +185,11 @@ export async function sendMorningMessagesForNursery(
       sent++
       for (const { id } of records) recordsCoveredBySend.add(id)
     } catch (err) {
-      console.error(`[Morning Messages] Failed to send to ${phone}:`, err)
+      const reason = err instanceof Error ? err.message : String(err)
+      // Full detail (name + phone) stays in the ephemeral log; the persisted run
+      // record gets only the parent id, to keep PII out of the database at rest.
+      console.error(`[Morning Messages] Failed to send to ${name} <${phone}>:`, err)
+      errors.push(`${parentId}: ${reason}`)
       failed++
     }
   }
@@ -201,7 +206,20 @@ export async function sendMorningMessagesForNursery(
       .in('id', [...recordsCoveredBySend])
   }
 
-  return { sent, failed }
+  return { sent, failed, errors }
+}
+
+/** Max length persisted to morning_message_runs.error_details. */
+const MAX_ERROR_DETAILS_LENGTH = 4000
+
+/**
+ * Joins per-parent failure reasons into one diagnostic string for the run
+ * record (or null when there were no failures), truncated so the persisted
+ * value stays bounded.
+ */
+export function formatRunErrorDetails(errors: string[]): string | null {
+  if (errors.length === 0) return null
+  return errors.join('; ').slice(0, MAX_ERROR_DETAILS_LENGTH)
 }
 
 /**
@@ -268,6 +286,9 @@ export async function runMorningMessages(toleranceMinutes = 5): Promise<{
           completed_at: new Date().toISOString(),
           messages_sent: result.sent,
           messages_failed: result.failed,
+          // Persist per-parent failure reasons so the run record explains *why*,
+          // not just a count. console.error alone is lost to log retention.
+          error_details: formatRunErrorDetails(result.errors),
         })
         .eq('id', run.id)
 
