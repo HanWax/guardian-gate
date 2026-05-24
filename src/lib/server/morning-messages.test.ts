@@ -35,6 +35,7 @@ vi.mock('./whatsapp', () => ({
 }))
 
 import {
+  formatRunErrorDetails,
   getCurrentTimeInTimezone,
   getTodayInTimezone,
   isWithinTolerance,
@@ -133,7 +134,7 @@ describe('sendMorningMessagesForNursery — per-parent counting', () => {
     expect(result).toEqual({
       sent: 1,
       failed: 1,
-      errors: ['B <+972500000002>: rate-limited'],
+      errors: ['p2: rate-limited'],
     })
     expect(mocks.sendInteractiveButtonMessage).toHaveBeenCalledTimes(2)
   })
@@ -185,7 +186,24 @@ describe('sendMorningMessagesForNursery — per-parent counting', () => {
     expect(result).toEqual({
       sent: 0,
       failed: 1,
-      errors: ['A <+972500000001>: rate-limited'],
+      errors: ['p1: rate-limited'],
     })
+  })
+})
+
+describe('formatRunErrorDetails', () => {
+  it('returns null when there are no errors', () => {
+    expect(formatRunErrorDetails([])).toBeNull()
+  })
+
+  it('joins multiple reasons with "; "', () => {
+    expect(formatRunErrorDetails(['p1: rate-limited', 'p2: timeout'])).toBe(
+      'p1: rate-limited; p2: timeout'
+    )
+  })
+
+  it('truncates to the persisted-length cap', () => {
+    const result = formatRunErrorDetails([`p1: ${'x'.repeat(5000)}`])
+    expect(result).toHaveLength(4000)
   })
 })

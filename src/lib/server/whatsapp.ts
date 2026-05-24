@@ -18,9 +18,9 @@ let minSendIntervalMs = DEFAULT_MIN_SEND_INTERVAL_MS;
 let lastSendAt = 0;
 
 /**
- * How many times a single send is retried after a 429 before giving up.
- * Each retry waits the `retry_after` the API reports, so the budget bounds
- * total wait (and keeps a send well under the function timeout).
+ * Ceiling on how many times a single send is retried after a 429. Retries also
+ * stop early once the cumulative wait would exceed maxTotalRetryWaitMs, so this
+ * is an upper bound on attempts, not a fixed count.
  */
 const DEFAULT_MAX_SEND_RETRIES = Number(process.env.WASENDER_MAX_RETRIES ?? 5);
 let maxSendRetries = DEFAULT_MAX_SEND_RETRIES;
@@ -28,6 +28,15 @@ let maxSendRetries = DEFAULT_MAX_SEND_RETRIES;
 const DEFAULT_RETRY_AFTER_MS = 5_000;
 /** Safety cap so a pathological retry_after can't stall a send indefinitely. */
 const MAX_RETRY_AFTER_MS = 65_000;
+/**
+ * Ceiling on the *total* time one send may spend waiting across all its 429
+ * retries. Keeps a single send comfortably under the function timeout even on
+ * the trial plan (1 msg/min → 60 s retry_after): once the next wait would push
+ * the cumulative total past this, we stop and throw, leaving the second-ping
+ * safety net to reach the family on a later run.
+ */
+const DEFAULT_MAX_TOTAL_RETRY_WAIT_MS = 120_000;
+let maxTotalRetryWaitMs = DEFAULT_MAX_TOTAL_RETRY_WAIT_MS;
 // Promise-chain mutex: concurrent callers append to the chain so each waits
 // for the previous to finish its delay before reading lastSendAt. A plain
 // timestamp check is racy — two parallel awaits would both see the same
@@ -46,12 +55,17 @@ export async function throttleSend(): Promise<void> {
   return next;
 }
 
-/** Test-only: clears throttle state and optionally overrides the interval and retry budget. */
-export function _resetThrottleForTesting(intervalMs?: number, retries?: number): void {
+/** Test-only: clears throttle state and optionally overrides the interval, retry budget, and total-wait cap. */
+export function _resetThrottleForTesting(
+  intervalMs?: number,
+  retries?: number,
+  totalWaitCapMs?: number
+): void {
   lastSendAt = 0;
   throttleChain = Promise.resolve();
   minSendIntervalMs = intervalMs ?? DEFAULT_MIN_SEND_INTERVAL_MS;
   maxSendRetries = retries ?? DEFAULT_MAX_SEND_RETRIES;
+  maxTotalRetryWaitMs = totalWaitCapMs ?? DEFAULT_MAX_TOTAL_RETRY_WAIT_MS;
 }
 
 /**
@@ -61,7 +75,7 @@ export function _resetThrottleForTesting(intervalMs?: number, retries?: number):
  * standard Retry-After header as a fallback, then a fixed default. The value is
  * clamped so a bad number can't hang the function.
  */
-function resolveRetryAfterMs(body: unknown, headers: Headers): number {
+export function resolveRetryAfterMs(body: unknown, headers: Headers): number {
   const clamp = (seconds: number) => Math.min(seconds * 1000, MAX_RETRY_AFTER_MS);
 
   const bodySeconds = Number((body as { retry_after?: number | string } | null)?.retry_after);
@@ -89,6 +103,7 @@ async function postMessage(body: object): Promise<WhatsAppMessageResponse> {
   }
 
   const url = `${API_BASE_URL}/api/send-message`;
+  let totalRetryWaitMs = 0;
 
   for (let attempt = 0; ; attempt++) {
     await throttleSend();
@@ -110,8 +125,13 @@ async function postMessage(body: object): Promise<WhatsAppMessageResponse> {
 
     if (response.status === 429 && attempt < maxSendRetries) {
       const waitMs = resolveRetryAfterMs(data, response.headers);
-      await new Promise((resolve) => setTimeout(resolve, waitMs));
-      continue;
+      // Stop retrying if this wait would blow the total budget; the second-ping
+      // safety net will reach the family on a later run instead.
+      if (totalRetryWaitMs + waitMs <= maxTotalRetryWaitMs) {
+        totalRetryWaitMs += waitMs;
+        await new Promise((resolve) => setTimeout(resolve, waitMs));
+        continue;
+      }
     }
 
     throw new Error(

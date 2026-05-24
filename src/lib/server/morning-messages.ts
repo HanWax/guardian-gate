@@ -155,7 +155,7 @@ export async function sendMorningMessagesForNursery(
   // child's other parent succeeds.
   const recordsCoveredBySend = new Set<string>()
 
-  for (const [, { phone, name, records }] of parentToRecords) {
+  for (const [parentId, { phone, name, records }] of parentToRecords) {
     try {
       if (records.length === 1) {
         const { childName } = records[0]
@@ -186,8 +186,10 @@ export async function sendMorningMessagesForNursery(
       for (const { id } of records) recordsCoveredBySend.add(id)
     } catch (err) {
       const reason = err instanceof Error ? err.message : String(err)
-      console.error(`[Morning Messages] Failed to send to ${phone}:`, err)
-      errors.push(`${name} <${phone}>: ${reason}`)
+      // Full detail (name + phone) stays in the ephemeral log; the persisted run
+      // record gets only the parent id, to keep PII out of the database at rest.
+      console.error(`[Morning Messages] Failed to send to ${name} <${phone}>:`, err)
+      errors.push(`${parentId}: ${reason}`)
       failed++
     }
   }
@@ -205,6 +207,19 @@ export async function sendMorningMessagesForNursery(
   }
 
   return { sent, failed, errors }
+}
+
+/** Max length persisted to morning_message_runs.error_details. */
+const MAX_ERROR_DETAILS_LENGTH = 4000
+
+/**
+ * Joins per-parent failure reasons into one diagnostic string for the run
+ * record (or null when there were no failures), truncated so the persisted
+ * value stays bounded.
+ */
+export function formatRunErrorDetails(errors: string[]): string | null {
+  if (errors.length === 0) return null
+  return errors.join('; ').slice(0, MAX_ERROR_DETAILS_LENGTH)
 }
 
 /**
@@ -273,9 +288,7 @@ export async function runMorningMessages(toleranceMinutes = 5): Promise<{
           messages_failed: result.failed,
           // Persist per-parent failure reasons so the run record explains *why*,
           // not just a count. console.error alone is lost to log retention.
-          error_details: result.errors.length
-            ? result.errors.join('; ').slice(0, 4000)
-            : null,
+          error_details: formatRunErrorDetails(result.errors),
         })
         .eq('id', run.id)
 
