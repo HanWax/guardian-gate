@@ -21,6 +21,7 @@ import {
 } from './message-templates'
 import { toWhatsAppPhone } from './phone-utils'
 import { sendTextMessage, sendInteractiveButtonMessage } from './whatsapp'
+import { isExpectedToArrive } from './attendance-status'
 
 export async function runTeacherFollowup(toleranceMinutes = 5): Promise<{
   nurseriesProcessed: number
@@ -69,7 +70,7 @@ export async function runTeacherFollowup(toleranceMinutes = 5): Promise<{
 
     // Split into the two groups that need follow-up
     const unconfirmedExpected = attendance.filter(
-      (a) => a.parent_response === 'dropping_off' && !a.teacher_confirmed
+      (a) => isExpectedToArrive(a.parent_response) && !a.teacher_confirmed
     )
     const noResponse = attendance.filter((a) => a.parent_response === null)
 

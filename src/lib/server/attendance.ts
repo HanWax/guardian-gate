@@ -1,6 +1,7 @@
 import { createServerFn } from '@tanstack/react-start'
 import { z } from 'zod'
 import { requireAdminRole, createServiceClient } from './auth'
+import { isExpectedToArrive } from './attendance-status'
 
 const err = {
   fetch_failed: 'שגיאה בטעינת נתוני נוכחות. אנא נסה שוב',
@@ -61,7 +62,7 @@ export const getMissingChildren = createServerFn({ method: 'POST' })
     const missing = (records ?? []).filter((r) => {
       if (!r.children) return false
       const noResponse = r.parent_response === null
-      const awaitingConfirmation = r.parent_response === 'dropping_off' && !r.teacher_confirmed
+      const awaitingConfirmation = isExpectedToArrive(r.parent_response) && !r.teacher_confirmed
       const unresolvedInconsistency = r.inconsistency === true && !r.inconsistency_resolved
       return noResponse || awaitingConfirmation || unresolvedInconsistency
     })

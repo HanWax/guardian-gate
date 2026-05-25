@@ -35,6 +35,7 @@ import {
   sendTextMessage,
   sendInteractiveButtonMessage,
 } from './whatsapp';
+import { isExpectedToArrive } from './attendance-status';
 
 /**
  * WhatsApp webhook payload structure from WASenderAPI.
@@ -523,9 +524,7 @@ async function handleMultiChildCheckin(
     .single();
 
   if (record?.parent_response) {
-    const wasDropping =
-      record.parent_response === 'dropping_off' ||
-      record.parent_response === 'dropping_off_late';
+    const wasDropping = isExpectedToArrive(record.parent_response);
     const nowDropping = action === 'yes';
 
     if (wasDropping !== nowDropping) {

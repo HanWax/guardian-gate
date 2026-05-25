@@ -18,6 +18,7 @@ import {
 } from './message-templates'
 import { toWhatsAppPhone } from './phone-utils'
 import { sendInteractiveButtonMessage, sendTextMessage } from './whatsapp'
+import { isExpectedToArrive } from './attendance-status'
 
 export async function runNineAmCheck(toleranceMinutes = 5): Promise<{
   nurseriesProcessed: number
@@ -67,9 +68,9 @@ export async function runNineAmCheck(toleranceMinutes = 5): Promise<{
 
     const attendanceMap = new Map(attendance.map((a) => [a.child_id, a]))
 
-    // Only on-time expected children appear in the teacher poll
+    // Every child expected to arrive — on time or late — belongs in the teacher poll
     const expectedNames = children
-      .filter((c) => attendanceMap.get(c.id)?.parent_response === 'dropping_off')
+      .filter((c) => isExpectedToArrive(attendanceMap.get(c.id)?.parent_response))
       .map((c) => c.name)
 
     const { data: teachers } = await supabase
